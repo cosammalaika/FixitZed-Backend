@@ -39,22 +39,6 @@ class ServiceRequestController extends Controller
             'customer_note' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $hasEligibleFixer = Fixer::query()
-            ->where('status', 'approved')
-            ->whereHas('services', fn ($q) => $q->where('services.id', $validated['service_id']))
-            ->exists();
-
-        if (! $hasEligibleFixer) {
-            Log::info('[FIXITZED_TRACE] booking.rejected.no_fixer', [
-                'service_id' => $validated['service_id'],
-                'customer_id' => $request->user()->id,
-            ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'No available fixer for this service.',
-            ], 422);
-        }
-
         $sr = ServiceRequest::create([
             'customer_id' => $request->user()->id,
             'service_id' => $validated['service_id'],

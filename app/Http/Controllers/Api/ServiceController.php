@@ -74,12 +74,17 @@ class ServiceController extends Controller
             ]));
 
             return ApiCache::remember(['catalog', 'services'], $key, function () use ($query, $perPage) {
-                $this->seedCatalogIfMissing();
-
                 $paginator = $query
                     ->distinct()
                     ->orderBy('services.name')
                     ->paginate($perPage);
+
+                $isEmpty = $paginator->isEmpty();
+                if ($isEmpty) {
+                    Log::warning('Services index returned empty list', [
+                        'filters' => request()->only(['search', 'category_id', 'subcategory_id']),
+                    ]);
+                }
 
                 return response()->json([
                     'success' => true,
@@ -91,6 +96,7 @@ class ServiceController extends Controller
                         'last_page' => $paginator->lastPage(),
                         'from' => $paginator->firstItem(),
                         'to' => $paginator->lastItem(),
+                        'is_empty' => $isEmpty,
                     ],
                     'links' => [
                         'first' => $paginator->url(1),
@@ -169,9 +175,7 @@ class ServiceController extends Controller
     protected function seedCatalogIfMissing(): void
     {
         if (! Category::query()->exists() || ! Subcategory::query()->exists() || ! Service::query()->exists()) {
-            Log::info('Seeding service catalog (bootstrap)');
-            (new ServiceCatalogSeeder())->run();
-            ApiCache::flush(['catalog', 'services', 'subcategories']);
+            Log::warning('Service catalog is empty. Please seed via artisan command; skipping auto-seed on GET.');
         }
     }
 }

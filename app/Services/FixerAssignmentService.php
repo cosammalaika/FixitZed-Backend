@@ -28,6 +28,9 @@ class FixerAssignmentService
                 $query->latest()->limit(1);
             }])
             ->where('status', 'approved')
+            ->whereHas('user', function ($q) {
+                $q->where('status', 'Active');
+            })
             ->when($excludeFixerId, fn ($query) => $query->where('id', '!=', $excludeFixerId))
             ->whereHas('services', function ($query) use ($serviceId) {
                 $query->where('services.id', $serviceId);
@@ -78,20 +81,24 @@ class FixerAssignmentService
             })
             ->values();
 
-        Log::info('[FIXITZED_TRACE] assignment.candidates', [
-            'request_id' => $serviceRequest->id,
-            'service_id' => $serviceId,
-            'customer_id' => $serviceRequest->customer_id,
-            'exclude_fixer_id' => $excludeFixerId,
-            'candidate_count' => $candidates->count(),
-        ]);
+        if (config('app.debug')) {
+            Log::info('[FIXITZED_TRACE] assignment.candidates', [
+                'request_id' => $serviceRequest->id,
+                'service_id' => $serviceId,
+                'customer_id' => $serviceRequest->customer_id,
+                'exclude_fixer_id' => $excludeFixerId,
+                'candidate_count' => $candidates->count(),
+            ]);
+        }
 
         if ($candidates->isEmpty()) {
             $this->scheduleNoFixerNotification($serviceRequest);
-            Log::info('[FIXITZED_TRACE] assignment.none', [
-                'request_id' => $serviceRequest->id,
-                'service_id' => $serviceId,
-            ]);
+            if (config('app.debug')) {
+                Log::info('[FIXITZED_TRACE] assignment.none', [
+                    'request_id' => $serviceRequest->id,
+                    'service_id' => $serviceId,
+                ]);
+            }
             return null;
         }
 
@@ -109,11 +116,13 @@ class FixerAssignmentService
         $this->notifyFixer($serviceRequest, $selected);
         $this->notifyCustomerAwaitingAcceptance($serviceRequest, $selected);
 
-        Log::info('[FIXITZED_TRACE] assignment.selected', [
-            'request_id' => $serviceRequest->id,
-            'service_id' => $serviceId,
-            'selected_fixer_id' => $selected->id,
-        ]);
+        if (config('app.debug')) {
+            Log::info('[FIXITZED_TRACE] assignment.selected', [
+                'request_id' => $serviceRequest->id,
+                'service_id' => $serviceId,
+                'selected_fixer_id' => $selected->id,
+            ]);
+        }
 
         return $selected;
     }

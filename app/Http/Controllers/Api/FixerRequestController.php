@@ -35,7 +35,6 @@ class FixerRequestController extends Controller
             abort(403, 'Forbidden');
         }
 
-        $expired = $this->expirePendingRequests();
         $status = $request->query('status');
         if ($status === 'declined') {
             $declines = ServiceRequestDecline::with(['serviceRequest.service', 'serviceRequest.customer'])
@@ -90,15 +89,17 @@ class FixerRequestController extends Controller
             return $this->transformForFixer($sr);
         });
 
-        Log::info('[FIXITZED_TRACE] fixer.feed', [
-            'user_id' => $user->id,
-            'fixer_id' => $fixer->id,
-            'status_filter' => $status,
-            'cutoff' => optional($this->expiryCutoff())->toDateTimeString(),
-            'timezone' => now()->timezoneName,
-            'expired_marked' => $expired,
-            'results_count' => $requests->total(),
-        ]);
+        if (config('app.debug')) {
+            Log::info('[FIXITZED_TRACE] fixer.feed', [
+                'user_id' => $user->id,
+                'fixer_id' => $fixer->id,
+                'status_filter' => $status,
+                'cutoff' => optional($this->expiryCutoff())->toDateTimeString(),
+                'timezone' => now()->timezoneName,
+                'expired_marked' => 0,
+                'results_count' => $requests->total(),
+            ]);
+        }
 
         return response()->json(['success' => true, 'data' => $requests]);
     }
@@ -528,10 +529,14 @@ class FixerRequestController extends Controller
     protected function expiryCutoff(): ?\Illuminate\Support\Carbon
     {
         $minutes = (int) Setting::get('requests.expiry_minutes', 15);
+        // Guard against misconfiguration that would expire instantly.
+        if ($minutes < 5) {
+            $minutes = 15;
+        }
         if ($minutes <= 0) {
             return null;
         }
-        return now()->subMinutes($minutes);
+        return now('UTC')->subMinutes($minutes);
     }
 
     protected function expirePendingRequests(): int

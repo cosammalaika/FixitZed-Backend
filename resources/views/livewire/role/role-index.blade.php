@@ -63,9 +63,11 @@
                                          </td>
                                          <td>
                                              <div class="btn-group">
-                                                 <button type="button" class="btn btn-primary dropdown-toggle"
-                                                     data-bs-toggle="dropdown" aria-expanded="false">Actions <i
-                                                         class="mdi mdi-chevron-down"></i></button>
+                                                  <button
+                                                    class="btn btn-link font-size-16 shadow-none py-0 text-muted dropdown-toggle"
+                                                    type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i class="bx bx-dots-horizontal-rounded"></i>
+                                                </button>
                                                  <div class="dropdown-menu dropdownmenu-primary">
                                                      <!-- Button to trigger the modal -->
                                                      <a class="dropdown-item" href="javascript:void(0);"

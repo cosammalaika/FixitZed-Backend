@@ -1,19 +1,18 @@
-<div>
-    <div class="relative mb-6 w-full">
-        <flux:heading size="xl" level="1">{{ __('Show Users') }}</flux:heading>
-        <flux:subheading size="lg" class="mb-6">{{ __('form for Showing User') }}</flux:subheading>
-        <flux:separator variant="subtle" />
-    </div>
-    <div>
-       
-
-        <a href="{{ route('users.index') }}"
-            class="cursor-pointer px-3 py-2 text-xs font-medium text-black bg-green-700 rounded-lg hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300">
-            Back
-        </a>
-        <div wire:submit="submit" class="w-50">
-           <p><strong>Name:</strong>{{ $user->name }}</p>
-           <p><strong>Email:</strong>{{ $user->email }}</p>
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="card-body">
+            <form wire:submit.prevent="submit">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label" for="default-input">Name</label>
+                        <input class="form-control" type="text" wire:model="name" placeholder="{{ $user->name }}" >
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="default-input">Email</label>
+                        <input class="form-control" type="email" wire:model="email" placeholder="{{ $user->email }}" >
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 

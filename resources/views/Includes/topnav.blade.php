@@ -49,12 +49,12 @@
                             <div class="arrow-down"></div>
                         </a>
                         <div class="dropdown-menu" aria-labelledby="topnav-pages">
+                            <a href="{{ route('users.index') }}" class="dropdown-item" data-key="t-chat">All
+                                Users</a>
                             <a href="{{ asset('apps-calendar.html') }}" class="dropdown-item"
                                 data-key="t-calendar">Unverified Users</a>
                             <a href="{{ asset('apps-chat.html') }}" class="dropdown-item"
-                                data-key="t-chat">Customers</a>
-                            <a href="{{ asset('apps-chat.html') }}" class="dropdown-item" data-key="t-chat">All
-                                Users</a>
+                            data-key="t-chat">Customers</a>
                             <div class="dropdown">
                                 <a class="dropdown-item dropdown-toggle arrow-none" href="{{ asset('#') }}"
                                     id="topnav-email" role="button">
@@ -125,19 +125,12 @@
                         </a>
                         <div class="dropdown-menu" aria-labelledby="topnav-pages">
 
-                            <div class="dropdown">
-                                <a class="dropdown-item dropdown-toggle arrow-none" href="{{ asset('#') }}"
-                                    id="topnav-email" role="button">
-                                    <span data-key="t-email">Role & Permission</span>
-                                    <div class="arrow-down"></div>
+                              <div class="dropdown">
+
+                                <a href="{{ route('role.index') }}" class="dropdown-item" data-key="t-inbox">
+                                    Role & Permission
                                 </a>
-                                <div class="dropdown-menu" aria-labelledby="topnav-email">
-                                    <a href="{{ route('role.index') }}" class="dropdown-item" data-key="t-inbox">
-                                        Role List
-                                    </a>
-                                    <a href="{{ asset('apps-email-read.html') }}"" class="dropdown-item"
-                                        data-key="t-read-email">Permission List</a>
-                                </div>
+
                             </div>
                         </div>
                     </li>

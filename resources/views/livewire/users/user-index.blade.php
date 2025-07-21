@@ -1,79 +1,181 @@
-<div>
-    <div class="relative mb-6 w-full">
-        <flux:heading size="xl" level="1">{{ __('Users') }}</flux:heading>
-        <flux:subheading size="lg" class="mb-6">{{ __('Manage your Users') }}</flux:subheading>
-        <flux:separator variant="subtle" />
-    </div>
-    <div>
-        @if (session('success'))
-            <div class="flex items-center p-2 mb-4 text-sm text-green-800 border border-green-300 rounded-lg bg-green-50 dark:bg-green-900 dark:text-green-300 dark:border-green-800"
-                role="alert">
-                <svg class="flex-shrink-0 w-8 h-8 mr-1 text-green-700 dark:text-green-300"
-                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"></path>
-                </svg>
-                <span class="font-medium"> {{ session('success') }} </span>
-            </div>
-        @endif
+<div class="page-content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="card-title mb-0">User List</h4>
+                        {{-- <a href="{{ route('roles.create') }}" class="btn btn-primary waves-effect waves-light">
+                             + Create Role
+                         </a> --}}
+                        <button type="button" class="btn btn-primary waves-effect waves-light" data-bs-toggle="modal"
+                            data-bs-target="#createRoleModal">
+                            + Add User
+                        </button>
 
-        @can('create.users')
-            <a href="{{ route('users.create') }}"
-                class="cursor-pointer px-3 py-2 text-xs font-medium text-black bg-green-700 rounded-lg hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300">
-                Create user
-            </a>
-        @endcan
-        <div class="overflow-x-auto mt-4">
-            <table class="w-full text-sm text-left text-gray-700">
-                <thead class="text-xs uppercase bg-gray-50 text-gray-700">
-                    <tr>
-                        <th scope="col" class="px-6 py-3">ID</th>
-                        <th scope="col" class="px-6 py-3">Name</th>
-                        <th scope="col" class="px-6 py-3">Email</th>
-                        <th scope="col" class="px-6 py-3">Roles</th>
-                        <th scope="col" class="px-6 py-3 w-70">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($users as $user)
-                        <tr class="odd:bg-white even:bg-gray-50 border-b border-gray-200">
-                            <td class="px-6 py-2 font-medium text-gray-900">{{ $user->id }}</td>
-                            <td class="px-6 py-2 text-gray-700">{{ $user->name }}</td>
-                            <td class="px-6 py-2 text-gray-700">{{ $user->email }}</td>
-                            <td class="px-6 py-2 text-gray-700">
-                                @if ($user->roles)
-                                    @foreach ($user->roles as $role)
-                                        <flux:badge>{{ $role->name }}</flux:badge>
-                                    @endforeach
-                                @endif
-                            </td>
-                            <td class="px-6 py-2">
-                                <div class="flex gap-2">
-                                    @can('show.users')
-                                        <a href="{{ route('users.show', $user->id) }}" variant="primary">
-                                            Show
-                                        </a>
-                                    @endcan
-                                    @can('edit.users')
-                                        <a href="{{ route('users.edit', $user->id) }}" variant="primary">
-                                            Edit
-                                        </a>
-                                    @endcan
-
-                                    @can('delete.users')
-                                        <button wire:click="delete({{ $user->id }})"
-                                            wire:confirm="Are you Sure you want to delete user" variant="primary">
-                                            Delete
-                                        </button>
-                                    @endcan
+                    </div>
+                    @if (session('success'))
+                        <div class="alert alert-success alert-top-border alert-dismissible fade show" role="alert">
+                            <i class="mdi mdi-check-all me-3 align-middle text-success"></i><strong>Success</strong> -
+                            {{ session('success') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                aria-label="Close"></button>
+                        </div>
+                    @endif
+                    <div class="modal fade" id="createRoleModal" tabindex="-1" aria-labelledby="createRoleModalLabel"
+                        aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title " id="createRoleModalLabel">Create Role</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
                                 </div>
-                            </td>
 
-                        </tr>
-                    @endforeach
+                                <div class="modal-body">
+                                    @livewire('users.user-create')
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                </tbody>
-            </table>
-        </div>
+
+
+                    <div class="card-body">
+                        <table id="datatable-buttons" class="table table-bordered dt-responsive nowrap w-100">
+                            <thead>
+                                <tr>
+                                    <th scope="col" style="width: 50px;">
+                                        <div class="form-check font-size-16">
+                                            <input type="checkbox" class="form-check-input" id="checkAll">
+                                            <label class="form-check-label" for="checkAll"></label>
+                                        </div>
+                                    </th>
+                                    <th scope="col">Id</th>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">Email</th>
+                                    <th scope="col">Roles</th>
+                                    <th style="width: 80px; min-width: 80px;">Action</th>
+                                </tr>
+                            </thead>
+
+
+                            <tbody>
+                                @foreach ($users as $user)
+                                    <tr>
+                                        <th scope="row">
+                                            <div class="form-check font-size-16">
+                                                <input type="checkbox" class="form-check-input" id="contacscheck1">
+                                                <label class="form-check-label" for="contacscheck1"></label>
+                                            </div>
+                                        </th>
+                                        <td>{{ $user->id }}</td>
+                                        <td>{{ $user->name }}</td>
+                                        <td>{{ $user->email }}</td>
+                                        <td>
+                                            <div class="d-flex gap-2">
+                                                @if ($user->roles)
+                                                    @foreach ($user->roles as $role)
+                                                        <a href="#"
+                                                            class="badge badge-soft-primary">{{ $role->name }}</a>
+                                                    @endforeach
+                                                @endif
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="dropdown">
+                                                <button
+                                                    class="btn btn-link font-size-16 shadow-none py-0 text-muted dropdown-toggle"
+                                                    type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i class="bx bx-dots-horizontal-rounded"></i>
+                                                </button>
+
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <a class="dropdown-item" href="javascript:void(0);"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#showRoleModal{{ $user->id }}">
+                                                        Show
+                                                    </a>
+
+
+                                                    <a class="dropdown-item" href="javascript:void(0);"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#editRoleModal{{ $user->id }}">
+                                                        Edit
+                                                    </a>
+                                                    </a>
+                                                    <a class="dropdown-item" wire:click="delete({{ $user->id }})"
+                                                        wire:confirm="Are you Sure you want to delete role"
+                                                        variant="primary">
+                                                        Delete
+                                                    </a>
+                                                    {{-- @can('show.users') --}}
+                                                    {{-- <li><a class="dropdown-item"
+                                                 href="{{ route('users.show', $user->id) }}">Show</a></li> --}}
+                                                    {{-- @endcan --}}
+                                                    {{-- @can('edit.users') --}}
+                                                    {{-- <li><a class="dropdown-item"
+                                                 href="{{ route('users.edit', $user->id) }}">Edit</a></li> --}}
+                                                    {{-- @endcan --}}
+                                                    {{-- @can('delete.users') --}}
+                                                    {{-- <li><a class="dropdown-item" wire:click="delete({{ $user->id }})"
+                                                 wire:confirm="Are you Sure you want to delete user">Delete</a></li> --}}
+                                                    {{-- @endcan --}}
+                                                </ul>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <div class="modal fade" id="editRoleModal{{ $user->id }}" tabindex="-1"
+                                        aria-labelledby="editRoleModalLabel{{ $user->id }}" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered modal-xl">
+                                            <div class="modal-content">
+
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="editRoleModalLabel{{ $user->id }}">
+                                                        Edit Role</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                        aria-label="Close"></button>
+                                                </div>
+
+                                                <div class="modal-body">
+                                                    @livewire('users.user-edit', ['id' => $user->id], key('user-edit-' . $user->id))
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Show Modal for Each Role -->
+                                    <div class="modal fade" id="showRoleModal{{ $user->id }}" tabindex="-1"
+                                        aria-labelledby="showRoleModalLabel{{ $user->id }}" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                                            <div class="modal-content">
+
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title"
+                                                        id="showRoleModalLabel{{ $user->id }}">
+                                                        Show Role</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                        aria-label="Close"></button>
+                                                </div>
+
+                                                <div class="modal-body">
+                                                    @livewire('users.user-show', ['id' => $user->id], key('user-show-' . $user->id))
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+
+                            </tbody>
+
+                        </table>
+                    </div>
+                </div>
+
+                <!-- end cardaa -->
+            </div> <!-- end col -->
+        </div> <!-- end row -->
     </div>
-
 </div>

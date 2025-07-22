@@ -1,5 +1,4 @@
 <?php
-
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -7,25 +6,20 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        // // Users
-        // Schema::create('users', function (Blueprint $table) {
-        //     $table->id();
-        //     $table->string('name');
-        //     $table->string('email')->unique();
-        //     $table->string('phone')->nullable();
-        //     $table->string('password');
-        //     $table->boolean('is_verified')->default(false);
-        //     $table->enum('type', ['customer', 'fixer', 'admin']);
-        //     $table->timestamps();
-        // });
-
-        // Fixers
-        Schema::create('fixers', function (Blueprint $table) {
+        // Users
+       Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->text('bio')->nullable();
-            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
-            $table->float('rating_avg')->default(0);
+            $table->string('first_name');
+            $table->string('last_name');
+            $table->string('username')->unique();
+            $table->string('email')->unique();
+            $table->string('contact_number');
+            $table->string('user_type')->default('user');
+            $table->string('status')->default('Active');
+            $table->text('address')->nullable();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password');
+            $table->rememberToken();
             $table->timestamps();
         });
 
@@ -47,7 +41,6 @@ return new class extends Migration {
         });
 
         // Services
-        // Services Table
         Schema::create('services', function (Blueprint $table) {
             $table->id();
             $table->foreignId('subcategory_id')->constrained()->onDelete('cascade');
@@ -58,6 +51,15 @@ return new class extends Migration {
             $table->timestamps();
         });
 
+        // Fixers
+        Schema::create('fixers', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->text('bio')->nullable();
+            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->float('rating_avg')->default(0);
+            $table->timestamps();
+        });
 
         // Service Requests
         Schema::create('service_requests', function (Blueprint $table) {
@@ -115,15 +117,19 @@ return new class extends Migration {
             $table->integer('used_count')->default(0);
             $table->timestamps();
         });
+
+        // Orders
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('fixer_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('service_id')->constrained()->onDelete('cascade');
+            $table->foreignId('service_id')->constrained('services')->onDelete('cascade');
             $table->timestamp('scheduled_at');
             $table->enum('status', ['pending', 'accepted', 'in_progress', 'completed', 'cancelled'])->default('pending');
             $table->timestamps();
         });
+
+        // Reviews
         Schema::create('reviews', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
@@ -132,6 +138,8 @@ return new class extends Migration {
             $table->text('comment')->nullable();
             $table->timestamps();
         });
+
+        // Locations
         Schema::create('locations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
@@ -140,6 +148,8 @@ return new class extends Migration {
             $table->decimal('longitude', 10, 7);
             $table->timestamps();
         });
+
+        // Notifications
         Schema::create('notifications', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
@@ -148,25 +158,23 @@ return new class extends Migration {
             $table->boolean('read')->default(false);
             $table->timestamps();
         });
-
-
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('notifications');
+        Schema::dropIfExists('locations');
+        Schema::dropIfExists('reviews');
+        Schema::dropIfExists('orders');
         Schema::dropIfExists('coupons');
         Schema::dropIfExists('ratings');
         Schema::dropIfExists('earnings');
         Schema::dropIfExists('payments');
         Schema::dropIfExists('service_requests');
+        Schema::dropIfExists('fixers');
         Schema::dropIfExists('services');
         Schema::dropIfExists('subcategories');
         Schema::dropIfExists('categories');
-        Schema::dropIfExists('fixers');
         Schema::dropIfExists('users');
-        Schema::dropIfExists('orders');
-        Schema::dropIfExists('reviews');
-        Schema::dropIfExists('locations');
-        Schema::dropIfExists('notifications');
     }
 };

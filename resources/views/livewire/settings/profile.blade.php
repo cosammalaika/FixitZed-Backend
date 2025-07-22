@@ -7,7 +7,8 @@ use Illuminate\Validation\Rule;
 use Livewire\Volt\Component;
 
 new class extends Component {
-    public string $name = '';
+    public string $first_name = '';
+    public string $last_name = '';
     public string $email = '';
 
     /**
@@ -15,8 +16,10 @@ new class extends Component {
      */
     public function mount(): void
     {
-        $this->name = Auth::user()->name;
-        $this->email = Auth::user()->email;
+        $user = Auth::user();
+        $this->first_name = $user->first_name;
+        $this->last_name = $user->last_name;
+        $this->email = $user->email;
     }
 
     /**
@@ -27,8 +30,8 @@ new class extends Component {
         $user = Auth::user();
 
         $validated = $this->validate([
-            'name' => ['required', 'string', 'max:255'],
-
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(User::class)->ignore($user->id)],
         ]);
 
@@ -40,7 +43,7 @@ new class extends Component {
 
         $user->save();
 
-        $this->dispatch('profile-updated', name: $user->name);
+        $this->dispatch('profile-updated', name: $user->first_name . ' ' . $user->last_name);
     }
 
     /**
@@ -52,7 +55,6 @@ new class extends Component {
 
         if ($user->hasVerifiedEmail()) {
             $this->redirectIntended(default: route('dashboard', absolute: false));
-
             return;
         }
 
@@ -60,7 +62,9 @@ new class extends Component {
 
         Session::flash('status', 'verification-link-sent');
     }
-}; ?>
+};
+?>
+
 
 <section class="w-full">
     <div class="page-content">
@@ -99,7 +103,7 @@ new class extends Component {
                                         </div>
                                         <div class="flex-grow-1">
                                             <div>
-                                                <h5 class="font-size-16 mb-1">{{ auth()->user()->name }}</h5>
+                                                <h5 class="font-size-16 mb-1">{{ auth()->user()->first_name }}</h5>
                                                 <p class="text-muted font-size-13">{{ auth()->user()->email }}</p>
 
                                                 <div
@@ -164,8 +168,10 @@ new class extends Component {
                                 </div>
                                 <div class="card-body">
                                     <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
-                                        <flux:input wire:model="name" :label="__('Name')" type="text" required
-                                            autofocus autocomplete="name" />
+                                        <flux:input wire:model="first_name" :label="__('Name')" type="text"
+                                            required autofocus autocomplete="name" />
+                                        <flux:input wire:model="last_name" :label="__('Name')" type="text"
+                                            required autofocus autocomplete="name" />
 
                                         <div>
                                             <flux:input wire:model="email" :label="__('Email')" type="email"

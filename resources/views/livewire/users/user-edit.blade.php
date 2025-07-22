@@ -4,8 +4,21 @@
             <form wire:submit.prevent="submit">
                 <div class="row">
                     <div class="col-md-6">
-                        <label class="form-label" for="default-input">Name</label>
-                        <input class="form-control" type="text" wire:model="name" placeholder="Name" required>
+                        <label class="form-label" for="default-input">First Name</label>
+                        <input class="form-control" type="text" wire:model="first_name" placeholder="First Name"
+                            required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="default-input">Last Name</label>
+                        <input class="form-control" type="text" wire:model="last_name" placeholder="Last Name"
+                            required>
+                    </div>
+                </div>
+                <div class="row mt-6">
+                    <div class="col-md-6">
+                        <label class="form-label" for="default-input">Username</label>
+                        <input class="form-control" type="username" wire:model="username" placeholder="Username"
+                            required>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label" for="default-input">Email</label>
@@ -14,14 +27,29 @@
                 </div>
                 <div class="row mt-6">
                     <div class="col-md-6">
-                        <label class="form-label" for="default-input">Password</label>
-                        <input class="form-control" type="password" wire:model="password" placeholder="Password"
+                        <label class="form-label" for="default-input">Contact Number</label>
+                        <input class="form-control" type="text" wire:model="contact_number"
+                            placeholder="Contact Number" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="default-input">Address</label>
+                        <input class="form-control" type="text" wire:model="address" placeholder="address" required>
+                    </div>
+                </div>
+                <div class="row mt-6">
+                    <div class="col-md-6">
+                        <label class="form-label" for="default-input">Username</label>
+                        <input class="form-control" type="text" wire:model="username" placeholder="Username"
                             required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label" for="default-input">Confirm Password</label>
-                        <input class="form-control" type="password" wire:model="confirm_password"
-                            placeholder="Confirm Password" required>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select"  wire:model.defer="status">
+                                <option>Active</option>
+                                <option>Inactive</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 

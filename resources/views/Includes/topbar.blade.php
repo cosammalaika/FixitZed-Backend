@@ -163,7 +163,9 @@
                     <span class="rounded-circle header-profile-user">
                         {{ auth()->user()->initials() }}
                     </span>
-                    <span class="d-none d-xl-inline-block ms-1 fw-medium">{{ auth()->user()->name }}</span>
+                    <span
+                        class="d-none d-xl-inline-block ms-1 fw-medium">{{ auth()->user()->first_name . ' ' . auth()->user()->last_name }}
+                    </span>
                     <i class="mdi mdi-chevron-down d-none d-xl-inline-block"></i>
                 </button>
                 <div class="dropdown-menu dropdown-menu-end">

@@ -10,14 +10,16 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('services', function (Blueprint $table) {
-            $table->id();
-            $table->string('name'); 
-            $table->text('description')->nullable();
-            $table->decimal('base_price', 10, 2)->nullable(); 
-            $table->boolean('is_active')->default(true);       
-            $table->timestamps();
-        });
+        
+        //  Schema::create('services', function (Blueprint $table) {
+        //     $table->id();
+        //     $table->foreignId('subcategory_id')->constrained()->onDelete('cascade');
+        //     $table->string('name');
+        //     $table->text('description')->nullable();
+        //     $table->decimal('price', 10, 2)->default(0);
+        //     $table->integer('duration_minutes')->default(60);
+        //     $table->timestamps();
+        // });
 
     }
 

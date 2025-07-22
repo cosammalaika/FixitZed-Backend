@@ -45,16 +45,16 @@
                         <table id="datatable-buttons" class="table table-bordered dt-responsive nowrap w-100">
                             <thead>
                                 <tr>
-                                    <th scope="col" style="width: 50px;">
-                                        <div class="form-check font-size-16">
-                                            <input type="checkbox" class="form-check-input" id="checkAll">
-                                            <label class="form-check-label" for="checkAll"></label>
-                                        </div>
-                                    </th>
                                     <th scope="col">Id</th>
-                                    <th scope="col">Name</th>
+                                    <th scope="col">First Name</th>
+                                    <th scope="col">Last Name</th>
+                                    <th scope="col">Username</th>
                                     <th scope="col">Email</th>
+                                    <th scope="col">Contact</th>
+                                    <th scope="col">Type</th>
+                                    <th scope="col">Address</th>
                                     <th scope="col">Roles</th>
+                                    <th scope="col">Status</th>
                                     <th style="width: 80px; min-width: 80px;">Action</th>
                                 </tr>
                             </thead>
@@ -63,15 +63,14 @@
                             <tbody>
                                 @foreach ($users as $user)
                                     <tr>
-                                        <th scope="row">
-                                            <div class="form-check font-size-16">
-                                                <input type="checkbox" class="form-check-input" id="contacscheck1">
-                                                <label class="form-check-label" for="contacscheck1"></label>
-                                            </div>
-                                        </th>
                                         <td>{{ $user->id }}</td>
-                                        <td>{{ $user->name }}</td>
+                                        <td>{{ $user->first_name }}</td>
+                                        <td>{{ $user->last_name }}</td>
+                                        <td>{{ $user->username }}</td>
                                         <td>{{ $user->email }}</td>
+                                        <td>{{ $user->contact_number }}</td>
+                                        <td>{{ $user->user_type }}</td>
+                                        <td>{{ $user->address }}</td>
                                         <td>
                                             <div class="d-flex gap-2">
                                                 @if ($user->roles)
@@ -82,6 +81,14 @@
                                                 @endif
                                             </div>
                                         </td>
+                                        <td>
+                                            @if ($user->status === 'Active')
+                                                <span class="badge rounded-pill badge-soft-success">Active</span>
+                                            @elseif($user->status === 'Inactive')
+                                                <span class="badge rounded-pill badge-soft-danger">Inactive</span>
+                                            @endif
+                                        </td>
+
                                         <td>
                                             <div class="dropdown">
                                                 <button
@@ -152,8 +159,7 @@
                                             <div class="modal-content">
 
                                                 <div class="modal-header">
-                                                    <h5 class="modal-title"
-                                                        id="showRoleModalLabel{{ $user->id }}">
+                                                    <h5 class="modal-title" id="showRoleModalLabel{{ $user->id }}">
                                                         Show Role</h5>
                                                     <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                         aria-label="Close"></button>

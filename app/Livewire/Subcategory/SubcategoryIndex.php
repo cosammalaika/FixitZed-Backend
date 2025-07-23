@@ -2,12 +2,23 @@
 
 namespace App\Livewire\Subcategory;
 
+use App\Models\Subcategory;
 use Livewire\Component;
 
 class SubcategoryIndex extends Component
 {
     public function render()
     {
-        return view('livewire.subcategory.subcategory-index');
+        $subcategories = Subcategory::get();
+        return view('livewire.subcategory.subcategory-index', compact("Subcategory"));
+    }
+    public function delete($id)
+    {
+        $subcategories = Subcategory::find($id);
+
+        $subcategories->delete();
+        session()->flash('success', "Subcategory deleted successfully.");
+        return view('livewire.subcategory.subcategory-index', compact("Subcategory"));
+
     }
 }

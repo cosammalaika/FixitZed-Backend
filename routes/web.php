@@ -12,6 +12,7 @@ use App\Livewire\Rating\{RatingCreate, RatingEdit, RatingIndex, RatingShow};
 use App\Livewire\Review\{ReviewCreate, ReviewEdit, ReviewIndex, ReviewShow};
 use App\Livewire\Role\{RoleCreate, RoleEdit, RoleIndex, RoleShow};
 use App\Livewire\Service\{ServiceCreate, ServiceEdit, ServiceIndex, ServiceShow};
+use App\Livewire\ServiceRequest\{ServiceRequestCreate, ServiceRequestEdit, ServiceRequestIndex, ServiceRequestShow};
 use App\Livewire\Subcategory\{SubcategoryCreate, SubcategoryEdit, SubcategoryIndex, SubcategoryShow};
 use App\Livewire\Users\{UserCreate, UserEdit, UserIndex, UserShow};
 use Illuminate\Support\Facades\Route;
@@ -99,6 +100,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('subcategory/create', SubcategoryCreate::class)->name(name: 'subcategory.create');
     Route::get('subcategory/{id}/edit', SubcategoryEdit::class)->name('subcategory.edit');
     Route::get('subcategory/{id}', SubcategoryShow::class)->name('subcategory.show');
+
+    Route::get('serviceRequest', action: ServiceRequestIndex::class)->name('serviceRequest.index');
+    Route::get('serviceRequest/create', ServiceRequestCreate::class)->name(name: 'serviceRequest.create');
+    Route::get('serviceRequest/{id}/edit', ServiceRequestEdit::class)->name('serviceRequest.edit');
+    Route::get('serviceRequest/{id}', ServiceRequestShow::class)->name('serviceRequest.show');
 
 
     Volt::route('settings/profile', 'settings.profile')->name('settings.profile');

@@ -28,10 +28,7 @@ class Service extends Model
         return $this->hasMany(ServiceRequest::class);
     }
 
-    public function orders()
-    {
-        return $this->hasMany(Order::class);
-    }
+    
 
     public function reviews()
     {

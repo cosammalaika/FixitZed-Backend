@@ -7,21 +7,21 @@ return new class extends Migration {
     public function up(): void
     {
         // Users
-       Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string('first_name');
-            $table->string('last_name');
-            $table->string('username')->unique();
-            $table->string('email')->unique();
-            $table->string('contact_number');
-            $table->string('user_type')->default('user');
-            $table->string('status')->default('Active');
-            $table->text('address')->nullable();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->rememberToken();
-            $table->timestamps();
-        });
+    //    Schema::create('users', function (Blueprint $table) {
+    //         $table->id();
+    //         $table->string('first_name');
+    //         $table->string('last_name');
+    //         $table->string('username')->unique();
+    //         $table->string('email')->unique();
+    //         $table->string('contact_number');
+            // $table->string('user_type')->default('user');
+    //         $table->string('status')->default('Active');
+    //         $table->text('address')->nullable();
+    //         $table->timestamp('email_verified_at')->nullable();
+    //         $table->string('password');
+    //         $table->rememberToken();
+    //         $table->timestamps();
+    //     });
 
         // Categories
         Schema::create('categories', function (Blueprint $table) {
@@ -78,7 +78,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('service_request_id')->constrained('service_requests')->onDelete('cascade');
             $table->decimal('amount', 10, 2);
-            $table->enum('status', ['pending', 'completed', 'failed'])->default('pending');
+            $table->enum('status', ['pending', 'accepted', 'in_progress', 'completed', 'cancelled'])->default('pending');
             $table->string('payment_method')->nullable();
             $table->string('transaction_id')->nullable();
             $table->dateTime('paid_at')->nullable();
@@ -118,17 +118,6 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // Orders
-        Schema::create('orders', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('fixer_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('service_id')->constrained('services')->onDelete('cascade');
-            $table->timestamp('scheduled_at');
-            $table->enum('status', ['pending', 'accepted', 'in_progress', 'completed', 'cancelled'])->default('pending');
-            $table->timestamps();
-        });
-
         // Reviews
         Schema::create('reviews', function (Blueprint $table) {
             $table->id();
@@ -165,7 +154,6 @@ return new class extends Migration {
         Schema::dropIfExists('notifications');
         Schema::dropIfExists('locations');
         Schema::dropIfExists('reviews');
-        Schema::dropIfExists('orders');
         Schema::dropIfExists('coupons');
         Schema::dropIfExists('ratings');
         Schema::dropIfExists('earnings');

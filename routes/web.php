@@ -2,11 +2,11 @@
 
 use App\Livewire\Category\{CategoryCreate, CategoryEdit, CategoryIndex, CategoryShow};
 use App\Livewire\Coupon\{CouponCreate, CouponEdit, CouponIndex, CouponShow};
+use App\Livewire\Dashboard;
 use App\Livewire\Earning\{EarningCreate, EarningEdit, EarningIndex, EarningShow};
 use App\Livewire\Fixer\{FixerCreate, FixerEdit, FixerIndex, FixerShow};
 use App\Livewire\Location\{LocationCreate, LocationEdit, LocationIndex, LocationShow};
 use App\Livewire\Notification\{NotificationCreate, NotificationEdit, NotificationIndex, NotificationShow};
-use App\Livewire\Order\{OrderCreate, OrderEdit, OrderIndex, OrderShow};
 use App\Livewire\Payment\{PaymentCreate, PaymentEdit, PaymentIndex, PaymentShow};
 use App\Livewire\Rating\{RatingCreate, RatingEdit, RatingIndex, RatingShow};
 use App\Livewire\Review\{ReviewCreate, ReviewEdit, ReviewIndex, ReviewShow};
@@ -21,9 +21,8 @@ use Livewire\Volt\Volt;
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
-
-Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified'])
+Route::middleware(['auth', 'verified'])
+    ->get('/dashboard', Dashboard::class)
     ->name('dashboard');
 
 Route::middleware(['auth'])->group(function () {
@@ -75,11 +74,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('notification/create', NotificationCreate::class)->name(name: 'notification.create');
     Route::get('notification/{id}/edit', NotificationEdit::class)->name('notification.edit');
     Route::get('notification/{id}', NotificationShow::class)->name('notification.show');
-
-    Route::get('order', OrderIndex::class)->name('order.index');
-    Route::get('order/create', OrderCreate::class)->name(name: 'order.create');
-    Route::get('order/{id}/edit', OrderEdit::class)->name('order.edit');
-    Route::get('order/{id}', OrderShow::class)->name('order.show');
 
     Route::get('payment', PaymentIndex::class)->name('payment.index');
     Route::get('payment/create', PaymentCreate::class)->name(name: 'payment.create');

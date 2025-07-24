@@ -10,7 +10,7 @@ class RatingIndex extends Component
     public function render()
     {
         $ratings = Rating::get();
-        return view('livewire.rating.rating-index', compact("Rating"));
+        return view('livewire.rating.rating-index', compact("ratings"));
     }
     public function delete($id)
     {
@@ -18,7 +18,7 @@ class RatingIndex extends Component
 
         $ratings->delete();
         session()->flash('success', "Rating deleted successfully.");
-        return view('livewire.rating.rating-index', compact("Rating"));
+        return view('livewire.rating.rating-index', compact("ratings"));
 
     }
    

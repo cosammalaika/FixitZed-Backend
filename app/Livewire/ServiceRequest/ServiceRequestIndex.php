@@ -10,7 +10,7 @@ class ServiceRequestIndex extends Component
     public function render()
     {
         $serviceRequests = ServiceRequest::get();
-        return view('livewire.service-request.service-request-index', compact("Service Request"));
+        return view('livewire.service-request.service-request-index', compact("serviceRequests"));
     }
     public function delete($id)
     {
@@ -18,7 +18,7 @@ class ServiceRequestIndex extends Component
 
         $serviceRequests->delete();
         session()->flash('success', "Service Request deleted successfully.");
-        return view('livewire.service-request.service-request-index', compact("Service Request"));
+        return view('livewire.service-request.service-request-index', compact("serviceRequests"));
 
     }
 }

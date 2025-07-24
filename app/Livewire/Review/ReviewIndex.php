@@ -10,7 +10,7 @@ class ReviewIndex extends Component
     public function render()
     {
         $reviews = Review::get();
-        return view('livewire.review.review-index', compact("Review"));
+        return view('livewire.review.review-index', compact("reviews"));
     }
     public function delete($id)
     {
@@ -18,7 +18,7 @@ class ReviewIndex extends Component
 
         $reviews->delete();
         session()->flash('success', "Review deleted successfully.");
-        return view('livewire.review.review-index', compact("Review"));
+        return view('livewire.review.review-index', compact("reviews"));
 
     }
 }

@@ -10,7 +10,7 @@ class PaymentIndex extends Component
     public function render()
     {
         $payments = Payment::get();
-        return view('livewire.payment.payment-index', compact("Payment"));
+        return view('livewire.payment.payment-index', compact("payments"));
     }
     public function delete($id)
     {
@@ -18,7 +18,7 @@ class PaymentIndex extends Component
 
         $payments->delete();
         session()->flash('success', "Payment deleted successfully.");
-        return view('livewire.payment.payment-index', compact("Payment"));
+        return view('livewire.payment.payment-index', compact("payments"));
 
     }
 }

@@ -10,7 +10,7 @@ class FixerIndex extends Component
     public function render()
     {
         $fixers = Fixer::get();
-        return view('livewire.fixer.fixer-index', compact("Fixer"));
+        return view('livewire.fixer.fixer-index', compact("fixers"));
     }
     public function delete($id)
     {
@@ -18,7 +18,7 @@ class FixerIndex extends Component
 
         $fixers->delete();
         session()->flash('success', "Fixer deleted successfully.");
-        return view('livewire.fixer.fixer-index', compact("Fixer"));
+        return view('livewire.fixer.fixer-index', compact("fixers"));
 
     }
 }

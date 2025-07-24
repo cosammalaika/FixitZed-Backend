@@ -10,7 +10,7 @@ class LocationIndex extends Component
     public function render()
     {
         $locations = Location::get();
-        return view('livewire.location.location-index', compact("Location"));
+        return view('livewire.location.location-index', compact("locations"));
     }
     public function delete($id)
     {
@@ -18,7 +18,7 @@ class LocationIndex extends Component
 
         $locations->delete();
         session()->flash('success', "Location deleted successfully.");
-        return view('livewire.location.location-index', compact("Location"));
+        return view('livewire.location.location-index', compact("locations"));
 
     }
 }

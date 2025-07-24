@@ -10,7 +10,7 @@ class OrderIndex extends Component
     public function render()
     {
         $orders = Order::get();
-        return view('livewire.order.order-index', compact("Order"));
+        return view('livewire.order.order-index', compact("orders"));
     }
     public function delete($id)
     {
@@ -18,7 +18,7 @@ class OrderIndex extends Component
 
         $orders->delete();
         session()->flash('success', "Order deleted successfully.");
-        return view('livewire.order.order-index', compact("Order"));
+        return view('livewire.order.order-index', compact("orders"));
 
     }
     

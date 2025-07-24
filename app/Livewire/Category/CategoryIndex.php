@@ -10,7 +10,7 @@ class CategoryIndex extends Component
     public function render()
     {
         $categories = Category::get();
-        return view('livewire.category.category-index', compact("category"));
+        return view('livewire.category.category-index', compact("categories"));
     }
     public function delete($id)
     {
@@ -18,7 +18,7 @@ class CategoryIndex extends Component
 
         $categories->delete();
         session()->flash('success', "Category deleted successfully.");
-        return view('livewire.category.category-index', compact("category"));
+        return view('livewire.category.category-index', compact("categories"));
 
     }
 

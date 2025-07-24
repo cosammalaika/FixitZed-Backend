@@ -3,7 +3,7 @@
         <div class="d-flex">
             <!-- LOGO -->
             <div class="navbar-brand-box">
-                <a href="{{ asset('index.html') }}" class="logo logo-dark">
+                <a href="{{ route('dashboard') }}" class="logo logo-dark">
                     <span class="logo-sm">
                         <img src="{{ asset('assets/images/logo-sm.png') }}" alt="" height="48">
                     </span>
@@ -12,13 +12,13 @@
                     </span>
                 </a>
 
-                <a href="{{ asset('index.html') }}" class="logo logo-light">
+                <a href="{{ route('dashboard') }}" class="logo logo-light">
                     <span class="logo-sm">
-                        <img src="{{ asset('assets/images/logo-sm.svg') }}" alt="" height="24">
+                        <img src="{{ asset('assets/images/logo-sm-dark.png') }}" alt="" height="48">
                     </span>
                     <span class="logo-lg">
-                        <img src="{{ asset('assets/images/logo-sm.svg') }}" alt="" height="24">
-                        <span class="logo-txt">Minia</span>
+                        <img src="{{ asset('assets/images/logo-sm-dark.png') }}" alt="" height="48">
+                        <span class="logo-txt"></span>
                     </span>
                 </a>
             </div>
@@ -41,9 +41,12 @@
         <div class="d-flex">
 
             <div class="dropdown d-inline-block d-lg-none ms-2">
-                <button type="button" class="btn header-item" id="page-header-search-dropdown"
-                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <i data-feather="search" class="icon-lg"></i>
+                <button type="button" class="btn header-item noti-icon position-relative"
+                    id="page-header-notifications-dropdown" data-bs-toggle="dropdown" aria-haspopup="true"
+                    aria-expanded="false">
+                    <i data-feather="bell" style="width: 24px; height: 24px;"></i>
+
+                    <span class="badge bg-danger rounded-pill">5</span>
                 </button>
                 <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end p-0"
                     aria-labelledby="page-header-search-dropdown">
@@ -60,12 +63,20 @@
                     </form>
                 </div>
             </div>
+            <div class="dropdown d-none d-sm-inline-block">
+                <button type="button" class="btn header-item" id="mode-setting-btn">
+                    <i class="mdi mdi-moon-waning-crescent fs-4 layout-mode-dark"></i>
+                    <i class="mdi mdi-white-balance-sunny fs-4 layout-mode-light"></i>
+
+                </button>
+            </div>
 
             <div class="dropdown d-inline-block">
                 <button type="button" class="btn header-item noti-icon position-relative"
                     id="page-header-notifications-dropdown" data-bs-toggle="dropdown" aria-haspopup="true"
                     aria-expanded="false">
-                    <i data-feather="bell" class="icon-lg"></i>
+                    <i class="mdi mdi-bell-outline"></i>
+
                     <span class="badge bg-danger rounded-pill">5</span>
                 </button>
                 <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end p-0"

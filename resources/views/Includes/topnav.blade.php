@@ -12,17 +12,10 @@
                             <span data-key="t-dashboards">Dashboard</span>
                         </a>
                     </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle arrow-none" href="{{ asset('index.html') }}"
-                            id="topnav-dashboard" role="button">
-                            {{-- <i data-feather="home"></i> --}}
-                            <span data-key="t-dashboards">Booking</span>
-                        </a>
-                    </li>
 
 
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle arrow-none" href="{{ asset('#') }}" id="topnav-pages"
+                        <a class="nav-link dropdown-toggle arrow-none" href="{{ asset('#') }}"  id="topnav-pages"
                             role="button">
                             {{-- <i data-feather="briefcase"></i> --}}
                             <span data-key="t-elements">Services</span>
@@ -30,14 +23,13 @@
                         </a>
                         <div class="dropdown-menu" aria-labelledby="topnav-pages">
 
-                            <a href="{{ asset('apps-calendar.html') }}" class="dropdown-item"
+                            <a href="{{ route('category.index') }}" class="dropdown-item"
                                 data-key="t-calendar">Category</a>
-                            <a href="{{ asset('apps-chat.html') }}" class="dropdown-item" data-key="t-chat">Sub
+                            <a href="{{ route('subcategory.index') }}" class="dropdown-item" data-key="t-chat">Sub
                                 Category</a>
-                            <a href="{{ asset('apps-chat.html') }}" class="dropdown-item" data-key="t-chat">All
-                                Services</a>
-                            <a href="{{ asset('apps-chat.html') }}" class="dropdown-item" data-key="t-chat">Services
-                                Request List</a>
+                            <a href="{{ route('services.index') }}" class="dropdown-item" data-key="t-chat">Services</a>
+                            <a href="{{ route('serviceRequest.index') }}" class="dropdown-item" data-key="t-chat">Services
+                                Requests</a>
                         </div>
                     </li>
 
@@ -49,25 +41,22 @@
                             <div class="arrow-down"></div>
                         </a>
                         <div class="dropdown-menu" aria-labelledby="topnav-pages">
-                            <a href="{{ route('users.index') }}" class="dropdown-item" data-key="t-chat">All
-                                Users</a>
-                            <a href="{{ asset('apps-calendar.html') }}" class="dropdown-item"
-                                data-key="t-calendar">Unverified Users</a>
-                            <a href="{{ asset('apps-chat.html') }}" class="dropdown-item"
-                            data-key="t-chat">Customers</a>
-                            <div class="dropdown">
+                            <a href="{{ route('users.index') }}" class="dropdown-item" data-key="t-chat">Users</a>
+                            <a href="{{ route('fixer.index') }}" class="dropdown-item"
+                            data-key="t-chat">Fixer</a>
+                            {{-- <div class="dropdown">
                                 <a class="dropdown-item dropdown-toggle arrow-none" href="{{ asset('#') }}"
                                     id="topnav-email" role="button">
                                     <span data-key="t-email">Fixer</span>
                                     <div class="arrow-down"></div>
                                 </a>
                                 <div class="dropdown-menu" aria-labelledby="topnav-email">
-                                    <a href="{{ asset('apps-email-inbox.html') }}"" class="dropdown-item"
+                                    <a href="{{ route('dashboard') }}" class="dropdown-item"
                                         data-key="t-inbox">Fixer List</a>
-                                    <a href="{{ asset('apps-email-read.html') }}"" class="dropdown-item"
+                                    <a href="{{ route('dashboard') }}" class="dropdown-item"
                                         data-key="t-read-email">Fixer Request List</a>
                                 </div>
-                            </div>
+                            </div> --}}
                         </div>
                     </li>
                     <li class="nav-item dropdown">
@@ -79,9 +68,9 @@
                         </a>
                         <div class="dropdown-menu" aria-labelledby="topnav-pages">
 
-                            <a href="{{ asset('apps-calendar.html') }}" class="dropdown-item"
+                            <a href="{{ route('payment.index') }}" class="dropdown-item"
                                 data-key="t-calendar">Payments</a>
-                            <a href="{{ asset('apps-chat.html') }}" class="dropdown-item"
+                            <a href="{{ route('earning.index') }}" class="dropdown-item"
                                 data-key="t-chat">Earnings</a>
                         </div>
                     </li>
@@ -95,8 +84,8 @@
                         </a>
                         <div class="dropdown-menu" aria-labelledby="topnav-pages">
 
-                            <a href="{{ asset('apps-calendar.html') }}" class="dropdown-item"
-                                data-key="t-calendar">Coupon List</a>
+                            <a href="{{ route('coupon.index') }}" class="dropdown-item"
+                                data-key="t-calendar">Coupon</a>
                         </div>
                     </li>
 
@@ -109,9 +98,9 @@
                         </a>
                         <div class="dropdown-menu" aria-labelledby="topnav-pages">
 
-                            <a href="{{ asset('apps-calendar.html') }}" class="dropdown-item"
+                            <a href="{{ route('rating.index') }}" class="dropdown-item"
                                 data-key="t-calendar">User Ratings List</a>
-                            <a href="{{ asset('apps-chat.html') }}" class="dropdown-item" data-key="t-chat">Fixer
+                            <a href="{{ route('rating.index') }}" class="dropdown-item" data-key="t-chat">Fixer
                                 Ratings List</a>
                         </div>
                     </li>
@@ -129,6 +118,9 @@
 
                                 <a href="{{ route('role.index') }}" class="dropdown-item" data-key="t-inbox">
                                     Role & Permission
+                                </a>
+                                 <a href="{{ asset('#') }}" class="dropdown-item" data-key="t-inbox">
+                                    Logs
                                 </a>
 
                             </div>

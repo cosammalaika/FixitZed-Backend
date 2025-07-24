@@ -10,7 +10,7 @@ class EarningIndex extends Component
     public function render()
     {
         $earnings = Earning::get();
-        return view('livewire.earning.earning-index', compact("Earning"));
+        return view('livewire.earning.earning-index', compact("earnings"));
     }
     public function delete($id)
     {
@@ -18,7 +18,7 @@ class EarningIndex extends Component
 
         $earnings->delete();
         session()->flash('success', "Earning deleted successfully.");
-        return view('livewire.earning.earning-index', compact("Earning"));
+        return view('livewire.earning.earning-index', compact("earnings"));
 
     }
 }

@@ -10,7 +10,7 @@ class SubcategoryIndex extends Component
     public function render()
     {
         $subcategories = Subcategory::get();
-        return view('livewire.subcategory.subcategory-index', compact("Subcategory"));
+        return view('livewire.subcategory.subcategory-index', compact("subcategories"));
     }
     public function delete($id)
     {
@@ -18,7 +18,7 @@ class SubcategoryIndex extends Component
 
         $subcategories->delete();
         session()->flash('success', "Subcategory deleted successfully.");
-        return view('livewire.subcategory.subcategory-index', compact("Subcategory"));
+        return view('livewire.subcategory.subcategory-index', compact("subcategories"));
 
     }
 }

@@ -10,7 +10,7 @@ class NotificationIndex extends Component
     public function render()
     {
         $notifications = Notification::get();
-        return view('livewire.notification.notification-index', compact("Notification"));
+        return view('livewire.notification.notification-index', compact("notifications"));
     }
     public function delete($id)
     {
@@ -18,7 +18,7 @@ class NotificationIndex extends Component
 
         $notifications->delete();
         session()->flash('success', "Notification deleted successfully.");
-        return view('livewire.notification.notification-index', compact("Notification"));
+        return view('livewire.notification.notification-index', compact("notifications"));
 
     }
 }

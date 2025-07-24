@@ -10,7 +10,7 @@ class CouponIndex extends Component
     public function render()
     {
         $coupons = Coupon::get();
-        return view('livewire.coupon.coupon-index', compact("Coupon"));
+        return view('livewire.coupon.coupon-index', compact("coupons"));
     }
     public function delete($id)
     {
@@ -18,7 +18,7 @@ class CouponIndex extends Component
 
         $coupons->delete();
         session()->flash('success', "Coupon deleted successfully.");
-        return view('livewire.coupon.coupon-index', compact("Coupon"));
+        return view('livewire.coupon.coupon-index', compact("coupons"));
 
     }
 }

@@ -15,7 +15,7 @@ class Service extends Model
         'description',
         'price',
         'duration_minutes',
-        // You can add 'is_active' if you have that column in your DB; your migration doesn't show it
+        'is_active', 
     ];
 
     public function subcategory()
@@ -28,7 +28,9 @@ class Service extends Model
         return $this->hasMany(ServiceRequest::class);
     }
 
-    
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
 
     public function reviews()
     {

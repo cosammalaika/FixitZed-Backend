@@ -9,7 +9,7 @@ class FixerIndex extends Component
 {
     public function render()
     {
-        $fixers = Fixer::get();
+         $fixers = Fixer::with('user')->latest()->get();
         return view('livewire.fixer.fixer-index', compact("fixers"));
     }
     public function delete($id)

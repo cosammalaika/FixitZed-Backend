@@ -40,7 +40,7 @@ class UserEdit extends Component
             'username' => 'required|string|max:255|unique:users,username,' . $this->user->id,
             'email' => 'required|email|max:255|unique:users,email,' . $this->user->id,
             'contact_number' => 'required|string|max:20',
-            'user_type' => 'required|in:user,admin',
+            'user_type' => 'required|in:Customer, Fixer, Admin, Support',
             'status' => 'required|in:Active,Inactive',
             'address' => 'nullable|string|max:1000',
             // 'password' => 'nullable|same:confirm_password|min:6',

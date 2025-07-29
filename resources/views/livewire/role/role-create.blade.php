@@ -2,6 +2,16 @@
     <div class="row justify-content-center">
         <div class="card-body">
             <form wire:submit.prevent="submit">
+                 @if ($errors->any())
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
                 {{-- Name Field --}}
                 <div class="mb-3">
                     <label for="formrow-firstname-input" class="form-label">Role name</label>

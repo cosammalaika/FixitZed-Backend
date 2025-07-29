@@ -1,31 +1,34 @@
-<div class="max-w-xl mx-auto bg-white shadow-md rounded p-6">
-    <h2 class="text-2xl font-bold mb-4">Service Details</h2>
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="card-body">
 
-    <div class="mb-4">
-        <strong>Name:</strong>
-        <p>{{ $service->name }}</p>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-4">
+                        <strong>Name:</strong>
+                        <p>{{ $service->name }}</p>
+                    </div>
+    
+                    <div class="mb-4">
+                        <strong>Description:</strong>
+                        <p>{{ $service->description ?? 'No description' }}</p>
+                    </div>
+                </div>
+    
+                <div class="col-md-6">
+                    <div class="mb-4">
+                        <strong>Base Price:</strong>
+                        <p>ZMW {{ number_format($service->price, 2) }}</p>
+                    </div>
+    
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-1">Status</h6>
+                        <span class="badge {{ $service->is_active ? 'bg-success' : 'bg-danger' }}">
+                            {{ $service->is_active ? 'Active' : 'Inactive' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <div class="mb-4">
-        <strong>Description:</strong>
-        <p>{{ $service->description ?? 'No description' }}</p>
-    </div>
-
-    <div class="mb-4">
-        <strong>Base Price:</strong>
-        <p>ZMW {{ number_format($service->base_price, 2) }}</p>
-    </div>
-
-    <div class="mb-4">
-        <strong>Status:</strong>
-        <p>
-            @if($service->is_active)
-                <span class="text-green-600 font-semibold">Active</span>
-            @else
-                <span class="text-red-600 font-semibold">Inactive</span>
-            @endif
-        </p>
-    </div>
-
-    <a href="{{ route('services.edit', $service->id) }}" class="text-blue-500 underline">Edit Service</a>
 </div>

@@ -159,12 +159,7 @@
                             </div>
 
                             <div class="row align-items-center">
-                                <div class="col-xl-8">
-                                    <div>
-                                        <div id="market-overview" data-colors='["#f1592a", "#34c38f"]'
-                                            class="apex-charts"></div>
-                                    </div>
-                                </div>
+                               
                                 <div class="col-xl-4">
                                     <div class="p-4">
                                         <div>

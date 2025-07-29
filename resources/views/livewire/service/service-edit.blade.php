@@ -1,41 +1,71 @@
-<div class="max-w-lg mx-auto bg-white p-6 rounded shadow">
-    @if (session()->has('success'))
-        <div class="mb-4 text-green-600">
-            {{ session('success') }}
-        </div>
-    @endif
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="card-body">
+            <form wire:submit.prevent="update">
+                @if ($errors->any())
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
 
-    <form wire:submit.prevent="update">
-        <div class="mb-4">
-            <label class="block mb-1">Name *</label>
-            <input type="text" wire:model="name" class="w-full border rounded px-3 py-2">
-            @error('name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-        </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label" for="name">Service Name</label>
+                        <input id="name" class="form-control" type="text" wire:model="name"
+                            placeholder="Service Name" required>
+                    </div>
 
-        <div class="mb-4">
-            <label class="block mb-1">Description</label>
-            <textarea wire:model="description" class="w-full border rounded px-3 py-2"></textarea>
-        </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="price">Base Price (ZMW)</label>
+                        <input id="price" class="form-control" type="number" wire:model="price"
+                            placeholder="e.g., 150" required>
+                    </div>
+                </div>
 
-        <div class="mb-4">
-            <label class="block mb-1">Base Price (ZMW)</label>
-            <input type="number" wire:model="base_price" step="0.01" class="w-full border rounded px-3 py-2">
-        </div>
-<div class="mb-4">
-    <label class="flex items-center cursor-pointer">
-        <!-- Switch -->
-        <div class="relative">
-            <input type="checkbox" wire:model="is_active" class="sr-only peer">
-            <div class="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors duration-300"></div>
-            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-md transform peer-checked:translate-x-5 transition-transform duration-300"></div>
-        </div>
-        <!-- Label -->
-        <span class="ml-3 text-gray-700 font-medium">
-            {{ $is_active ? 'Active' : 'Inactive' }}
-        </span>
-    </label>
-</div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label" for="duration_minutes">Duration (Minutes)</label>
+                        <input id="duration_minutes" class="form-control" type="number" wire:model="duration_minutes"
+                            placeholder="e.g., 20" required>
+                    </div>
 
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Update Service</button>
-    </form>
+                    <div class="col-md-6">
+                        <label class="form-label" for="subcategory_id">Subcategory</label>
+                        <select id="subcategory_id" wire:model="subcategory_id" class="form-control" required>
+                            <option value="">-- Select Subcategory --</option>
+                            @foreach ($subcategories as $subcategory)
+                                <option value="{{ $subcategory->id }}">{{ $subcategory->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('subcategory_id')
+                            <span class="text-danger small">{{ $message }}</span>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label" for="description">Description</label>
+                        <textarea id="description" wire:model="description" class="form-control" rows="4"
+                            placeholder="Description text ..."></textarea>
+                        @error('description')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
+                    </div>
+                    <div class="col-md-6 d-flex align-items-center">
+                        <div class="form-check form-switch mt-4">
+                            <input type="checkbox" class="form-check-input" id="is_active" wire:model="is_active">
+                            <label class="form-check-label" for="is_active">Active</label>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Update Service</button>
+            </form>
+        </div>
+    </div>
 </div>

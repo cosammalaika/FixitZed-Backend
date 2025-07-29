@@ -13,26 +13,6 @@
                         </a>
                     </li>
 
-
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle arrow-none" href="{{ asset('#') }}"  id="topnav-pages"
-                            role="button">
-                            {{-- <i data-feather="briefcase"></i> --}}
-                            <span data-key="t-elements">Services</span>
-                            <div class="arrow-down"></div>
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="topnav-pages">
-
-                            <a href="{{ route('category.index') }}" class="dropdown-item"
-                                data-key="t-calendar">Category</a>
-                            <a href="{{ route('subcategory.index') }}" class="dropdown-item" data-key="t-chat">Sub
-                                Category</a>
-                            <a href="{{ route('services.index') }}" class="dropdown-item" data-key="t-chat">Services</a>
-                            <a href="{{ route('serviceRequest.index') }}" class="dropdown-item" data-key="t-chat">Services
-                                Requests</a>
-                        </div>
-                    </li>
-
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle arrow-none" href="{{ asset('#') }}" id="topnav-pages"
                             role="button">
@@ -42,8 +22,7 @@
                         </a>
                         <div class="dropdown-menu" aria-labelledby="topnav-pages">
                             <a href="{{ route('users.index') }}" class="dropdown-item" data-key="t-chat">Users</a>
-                            <a href="{{ route('fixer.index') }}" class="dropdown-item"
-                            data-key="t-chat">Fixer</a>
+                            <a href="{{ route('fixer.index') }}" class="dropdown-item" data-key="t-chat">Fixer</a>
                             {{-- <div class="dropdown">
                                 <a class="dropdown-item dropdown-toggle arrow-none" href="{{ asset('#') }}"
                                     id="topnav-email" role="button">
@@ -59,6 +38,41 @@
                             </div> --}}
                         </div>
                     </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle arrow-none" href="{{ asset('#') }}" id="topnav-pages"
+                            role="button">
+                            {{-- <i data-feather="briefcase"></i> --}}
+                            <span data-key="t-elements">Services</span>
+                            <div class="arrow-down"></div>
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="topnav-pages">
+
+                            <a href="{{ route('services.index') }}" class="dropdown-item" data-key="t-chat">Services</a>
+                            <a href="{{ route('serviceRequest.index') }}" class="dropdown-item"
+                                data-key="t-chat">Services
+                                Requests</a>
+                        </div>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle arrow-none" href="{{ asset('#') }}" id="topnav-pages"
+                            role="button">
+                            {{-- <i data-feather="briefcase"></i> --}}
+                            <span data-key="t-elements">Category</span>
+                            <div class="arrow-down"></div>
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="topnav-pages">
+
+                            <a href="{{ route('category.index') }}" class="dropdown-item"
+                                data-key="t-calendar">Categories</a>
+                            <a href="{{ route('subcategory.index') }}" class="dropdown-item" data-key="t-chat">Sub
+                                Categories</a>
+
+                        </div>
+                    </li>
+
+
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle arrow-none" href="{{ asset('#') }}" id="topnav-pages"
                             role="button">
@@ -70,8 +84,7 @@
 
                             <a href="{{ route('payment.index') }}" class="dropdown-item"
                                 data-key="t-calendar">Payments</a>
-                            <a href="{{ route('earning.index') }}" class="dropdown-item"
-                                data-key="t-chat">Earnings</a>
+                            <a href="{{ route('earning.index') }}" class="dropdown-item" data-key="t-chat">Earnings</a>
                         </div>
                     </li>
 
@@ -86,6 +99,8 @@
 
                             <a href="{{ route('coupon.index') }}" class="dropdown-item"
                                 data-key="t-calendar">Coupon</a>
+                            <a href="{{ route('coupon.index') }}" class="dropdown-item"
+                                data-key="t-calendar">Notifications</a>
                         </div>
                     </li>
 
@@ -98,8 +113,8 @@
                         </a>
                         <div class="dropdown-menu" aria-labelledby="topnav-pages">
 
-                            <a href="{{ route('rating.index') }}" class="dropdown-item"
-                                data-key="t-calendar">User Ratings List</a>
+                            <a href="{{ route('rating.index') }}" class="dropdown-item" data-key="t-calendar">User
+                                Ratings List</a>
                             <a href="{{ route('rating.index') }}" class="dropdown-item" data-key="t-chat">Fixer
                                 Ratings List</a>
                         </div>
@@ -114,12 +129,12 @@
                         </a>
                         <div class="dropdown-menu" aria-labelledby="topnav-pages">
 
-                              <div class="dropdown">
+                            <div class="dropdown">
 
                                 <a href="{{ route('role.index') }}" class="dropdown-item" data-key="t-inbox">
                                     Role & Permission
                                 </a>
-                                 <a href="{{ asset('#') }}" class="dropdown-item" data-key="t-inbox">
+                                <a href="{{ asset('#') }}" class="dropdown-item" data-key="t-inbox">
                                     Logs
                                 </a>
 

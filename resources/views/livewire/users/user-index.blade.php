@@ -45,7 +45,7 @@
                         <table id="datatable-buttons" class="table table-bordered dt-responsive nowrap w-100">
                             <thead>
                                 <tr>
-                                    <th scope="col">Id</th>
+                                    <th scope="col">#</th>
                                     <th scope="col">First Name</th>
                                     <th scope="col">Last Name</th>
                                     <th scope="col">Username</th>
@@ -134,7 +134,7 @@
                                     </tr>
                                     <div class="modal fade" id="editRoleModal{{ $user->id }}" tabindex="-1"
                                         aria-labelledby="editRoleModalLabel{{ $user->id }}" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered modal-xl">
+                                        <div class="modal-dialog modal-dialog-centered modal-lg">
                                             <div class="modal-content">
 
                                                 <div class="modal-header">

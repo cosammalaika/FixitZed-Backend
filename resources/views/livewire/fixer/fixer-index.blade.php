@@ -1,3 +1,174 @@
-<div>
-    {{-- If your happiness depends on money, you will never be happy with yourself. --}}
-</div>
+ <div class="page-content">
+     <div class="container-fluid">
+         <div class="row">
+             <div class="col-12">
+                 <div class="card">
+                     <div class="card-header d-flex justify-content-between align-items-center">
+                         <h4 class="card-title mb-0">fixers List</h4>
+
+                         <button type="button" class="btn btn-primary waves-effect waves-light" data-bs-toggle="modal"
+                             data-bs-target="#createRoleModal">
+                             + Add fixer
+                         </button>
+
+                     </div>
+                     @if (session('success'))
+                         <div id="success-alert"
+                             class="alert alert-success alert-top-border alert-dismissible fade show" role="alert">
+                             <i class="mdi mdi-check-all me-3 align-middle text-success"></i><strong>Success</strong> -
+                             {{ session('success') }}
+                             <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                 aria-label="Close"></button>
+                         </div>
+
+                         <script>
+                             setTimeout(() => {
+                                 const alert = document.getElementById('success-alert');
+                                 if (alert) {
+                                     let bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+                                     bsAlert.close();
+                                 }
+                             }, 4000);
+                         </script>
+                     @endif
+
+                     <div class="modal fade" id="createRoleModal" tabindex="-1" aria-labelledby="createRoleModalLabel"
+                         aria-hidden="true">
+                         <div class="modal-dialog modal-dialog-centered modal-lg">
+                             <div class="modal-content">
+                                 <div class="modal-header">
+                                     <h5 class="modal-title " id="createRoleModalLabel">Create fixer</h5>
+                                     <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                         aria-label="Close"></button>
+                                 </div>
+
+                                 <div class="modal-body">
+                                     @livewire('fixer.fixer-create')
+                                 </div>
+                             </div>
+                         </div>
+                     </div>
+
+
+
+                     <div class="card-body">
+                         <table id="datatable-buttons" class="table table-bordered dt-responsive nowrap w-100">
+                             <thead>
+                                 <tr>
+                                     <th>#</th>
+                                     <th>Name</th>
+                                     <th>Email</th>
+                                     <th>Status</th>
+                                     <th>Rating</th>
+                                     <th>Bio</th>
+                                     <th>Joined</th>
+                                     <th style="width: 80px; min-width: 80px;">Action</th>
+                                 </tr>
+                             </thead>
+
+
+                             <tbody>
+                                 @foreach ($fixers as $index => $fixer)
+                                     <tr>
+                                         <td>{{ $index + 1 }}</td>
+                                         <td>{{ $fixer->user->first_name }} {{ $fixer->user->last_name }}</td>
+                                         <td>{{ $fixer->user->email }}</td>
+                                         <td class="py-2 px-4 capitalize">
+                                             <span
+                                                 class="px-2 py-1 rounded text-sm
+                        @if ($fixer->status == 'approved') bg-green-100 text-green-700
+                        @elseif($fixer->status == 'rejected') bg-red-100 text-red-700
+                        @else bg-yellow-100 text-yellow-700 @endif">
+                                                 {{ $fixer->status }}
+                                             </span>
+                                         </td>
+                                         <td>{{ number_format($fixer->rating_avg, 1) }}/5</td>
+                                         <td>{{ Str::limit($fixer->bio, 40) ?? 'N/A' }}</td>
+                                         <td>{{ $fixer->created_at->format('M d, Y') }}</td>
+                                         <td>
+                                             <div class="dropdown">
+                                                 <button
+                                                     class="btn btn-link font-size-16 shadow-none py-0 text-muted dropdown-toggle"
+                                                     type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                     <i class="bx bx-dots-horizontal-rounded"></i>
+                                                 </button>
+
+                                                 <ul class="dropdown-menu dropdown-menu-end">
+                                                     <a class="dropdown-item" href="javascript:void(0);"
+                                                         data-bs-toggle="modal"
+                                                         data-bs-target="#showRoleModal{{ $fixer->id }}">
+                                                         Show
+                                                     </a>
+
+
+                                                     <a class="dropdown-item" href="javascript:void(0);"
+                                                         data-bs-toggle="modal"
+                                                         data-bs-target="#editRoleModal{{ $fixer->id }}">
+                                                         Edit
+                                                     </a>
+                                                     </a>
+                                                     <a class="dropdown-item" wire:click="delete({{ $fixer->id }})"
+                                                         wire:confirm="Are you Sure you want to delete role"
+                                                         variant="primary">
+                                                         Delete
+                                                     </a>
+
+                                                 </ul>
+                                             </div>
+                                         </td>
+                                     </tr>
+                                     <div class="modal fade" id="editRoleModal{{ $fixer->id }}" tabindex="-1"
+                                         aria-labelledby="editRoleModalLabel{{ $fixer->id }}" aria-hidden="true">
+                                         <div class="modal-dialog modal-dialog-centered modal-lg">
+                                             <div class="modal-content">
+
+                                                 <div class="modal-header">
+                                                     <h5 class="modal-title"
+                                                         id="editRoleModalLabel{{ $fixer->id }}">
+                                                         Edit fixer</h5>
+                                                     <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                         aria-label="Close"></button>
+                                                 </div>
+
+                                                 <div class="modal-body">
+                                                     @livewire('fixer.fixer-edit', ['id' => $fixer->id], key('fixer-edit-' . $fixer->id))
+                                                 </div>
+
+                                             </div>
+                                         </div>
+                                     </div>
+
+                                     <!-- Show Modal for Each Role -->
+                                     <div class="modal fade" id="showRoleModal{{ $fixer->id }}" tabindex="-1"
+                                         aria-labelledby="showRoleModalLabel{{ $fixer->id }}" aria-hidden="true">
+                                         <div class="modal-dialog modal-dialog-centered modal-lg">
+                                             <div class="modal-content">
+
+                                                 <div class="modal-header">
+                                                     <h5 class="modal-title"
+                                                         id="showRoleModalLabel{{ $fixer->id }}">
+                                                         Show fixer</h5>
+                                                     <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                         aria-label="Close"></button>
+                                                 </div>
+
+                                                 <div class="modal-body">
+                                                     @livewire('fixer.fixer-show', ['id' => $fixer->id], key('fixer-show-' . $fixer->id))
+                                                 </div>
+
+                                             </div>
+                                         </div>
+                                     </div>
+                                 @endforeach
+
+                             </tbody>
+
+                         </table>
+                     </div>
+                 </div>
+
+                 <!-- end cardaa -->
+             </div> <!-- end col -->
+         </div> <!-- end row -->
+     </div>
+ </div>

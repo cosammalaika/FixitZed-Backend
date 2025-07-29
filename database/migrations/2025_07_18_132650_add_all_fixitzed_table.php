@@ -14,7 +14,7 @@ return new class extends Migration {
     //         $table->string('username')->unique();
     //         $table->string('email')->unique();
     //         $table->string('contact_number');
-            // $table->string('user_type')->default('user');
+    //         $table->string('user_type')->default('user');
     //         $table->string('status')->default('Active');
     //         $table->text('address')->nullable();
     //         $table->timestamp('email_verified_at')->nullable();

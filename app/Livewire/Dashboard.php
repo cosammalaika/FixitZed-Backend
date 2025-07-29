@@ -10,7 +10,7 @@ use Livewire\Component;
 
 class Dashboard extends Component
 {
-    public $totalUsers, $totalFixers, $activeRequests, $serviceCompleted, $newUsersThisWeek, $newFixerThisWeek, $newActiveRequests, $newServiceCompleted;
+    public $totalUsers, $totalFixers, $activeRequests, $serviceCompleted, $newUsersThisWeek, $newFixerThisWeek, $newActiveRequests, $newServiceCompleted, $recentCustomers, $recentRequests;
 
     public function mount()
     {
@@ -28,6 +28,16 @@ class Dashboard extends Component
         $this->newServiceCompleted = ServiceRequest::where('status', 'completed')
             ->where('created_at', '>=', Carbon::now()->subWeek())
             ->count();
+
+        $this->recentCustomers = User::where('status', 'Active')
+            ->where('user_type', 'Customer')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $this->recentRequests = ServiceRequest::latest()
+            ->take(5)
+            ->get();
     }
 
     public function render()

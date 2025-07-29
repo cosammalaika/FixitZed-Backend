@@ -97,7 +97,7 @@
                                      <!-- Edit Modal -->
                                      <div class="modal fade" id="editRoleModal{{ $role->id }}" tabindex="-1"
                                          aria-labelledby="editRoleModalLabel{{ $role->id }}" aria-hidden="true">
-                                         <div class="modal-dialog modal-dialog-centered modal-xl">
+                                         <div class="modal-dialog modal-dialog-centered modal-lg">
                                              <div class="modal-content">
 
                                                  <div class="modal-header">

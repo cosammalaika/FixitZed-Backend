@@ -10,7 +10,9 @@ class SubcategoryIndex extends Component
     public function render()
     {
         $subcategories = Subcategory::get();
-        return view('livewire.subcategory.subcategory-index', compact("subcategories"));
+         return view('livewire.subcategory.subcategory-index', [
+            'subcategories' => Subcategory::with('category')->latest()->get()
+        ]);
     }
     public function delete($id)
     {

@@ -48,10 +48,12 @@
 
                 <div class="row">
                     <div class="col-md-6">
-                        <label class="form-label" for="service_id">Status</label>
+                        <label class="form-label" for="status">Status</label>
                         <select wire:model="status" class="form-control">
                             @foreach (['pending', 'accepted', 'completed', 'cancelled'] as $stat)
-                                <option value="{{ $stat }}">{{ ucfirst($stat) }}</option>
+                                <option value="{{ $stat }}" @if ($stat === 'completed' && !$hasValidPayment) disabled style="color: #999;" @endif>
+                                    {{ ucfirst($stat) }}
+                                </option>
                             @endforeach
                         </select>
                     </div>
@@ -61,7 +63,7 @@
                     </div>
                 </div><br>
 
-                <button type="submit" class="btn btn-primary waves-effect waves-light">Create</button>
+                <button type="submit" class="btn btn-primary waves-effect waves-light">Update Request</button>
             </form>
         </div>
     </div>
@@ -79,7 +81,7 @@
             <label>Customer</label>
             <select wire:model="customer_id" class="form-control">
                 <option value="">Select Customer</option>
-                @foreach($customers as $customer)
+                @foreach ($customers as $customer)
                     <option value="{{ $customer->id }}">{{ $customer->name }}</option>
                 @endforeach
             </select>
@@ -90,7 +92,7 @@
             <label>Fixer</label>
             <select wire:model="fixer_id" class="form-control">
                 <option value="">Select Fixer</option>
-                @foreach($fixers as $fixer)
+                @foreach ($fixers as $fixer)
                     <option value="{{ $fixer->id }}">{{ $fixer->user->name }}</option>
                 @endforeach
             </select>
@@ -101,7 +103,7 @@
             <label>Service</label>
             <select wire:model="service_id" class="form-control">
                 <option value="">Select Service</option>
-                @foreach($services as $service)
+                @foreach ($services as $service)
                     <option value="{{ $service->id }}">{{ $service->name }}</option>
                 @endforeach
             </select>
@@ -117,7 +119,7 @@
         <div class="mb-3">
             <label>Status</label>
             <select wire:model="status" class="form-control">
-                @foreach(['pending', 'accepted', 'completed', 'cancelled'] as $stat)
+                @foreach (['pending', 'accepted', 'completed', 'cancelled'] as $stat)
                     <option value="{{ $stat }}">{{ ucfirst($stat) }}</option>
                 @endforeach
             </select>

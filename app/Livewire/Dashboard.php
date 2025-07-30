@@ -16,12 +16,12 @@ class Dashboard extends Component
     {
         $this->totalUsers = User::where('status', 'Active')->count();
         $this->totalFixers = Fixer::where('status', 'approved')->count();
-        $this->activeRequests = ServiceRequest::where('status', 'pending')->count();
+        $this->activeRequests = ServiceRequest::where('status', 'accepted')->count();
         $this->serviceCompleted = ServiceRequest::where('status', 'completed')->count();
 
         $this->newUsersThisWeek = User::where('created_at', '>=', Carbon::now()->subWeek())->count();
         $this->newFixerThisWeek = Fixer::where('created_at', '>=', Carbon::now()->subWeek())->count();
-        $this->newActiveRequests = ServiceRequest::where('status', 'pending')
+        $this->newActiveRequests = ServiceRequest::where('status', 'accepted')
             ->where('created_at', '>=', Carbon::now()->subWeek())
             ->count();
 

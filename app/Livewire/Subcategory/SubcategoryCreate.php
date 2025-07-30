@@ -2,12 +2,42 @@
 
 namespace App\Livewire\Subcategory;
 
+use App\Models\Category;
+use App\Models\Subcategory;
 use Livewire\Component;
 
 class SubcategoryCreate extends Component
 {
+    public $category_id;
+    public $name;
+    public $description;
+    public $categories;
+
+    public function mount()
+    {
+        $this->categories = Category::all();
+    }
+
     public function render()
     {
         return view('livewire.subcategory.subcategory-create');
+    }
+
+    public function submit()
+    {
+        $this->validate([
+            'category_id' => 'required|exists:categories,id',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        Subcategory::create([
+            'category_id' => $this->category_id,
+            'name' => $this->name,
+            'description' => $this->description,
+        ]);
+
+        session()->flash('success', 'Subcategory created successfully.');
+        return redirect()->route('subcategory.index');
     }
 }

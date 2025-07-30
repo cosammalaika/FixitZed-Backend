@@ -4,11 +4,11 @@
              <div class="col-12">
                  <div class="card">
                      <div class="card-header d-flex justify-content-between align-items-center">
-                         <h4 class="card-title mb-0">Services List</h4>
+                         <h4 class="card-title mb-0">Services Request List</h4>
 
                          <button type="button" class="btn btn-primary waves-effect waves-light" data-bs-toggle="modal"
                              data-bs-target="#createRoleModal">
-                             + Add service
+                             + Create Service Request
                          </button>
 
                      </div>
@@ -78,7 +78,14 @@
                                          <td>{{ $request->service->name ?? 'N/A' }}</td>
 
                                          <td>{{ $request->scheduled_at }}</td>
-                                         <td>{{ $request->status }}</td>
+                                         <td><span
+                                                 class="
+                        @if ($request->status == 'accepted') badge rounded-pill badge-soft-success
+                        @elseif($request->status == 'completed') badge rounded-pill badge-soft-primary
+                        @elseif($request->status == 'cancelled') badge rounded-pill badge-soft-danger
+                        @else badge rounded-pill badge-soft-warning @endif">
+                                                 {{ $request->status }}
+                                             </span></td>
                                          <td>{{ $request->location }}</td>
                                          <td>
                                              <div class="dropdown">

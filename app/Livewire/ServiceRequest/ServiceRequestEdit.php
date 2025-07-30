@@ -6,21 +6,15 @@ use App\Models\ServiceRequest;
 use App\Models\User;
 use App\Models\Fixer;
 use App\Models\Service;
+use App\Models\Payment;
 use Livewire\Component;
 
 class ServiceRequestEdit extends Component
 {
-    public $id;
-    public $customer_id;
-    public $fixer_id;
-    public $service_id;
-    public $scheduled_at;
-    public $status;
-    public $location;
+    public $serviceRequestId;
+    public $customer_id, $fixer_id, $service_id, $scheduled_at, $status, $location;
+    public $customers, $fixers, $services,$hasValidPayment = false;
 
-    public $customers;
-    public $fixers;
-    public $services;
 
     public function mount($id)
     {
@@ -38,7 +32,12 @@ class ServiceRequestEdit extends Component
         $this->customers = User::all();
         $this->fixers = Fixer::all();
         $this->services = Service::all();
+
+        $this->hasValidPayment = Payment::where('service_request_id', $id)
+            ->whereIn('status', ['accepted', 'completed']) // adjust based on your logic
+            ->exists();
     }
+
 
     public function render()
     {
@@ -56,7 +55,17 @@ class ServiceRequestEdit extends Component
             'location' => 'nullable|string',
         ]);
 
-        $serviceRequest = ServiceRequest::findOrFail($this->id);
+        $serviceRequest = ServiceRequest::findOrFail($this->serviceRequestId);
+        if ($this->status === 'completed') {
+            $payment = Payment::where('service_request_id', $this->serviceRequestId)
+                ->whereIn('status', ['accepted', 'completed']) 
+                ->first();
+
+            if (!$payment) {
+                session()->flash('error', 'Cannot mark as completed. Payment has not been made.');
+                return;
+            }
+        }
 
         $serviceRequest->update([
             'customer_id' => $this->customer_id,

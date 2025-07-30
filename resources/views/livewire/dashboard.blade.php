@@ -110,8 +110,7 @@
                         <div class="card-body">
                             <div class="row align-items-center">
                                 <div class="col-7">
-                                    <span class="text-muted mb-3 lh-1 d-block text-truncate">Services
-                                        Completed</span>
+                                    <span class="text-muted mb-3 lh-1 d-block text-truncate">Completed Services Request</span>
                                     <h4 class="mb-3">
                                         <span class="counter-value" data-target="{{ $serviceCompleted }}">0</span>
                                     </h4>

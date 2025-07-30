@@ -9,16 +9,22 @@ class FixerIndex extends Component
 {
     public function render()
     {
-         $fixers = Fixer::with('user')->latest()->get();
+        $fixers = Fixer::whereHas('user', function ($query) {
+            $query->where('status', 'Active');
+        })->with('user')->latest()->get();
+
         return view('livewire.fixer.fixer-index', compact("fixers"));
     }
+
     public function delete($id)
     {
-        $fixers = Fixer::find($id);
+        $fixer = Fixer::find($id);
 
-        $fixers->delete();
-        session()->flash('success', "Fixer deleted successfully.");
-        return view('livewire.fixer.fixer-index', compact("fixers"));
+        if ($fixer) {
+            $fixer->delete();
+            session()->flash('success', "Fixer deleted successfully.");
+        }
 
+        return redirect()->route('fixers.index'); 
     }
 }

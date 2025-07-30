@@ -1,7 +1,8 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="card-body">
-
+            <h4 class="">User Profile</h4>
+            <hr>
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">First Name</label>

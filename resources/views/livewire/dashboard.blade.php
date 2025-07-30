@@ -70,7 +70,7 @@
                             </div>
                             <div class="text-nowrap">
                                 <span class="badge bg-soft-success text-success">
-                                    +{{ $newFixerThisWeek ?? 0 }} Users</span>
+                                    +{{ $newFixerThisWeek ?? 0 }} Fixers </span>
                                 <span class="ms-1 text-muted font-size-13">Since last week</span>
                             </div>
                         </div><!-- end card body -->

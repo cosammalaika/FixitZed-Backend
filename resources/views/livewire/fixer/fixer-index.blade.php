@@ -75,10 +75,10 @@
                                          <td>{{ $fixer->user->email }}</td>
                                          <td class="py-2 px-4 capitalize">
                                              <span
-                                                 class="px-2 py-1 rounded text-sm
-                        @if ($fixer->status == 'approved') bg-green-100 text-green-700
-                        @elseif($fixer->status == 'rejected') bg-red-100 text-red-700
-                        @else bg-yellow-100 text-yellow-700 @endif">
+                                                 class="
+                        @if ($fixer->status == 'approved') badge rounded-pill badge-soft-success
+                        @elseif($fixer->status == 'rejected') badge rounded-pill badge-soft-danger
+                        @else badge rounded-pill badge-soft-warning @endif">
                                                  {{ $fixer->status }}
                                              </span>
                                          </td>

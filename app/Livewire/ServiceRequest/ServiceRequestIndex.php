@@ -7,18 +7,40 @@ use Livewire\Component;
 
 class ServiceRequestIndex extends Component
 {
+    public $serviceRequests;
+
+    public function mount()
+    {
+        $this->fetchServiceRequests();
+    }
+
     public function render()
     {
-        $serviceRequests = ServiceRequest::get();
-        return view('livewire.service-request.service-request-index', compact("serviceRequests"));
+        return view('livewire.service-request.service-request-index', [
+            'serviceRequests' => $this->serviceRequests
+        ]);
     }
+
     public function delete($id)
     {
-        $serviceRequests = ServiceRequest::find($id);
+        $serviceRequest = ServiceRequest::find($id);
 
-        $serviceRequests->delete();
-        session()->flash('success', "Service Request deleted successfully.");
-        return view('livewire.service-request.service-request-index', compact("serviceRequests"));
+        if ($serviceRequest) {
+            $serviceRequest->delete();
+            session()->flash('success', 'Service Request deleted successfully.');
+        } else {
+            session()->flash('error', 'Service Request not found.');
+        }
 
+        $this->fetchServiceRequests(); 
+    }
+
+    private function fetchServiceRequests()
+    {
+        $this->serviceRequests = ServiceRequest::with([
+            'customer', 
+            'fixer.user',
+            'service'
+        ])->latest()->get();
     }
 }

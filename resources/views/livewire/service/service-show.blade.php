@@ -1,7 +1,8 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="card-body">
-
+             <h4 class="">Service Info</h4>
+            <hr>
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-4">

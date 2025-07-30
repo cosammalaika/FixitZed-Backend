@@ -9,7 +9,7 @@ use Livewire\Component;
 class FixerCreate extends Component
 {
     public $user_id, $bio, $status = 'pending';
-    public $users; // List of available users
+    public $users;
 
     protected $rules = [
         'user_id' => 'required|exists:users,id',

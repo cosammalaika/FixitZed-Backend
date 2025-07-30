@@ -15,7 +15,7 @@ class Dashboard extends Component
     public function mount()
     {
         $this->totalUsers = User::where('status', 'Active')->count();
-        $this->totalFixers = Fixer::where('status', 'Active')->count();
+        $this->totalFixers = Fixer::where('status', 'approved')->count();
         $this->activeRequests = ServiceRequest::where('status', 'pending')->count();
         $this->serviceCompleted = ServiceRequest::where('status', 'completed')->count();
 

@@ -35,7 +35,7 @@ class RatingCreate extends Component
             'comment' => 'nullable|string'
         ]);
 
-        Rating::create([
+        $rating = Rating::create([
             'rater_id' => $this->rater_id,
             'rated_user_id' => $this->rated_user_id,
             'service_request_id' => $this->service_request_id,
@@ -44,8 +44,9 @@ class RatingCreate extends Component
             'comment' => $this->comment,
         ]);
 
-        session()->flash('success', 'Rating submitted successfully.');
+        log_user_action('created rating', "Rating ID: {$rating->id}, Rating: {$this->rating}, Role: {$this->role}");
 
+        session()->flash('success', 'Rating submitted successfully.');
         return redirect()->route('ratings.index');
     }
 

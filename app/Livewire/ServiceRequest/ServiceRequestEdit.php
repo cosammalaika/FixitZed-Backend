@@ -13,7 +13,7 @@ class ServiceRequestEdit extends Component
 {
     public $serviceRequestId;
     public $customer_id, $fixer_id, $service_id, $scheduled_at, $status, $location;
-    public $customers, $fixers, $services,$hasValidPayment = false;
+    public $customers, $fixers, $services, $hasValidPayment = false;
 
 
     public function mount($id)
@@ -56,9 +56,10 @@ class ServiceRequestEdit extends Component
         ]);
 
         $serviceRequest = ServiceRequest::findOrFail($this->serviceRequestId);
+
         if ($this->status === 'completed') {
             $payment = Payment::where('service_request_id', $this->serviceRequestId)
-                ->whereIn('status', ['accepted', 'completed']) 
+                ->whereIn('status', ['accepted', 'completed'])
                 ->first();
 
             if (!$payment) {
@@ -76,8 +77,10 @@ class ServiceRequestEdit extends Component
             'location' => $this->location,
         ]);
 
-        session()->flash('success', 'Service request updated successfully.');
+        log_user_action('updated service request', "ServiceRequest ID: {$this->serviceRequestId}");
 
+        session()->flash('success', 'Service request updated successfully.');
         return redirect()->route('serviceRequest.index');
     }
+
 }

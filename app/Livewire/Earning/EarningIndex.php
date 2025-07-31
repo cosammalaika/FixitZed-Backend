@@ -16,11 +16,18 @@ class EarningIndex extends Component
 
     public function delete($id)
     {
-        $earnings = Earning::find($id);
+        $earning = Earning::find($id);
 
-        $earnings->delete();
-        session()->flash('success', "Earning deleted successfully.");
-        return view('livewire.earning.earning-index', compact("earnings"));
+        if ($earning) {
+            $earning->delete();
 
+            log_user_action('deleted earning', "Deleted earning ID: {$earning->id}");
+
+            session()->flash('success', "Earning deleted successfully.");
+        } else {
+            session()->flash('success', "Earning not found.");
+        }
+
+        return redirect()->route('earnings.index');
     }
 }

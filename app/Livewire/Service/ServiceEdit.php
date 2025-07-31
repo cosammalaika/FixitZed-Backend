@@ -8,7 +8,7 @@ use App\Models\Service;
 
 class ServiceEdit extends Component
 {
-    public $serviceId, $name, $description, $price, $is_active, $subcategories, $subcategory_id,$duration_minutes;
+    public $serviceId, $name, $description, $price, $is_active, $subcategories, $subcategory_id, $duration_minutes;
 
     protected $rules = [
         'name' => 'required|string|max:255',
@@ -40,6 +40,8 @@ class ServiceEdit extends Component
         $this->validate();
 
         $service = Service::findOrFail($this->serviceId);
+        $oldName = $service->name;
+
         $service->update([
             'name' => $this->name,
             'description' => $this->description,
@@ -49,9 +51,12 @@ class ServiceEdit extends Component
             'is_active' => $this->is_active,
         ]);
 
+        log_user_action('updated service', "From '{$oldName}' to '{$this->name}', ID: {$service->id}");
+
         session()->flash('success', 'Service updated successfully.');
-        return to_route("services.index")->with("success","Service created successfully");
+        return to_route("services.index")->with("success", "Service updated successfully");
     }
+
 
 
 }

@@ -9,8 +9,8 @@ use Spatie\Permission\Models\Role;
 
 class UserEdit extends Component
 {
-     public $user; 
-    public $first_name, $last_name, $username, $contact_number, $user_type, $status,$email, $address, $allRoles, $roles = [];
+    public $user;
+    public $first_name, $last_name, $username, $contact_number, $user_type, $status, $email, $address, $allRoles, $roles = [];
 
     public function mount($id)
     {
@@ -62,6 +62,8 @@ class UserEdit extends Component
         $this->user->save();
 
         $this->user->syncRoles($this->roles);
+        log_user_action('updated user', "User ID: {$this->user->id}, Name: {$this->user->first_name} {$this->user->last_name}");
+
 
         return redirect()->route('users.index')->with('success', 'User updated successfully.');
     }

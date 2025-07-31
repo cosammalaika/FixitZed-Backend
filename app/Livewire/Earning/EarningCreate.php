@@ -19,11 +19,13 @@ class EarningCreate extends Component
             'amount' => 'required|numeric|min:0',
         ]);
 
-        Earning::create([
+        $earning = Earning::create([
             'fixer_id' => $this->fixer_id,
             'service_count' => $this->service_count,
             'amount' => $this->amount,
         ]);
+
+        log_user_action('created earning', "Created earning ID: {$earning->id} for fixer ID: {$this->fixer_id}");
 
         session()->flash('success', 'Earning created successfully!');
         return redirect()->route('earnings.index');

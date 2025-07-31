@@ -19,7 +19,7 @@ class CouponCreate extends Component
             'usage_limit' => 'required|integer|min:1',
         ]);
 
-        Coupon::create([
+        $coupon = Coupon::create([
             'code' => strtoupper($this->code),
             'discount_percent' => $this->discount_percent,
             'valid_from' => $this->valid_from,
@@ -27,10 +27,11 @@ class CouponCreate extends Component
             'usage_limit' => $this->usage_limit,
         ]);
 
+        log_user_action('created coupon', "Created coupon ID: {$coupon->id}, Code: {$coupon->code}");
+
         session()->flash('success', 'Coupon created successfully!');
         return redirect()->route('coupons.index');
     }
-
     public function render()
     {
         return view('livewire.coupon.coupon-create');

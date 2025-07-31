@@ -14,20 +14,20 @@ class ServiceCreate extends Component
         'description' => 'nullable|string',
         'price' => 'nullable|numeric|min:0',
         'duration_minutes' => 'nullable|numeric|min:0',
-        'subcategory_id' => 'required|exists:subcategories,id', 
+        'subcategory_id' => 'required|exists:subcategories,id',
         'is_active' => 'boolean',
     ];
 
     public function mount()
     {
-        $this->subcategories = Subcategory::all(); 
+        $this->subcategories = Subcategory::all();
     }
 
     public function submit()
     {
         $this->validate();
 
-        Service::create([
+        $service = Service::create([
             'name' => $this->name,
             'description' => $this->description,
             'price' => $this->price,
@@ -36,14 +36,17 @@ class ServiceCreate extends Component
             'is_active' => $this->is_active == "1" ? true : false,
         ]);
 
+        log_user_action('created service', "Service: {$service->name}, ID: {$service->id}");
+
         session()->flash('success', 'Service created successfully.');
         return to_route("services.index")->with("success", "Service created successfully");
     }
 
+
     public function render()
     {
         return view('livewire.service.service-create', [
-            'subcategories' => $this->subcategories, 
+            'subcategories' => $this->subcategories,
         ]);
     }
 }

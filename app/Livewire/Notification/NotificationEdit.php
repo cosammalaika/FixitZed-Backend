@@ -32,6 +32,8 @@ class NotificationEdit extends Component
             'read' => $this->read,
         ]);
 
+        log_user_action('updated notification', "Notification ID: {$this->notification->id}");
+
         session()->flash('success', 'Notification updated successfully!');
         return redirect()->route('notification.index');
     }

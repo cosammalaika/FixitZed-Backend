@@ -43,7 +43,6 @@ class PaymentEdit extends Component
             'amount' => 'required|numeric|min:0',
             'status' => 'required|in:pending,accepted,in_progress,completed,cancelled',
             'payment_method' => 'nullable|string',
-            
         ]);
 
         $this->payment->update([
@@ -52,6 +51,9 @@ class PaymentEdit extends Component
             'status' => $this->status,
             'payment_method' => $this->payment_method,
         ]);
+
+        log_user_action('updated payment', "Payment ID: {$this->payment->id}, Status: {$this->status}");
+
         if ($this->status === 'accepted') {
             $serviceRequest = ServiceRequest::find($this->service_request_id);
             if ($serviceRequest && $serviceRequest->status !== 'completed') {

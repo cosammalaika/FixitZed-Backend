@@ -31,21 +31,23 @@ class FixerEdit extends Component
         $this->users = User::where('status', 'Active')->get();
     }
 
-    public function submit()
-    {
-        $this->validate();
+   public function submit()
+{
+    $this->validate();
 
-        $fixer = Fixer::findOrFail($this->fixerId);
+    $fixer = Fixer::findOrFail($this->fixerId);
 
-        $fixer->update([
-            'user_id' => $this->user_id,
-            'bio' => $this->bio,
-            'status' => $this->status,
-        ]);
+    $fixer->update([
+        'user_id' => $this->user_id,
+        'bio' => $this->bio,
+        'status' => $this->status,
+    ]);
 
-        session()->flash('success', 'Fixer updated successfully.');
-        return to_route('fixer.index')->with('success', 'Fixer updated successfully.');
-    }
+    log_user_action('updated fixer', "Updated Fixer ID: {$fixer->id}");
+
+    session()->flash('success', 'Fixer updated successfully.');
+    return to_route('fixer.index')->with('success', 'Fixer updated successfully.');
+}
 
     public function render()
     {

@@ -31,13 +31,16 @@ class SubcategoryCreate extends Component
             'description' => 'nullable|string',
         ]);
 
-        Subcategory::create([
+        $subcategory = Subcategory::create([
             'category_id' => $this->category_id,
             'name' => $this->name,
             'description' => $this->description,
         ]);
 
+        log_user_action('created subcategory', "Subcategory ID: {$subcategory->id}, Name: {$subcategory->name}");
+
         session()->flash('success', 'Subcategory created successfully.');
         return redirect()->route('subcategory.index');
     }
+
 }

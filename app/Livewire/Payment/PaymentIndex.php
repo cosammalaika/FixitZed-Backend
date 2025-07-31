@@ -16,11 +16,20 @@ class PaymentIndex extends Component
     }
     public function delete($id)
     {
-        $payments = Payment::find($id);
+        $payment = Payment::find($id);
 
-        $payments->delete();
-        session()->flash('success', "Payment deleted successfully.");
-        return view('livewire.payment.payment-index', compact("payments"));
+        if ($payment) {
+            $payment->delete();
 
+            log_user_action('deleted payment', "Payment ID: {$id}");
+
+            session()->flash('success', "Payment deleted successfully.");
+        } else {
+            session()->flash('error', "Payment not found.");
+        }
+
+        return view('livewire.payment.payment-index', [
+            'payments' => Payment::with('serviceRequest.service')->latest()->get()
+        ]);
     }
 }

@@ -10,16 +10,7 @@ use Livewire\Component;
 
 class ServiceRequestCreate extends Component
 {
-    public $customer_id;
-    public $fixer_id;
-    public $service_id;
-    public $scheduled_at;
-    public $status = 'pending';
-    public $location;
-
-    public $customers;
-    public $fixers;
-    public $services;
+    public $customer_id, $fixer_id, $service_id, $scheduled_at, $status = 'pending', $location, $customers, $fixers, $services;
 
     public function mount()
     {
@@ -44,7 +35,7 @@ class ServiceRequestCreate extends Component
             'location' => 'nullable|string',
         ]);
 
-        ServiceRequest::create([
+        $request = ServiceRequest::create([
             'customer_id' => $this->customer_id,
             'fixer_id' => $this->fixer_id,
             'service_id' => $this->service_id,
@@ -53,8 +44,11 @@ class ServiceRequestCreate extends Component
             'location' => $this->location,
         ]);
 
+        log_user_action('created service request', "ServiceRequest ID: {$request->id}");
+
         session()->flash('success', 'Service request created successfully.');
 
         return redirect()->route('serviceRequest.index');
     }
+
 }

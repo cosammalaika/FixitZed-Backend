@@ -39,10 +39,11 @@ class CouponEdit extends Component
             'usage_limit' => $this->usage_limit,
         ]);
 
+        log_user_action('updated coupon', "Updated coupon ID: {$this->coupon->id}, Code: {$this->code}");
+
         session()->flash('success', 'Coupon updated successfully!');
         return redirect()->route('coupons.index');
     }
-
     public function render()
     {
         return view('livewire.coupon.coupon-edit');

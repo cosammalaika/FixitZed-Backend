@@ -14,12 +14,19 @@ class CategoryIndex extends Component
     }
     public function delete($id)
     {
-        $categories = Category::find($id);
+        $category = Category::find($id);
 
-        $categories->delete();
-        session()->flash('success', "Category deleted successfully.");
-        return view('livewire.category.category-index', compact("categories"));
+        if ($category) {
+            $category->delete();
 
+            log_user_action('deleted category', "Deleted category ID: {$id}, Name: {$category->name}");
+
+            session()->flash('success', "Category deleted successfully.");
+        } else {
+            session()->flash('success', "Category not found.");
+        }
+
+        return redirect()->route('category.index');
     }
 
 }

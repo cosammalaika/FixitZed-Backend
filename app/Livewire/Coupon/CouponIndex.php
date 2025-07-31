@@ -14,11 +14,18 @@ class CouponIndex extends Component
     }
     public function delete($id)
     {
-        $coupons = Coupon::find($id);
+        $coupon = Coupon::find($id);
 
-        $coupons->delete();
-        session()->flash('success', "Coupon deleted successfully.");
-        return view('livewire.coupon.coupon-index', compact("coupons"));
+        if ($coupon) {
+            $coupon->delete();
 
+            log_user_action('deleted coupon', "Deleted coupon ID: {$coupon->id}, Code: {$coupon->code}");
+
+            session()->flash('success', "Coupon deleted successfully.");
+        } else {
+            session()->flash('success', "Coupon not found.");
+        }
+
+        return redirect()->route('coupons.index');
     }
 }

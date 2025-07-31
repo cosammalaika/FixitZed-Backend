@@ -35,7 +35,6 @@ class PaymentCreate extends Component
         $this->transaction_id = 'FIZ-' . now()->format('YmdHis') . '-' . strtoupper(Str::random(5));
         $this->paid_at = now();
 
-        // Create the payment
         $payment = Payment::create([
             'service_request_id' => $this->service_request_id,
             'amount' => $this->amount,
@@ -44,6 +43,8 @@ class PaymentCreate extends Component
             'transaction_id' => $this->transaction_id,
             'paid_at' => $this->paid_at,
         ]);
+
+        log_user_action('created payment', "Payment ID: {$payment->id}, Amount: {$this->amount}, Status: {$this->status}");
 
         if ($this->status === 'accepted') {
             $serviceRequest = ServiceRequest::with('fixer')->find($this->service_request_id);
@@ -55,7 +56,6 @@ class PaymentCreate extends Component
             $fixer = $serviceRequest->fixer;
 
             if ($fixer) {
-                // Fetch or create a single earning record per fixer
                 $earning = Earning::firstOrNew(['fixer_id' => $fixer->id]);
 
                 $earning->amount = ($earning->amount ?? 0) + $this->amount;

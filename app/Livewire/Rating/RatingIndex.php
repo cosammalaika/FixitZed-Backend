@@ -14,12 +14,18 @@ class RatingIndex extends Component
     }
     public function delete($id)
     {
-        $ratings = Rating::find($id);
+        $rating = Rating::find($id);
 
-        $ratings->delete();
-        session()->flash('success', "Rating deleted successfully.");
+        if ($rating) {
+            $rating->delete();
+            log_user_action('deleted rating', "Rating ID: {$id}");
+            session()->flash('success', "Rating deleted successfully.");
+        } else {
+            session()->flash('error', "Rating not found.");
+        }
+
+        $ratings = Rating::get();
         return view('livewire.rating.rating-index', compact("ratings"));
-
     }
-   
+
 }

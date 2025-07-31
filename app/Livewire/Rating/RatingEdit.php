@@ -9,7 +9,7 @@ use Livewire\Component;
 
 class RatingEdit extends Component
 {
-    public $ratingId, $rater_id, $rated_user_id, $service_request_id, $role,$rating, $comment, $users, $serviceRequests;
+    public $ratingId, $rater_id, $rated_user_id, $service_request_id, $role, $rating, $comment, $users, $serviceRequests;
 
     public function mount($ratingId)
     {
@@ -47,8 +47,9 @@ class RatingEdit extends Component
             'comment' => $this->comment,
         ]);
 
-        session()->flash('success', 'Rating updated successfully.');
+        log_user_action('updated rating', "Rating ID: {$this->ratingId}, New Rating: {$this->rating}");
 
+        session()->flash('success', 'Rating updated successfully.');
         return redirect()->route('ratings.index');
     }
 

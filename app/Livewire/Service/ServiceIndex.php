@@ -10,15 +10,25 @@ class ServiceIndex extends Component
     public function render()
     {
         $services = Service::get();
-        return view('livewire.service.service-index',compact("services"));
+        return view('livewire.service.service-index', compact("services"));
     }
     public function delete($id)
     {
-        $services = Service::find($id);
+        $service = Service::find($id);
 
-            $services->delete();
+        if ($service) {
+            $name = $service->name;
+            $service->delete();
+
+            log_user_action('deleted service', "Service: {$name}, ID: {$id}");
+
             session()->flash('success', "Service deleted successfully.");
-            return view('livewire.service.service-index',compact("services"));
-        
+        } else {
+            session()->flash('error', "Service not found.");
+        }
+
+        $services = Service::get();
+        return view('livewire.service.service-index', compact("services"));
     }
+
 }

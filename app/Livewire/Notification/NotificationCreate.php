@@ -8,7 +8,7 @@ use Livewire\Component;
 
 class NotificationCreate extends Component
 {
-    public $recipient_type = '',$user_id = null, $title = '',$message = '',$users = [];
+    public $recipient_type = '', $user_id = null, $title = '', $message = '', $users = [];
 
     public function mount()
     {
@@ -32,12 +32,14 @@ class NotificationCreate extends Component
             'message' => 'required|string',
         ]);
 
-        Notification::create([
+        $notification = Notification::create([
             'recipient_type' => $this->recipient_type,
             'user_id' => $this->recipient_type === 'Individual' ? $this->user_id : null,
             'title' => $this->title,
             'message' => $this->message,
         ]);
+
+        log_user_action('created notification', "Notification ID: {$notification->id}, Title: {$this->title}");
 
         session()->flash('success', 'Notification created successfully!');
         return redirect()->route('notification.index');

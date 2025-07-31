@@ -19,18 +19,20 @@ class FixerCreate extends Component
 
     public function mount()
     {
-        $this->users = User::where('status', 'Active')->get(); 
+        $this->users = User::where('status', 'Active')->get();
     }
 
     public function submit()
     {
         $this->validate();
 
-        Fixer::create([
+        $fixer = Fixer::create([
             'user_id' => $this->user_id,
             'bio' => $this->bio,
             'status' => $this->status,
         ]);
+
+        log_user_action('created fixer', "Fixer ID: {$fixer->id}, User ID: {$this->user_id}");
 
         session()->flash('success', 'Fixer created successfully.');
         return to_route('fixer.index')->with('success', 'Fixer created successfully.');

@@ -21,15 +21,18 @@ class RoleCreate extends Component
     }
     public function submit()
     {
-        $this ->validate([
-            "name"=>"required|unique:roles,name",
-            "permissions"=>"required"
+        $this->validate([
+            "name" => "required|unique:roles,name",
+            "permissions" => "required"
         ]);
 
-       $role=Role::create([
-        "name"=> $this -> name
-       ]);
-       $role->syncPermissions($this -> permissions);
-        return to_route("role.index")->with("success","role created successfully");
+        $role = Role::create([
+            "name" => $this->name
+        ]);
+        $role->syncPermissions($this->permissions);
+
+        log_user_action('created role', "Role: {$this->name}, Permissions: " . implode(', ', $this->permissions));
+
+        return to_route("role.index")->with("success", "Role created successfully");
     }
 }

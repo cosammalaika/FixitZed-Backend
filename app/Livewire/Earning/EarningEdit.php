@@ -34,6 +34,8 @@ class EarningEdit extends Component
             'amount' => $this->amount,
         ]);
 
+        log_user_action('updated earning', "Updated earning ID: {$this->earning->id}");
+
         session()->flash('success', 'Earning updated successfully!');
         return redirect()->route('earnings.index');
     }

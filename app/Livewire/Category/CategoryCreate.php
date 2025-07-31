@@ -22,10 +22,12 @@ class CategoryCreate extends Component
             'description' => 'nullable|string',
         ]);
 
-        Category::create([
+        $category = Category::create([
             'name' => $this->name,
             'description' => $this->description,
         ]);
+
+        log_user_action('created category', "Created category ID: {$category->id}, Name: {$category->name}");
 
         session()->flash('success', 'Category created successfully.');
         return redirect()->route('category.index');

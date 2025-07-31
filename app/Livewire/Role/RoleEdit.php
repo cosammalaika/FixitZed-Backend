@@ -15,19 +15,24 @@ class RoleEdit extends Component
         $this->role = Role::find($id);
         $this->allPermissions = Permission::all();
         $this->name = $this->role->name;
-        $this->permissions= $this->role->permissions()->pluck("name");
+        $this->permissions = $this->role->permissions()->pluck("name");
     }
-     public function submit()
+    public function submit()
     {
-        $this ->validate([
-            "name"=>"required|unique:roles,name,".$this->role->id,
-            "permissions"=>"required"
+        $this->validate([
+            "name" => "required|unique:roles,name," . $this->role->id,
+            "permissions" => "required"
         ]);
 
-       $this->role->name = $this->name;
-       $this->role->save(); 
-       $this->role->syncPermissions($this -> permissions);
-        return to_route("role.index")->with("success","Role Edited successfully");
+        $oldName = $this->role->name;
+
+        $this->role->name = $this->name;
+        $this->role->save();
+        $this->role->syncPermissions($this->permissions);
+
+        log_user_action('updated role', "From '{$oldName}' to '{$this->name}', Permissions: " . implode(', ', $this->permissions));
+
+        return to_route("role.index")->with("success", "Role edited successfully");
     }
     public function render()
     {

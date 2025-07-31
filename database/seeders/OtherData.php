@@ -101,7 +101,7 @@ class OtherData extends Seeder
         // Earning
         Earning::create([
             'fixer_id' => $fixer->id,
-            'source_service_request_id' => $serviceRequest->id,
+            'service_count' => $serviceRequest->id,
             'amount' => 120.00,
         ]);
 

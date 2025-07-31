@@ -89,7 +89,7 @@ return new class extends Migration {
         Schema::create('earnings', function (Blueprint $table) {
             $table->id();
             $table->foreignId('fixer_id')->constrained('fixers')->onDelete('cascade');
-            $table->foreignId('source_service_request_id')->constrained('service_requests')->onDelete('cascade');
+            $table->foreignId('service_count')->constrained('service_requests')->onDelete('cascade');
             $table->decimal('amount', 10, 2);
             $table->timestamps();
         });

@@ -75,7 +75,7 @@
                                          <td>{{ $coupon->discount_percent }}%</td>
                                          <td>{{ $coupon->valid_from }}</td>
                                          <td>{{ $coupon->valid_to }}</td>
-                                         <td>{{ $coupon->usage_limit }} min</td>
+                                         <td>{{ $coupon->usage_limit }}</td>
                                          <td>{{ $coupon->used_count }}</td>
                                          <td>
                                              <div class="dropdown">
@@ -156,7 +156,7 @@
                                                  </div>
 
                                                  <div class="modal-body">
-                                                     @livewire('coupon.coupon-show', ['id' => $coupon->id], key('coupon-show-' . $coupon->id))
+                                                     @livewire('coupon.coupon-show', ['coupon' => $coupon], key('coupon-show-' . $coupon->id))
                                                  </div>
 
                                              </div>

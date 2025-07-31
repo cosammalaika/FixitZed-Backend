@@ -11,7 +11,7 @@ class Earning extends Model
 
     protected $fillable = [
         'fixer_id',
-        'source_service_request_id',
+        'service_count',
         'amount',
     ];
 
@@ -22,6 +22,6 @@ class Earning extends Model
 
     public function serviceRequest()
     {
-        return $this->belongsTo(ServiceRequest::class, 'source_service_request_id');
+        return $this->belongsTo(ServiceRequest::class, 'service_count');
     }
 }

@@ -9,9 +9,11 @@ class EarningIndex extends Component
 {
     public function render()
     {
-        $earnings = Earning::get();
-        return view('livewire.earning.earning-index', compact("earnings"));
+        return view('livewire.earning.earning-index', [
+            'earnings' => Earning::latest()->with(['fixer.user', 'serviceRequest'])->get()
+        ]);
     }
+
     public function delete($id)
     {
         $earnings = Earning::find($id);

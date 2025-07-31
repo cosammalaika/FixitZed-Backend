@@ -67,7 +67,6 @@
                 <button type="button" class="btn header-item" id="mode-setting-btn">
                     <i class="mdi mdi-moon-waning-crescent fs-4 layout-mode-dark"></i>
                     <i class="mdi mdi-white-balance-sunny fs-4 layout-mode-light"></i>
-
                 </button>
             </div>
 

@@ -4,6 +4,7 @@ namespace App\Livewire\Payment;
 
 use App\Models\Payment;
 use App\Models\ServiceRequest;
+use App\Models\Earning;
 use Illuminate\Support\Str;
 use Livewire\Component;
 
@@ -22,7 +23,6 @@ class PaymentCreate extends Component
     {
         return view('livewire.payment.payment-create');
     }
-
     public function submit()
     {
         $this->validate([
@@ -35,7 +35,8 @@ class PaymentCreate extends Component
         $this->transaction_id = 'FIZ-' . now()->format('YmdHis') . '-' . strtoupper(Str::random(5));
         $this->paid_at = now();
 
-        Payment::create([
+        // Create the payment
+        $payment = Payment::create([
             'service_request_id' => $this->service_request_id,
             'amount' => $this->amount,
             'status' => $this->status,
@@ -44,11 +45,23 @@ class PaymentCreate extends Component
             'paid_at' => $this->paid_at,
         ]);
 
-        
         if ($this->status === 'accepted') {
-            $serviceRequest = ServiceRequest::find($this->service_request_id);
+            $serviceRequest = ServiceRequest::with('fixer')->find($this->service_request_id);
+
             if ($serviceRequest && $serviceRequest->status !== 'completed') {
                 $serviceRequest->update(['status' => 'completed']);
+            }
+
+            $fixer = $serviceRequest->fixer;
+
+            if ($fixer) {
+                // Fetch or create a single earning record per fixer
+                $earning = Earning::firstOrNew(['fixer_id' => $fixer->id]);
+
+                $earning->amount = ($earning->amount ?? 0) + $this->amount;
+                $earning->service_count = ($earning->service_count ?? 0) + 1;
+
+                $earning->save();
             }
         }
 

@@ -53,6 +53,8 @@ class UserCreate extends Component
 
 
         $user->syncRoles($this->roles);
+        log_user_action('created user', "Created user ID: {$user->id}, Email: {$user->email}");
+
 
         return to_route("users.index")->with("success", "User created successfully");
     }

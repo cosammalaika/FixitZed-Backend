@@ -14,6 +14,7 @@ use App\Livewire\Role\{RoleCreate, RoleEdit, RoleIndex, RoleShow};
 use App\Livewire\Service\{ServiceCreate, ServiceEdit, ServiceIndex, ServiceShow};
 use App\Livewire\ServiceRequest\{ServiceRequestCreate, ServiceRequestEdit, ServiceRequestIndex, ServiceRequestShow};
 use App\Livewire\Subcategory\{SubcategoryCreate, SubcategoryEdit, SubcategoryIndex, SubcategoryShow};
+use App\Livewire\UserLog\UserLogIndex;
 use App\Livewire\Users\{UserCreate, UserEdit, UserIndex, UserShow};
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
@@ -27,6 +28,8 @@ Route::middleware(['auth', 'verified'])
 
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', 'settings/profile');
+
+    Route::get('logs', UserLogIndex::class)->name('logs.index');
 
     Route::get('users', UserIndex::class)->name('users.index');
     Route::get('users/create', UserCreate::class)->name('users.create');

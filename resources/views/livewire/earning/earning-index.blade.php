@@ -37,7 +37,7 @@
                                      <th>#</th>
                                      <th>Fixer</th>
                                      <th>Paid Request</th>
-                                     <th>Amount</th>
+                                     <th>Total Amount Earned</th>
                                      <th style="width: 80px; min-width: 80px;">Action</th>
                                  </tr>
                              </thead>

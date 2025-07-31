@@ -24,6 +24,8 @@ class UserIndex extends Component
 
         if ($user) {
             $user->delete();
+            log_user_action('deleted user', description: "Deleted user ID: {$user->id}, Email: {$user->email}");
+
             session()->flash('success', "User deleted successfully.");
         } else {
             session()->flash('success', "User not found.");

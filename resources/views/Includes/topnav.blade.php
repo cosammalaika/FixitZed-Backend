@@ -99,7 +99,7 @@
 
                             <a href="{{ route('coupon.index') }}" class="dropdown-item"
                                 data-key="t-calendar">Coupon</a>
-                            <a href="{{ route('coupon.index') }}" class="dropdown-item"
+                            <a href="{{ route('notification.index') }}" class="dropdown-item"
                                 data-key="t-calendar">Notifications</a>
                         </div>
                     </li>
@@ -112,9 +112,6 @@
                             <div class="arrow-down"></div>
                         </a>
                         <div class="dropdown-menu" aria-labelledby="topnav-pages">
-
-                            <a href="{{ route('rating.index') }}" class="dropdown-item" data-key="t-calendar">User
-                                Ratings List</a>
                             <a href="{{ route('rating.index') }}" class="dropdown-item" data-key="t-chat">Fixer
                                 Ratings List</a>
                         </div>
@@ -134,7 +131,7 @@
                                 <a href="{{ route('role.index') }}" class="dropdown-item" data-key="t-inbox">
                                     Role & Permission
                                 </a>
-                                <a href="{{ asset('#') }}" class="dropdown-item" data-key="t-inbox">
+                                <a href="{{ route('logs.index') }}" class="dropdown-item" data-key="t-inbox">
                                     Logs
                                 </a>
 

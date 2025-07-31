@@ -7,18 +7,33 @@ use Livewire\Component;
 
 class NotificationIndex extends Component
 {
-    public function render()
+    public $notifications;
+
+    public function mount()
     {
-        $notifications = Notification::get();
-        return view('livewire.notification.notification-index', compact("notifications"));
+        $this->loadNotifications();
     }
+
+    public function loadNotifications()
+    {
+        $this->notifications = Notification::all();
+    }
+
     public function delete($id)
     {
-        $notifications = Notification::find($id);
+        $notification = Notification::find($id);
 
-        $notifications->delete();
-        session()->flash('success', "Notification deleted successfully.");
-        return view('livewire.notification.notification-index', compact("notifications"));
+        if ($notification) {
+            $notification->delete();
+            session()->flash('success', "Notification deleted successfully.");
+            $this->loadNotifications(); // Refresh notifications list
+        } else {
+            session()->flash('error', "Notification not found.");
+        }
+    }
 
+    public function render()
+    {
+        return view('livewire.notification.notification-index');
     }
 }

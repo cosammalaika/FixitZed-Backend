@@ -1,6 +1,4 @@
 <div class="container mt-4">
-    <h4>Edit Notification</h4>
-
     @if (session()->has('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif

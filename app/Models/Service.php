@@ -15,13 +15,18 @@ class Service extends Model
         'description',
         'price',
         'duration_minutes',
-        'is_active', 
+        'is_active',
     ];
 
     public function subcategory()
     {
         return $this->belongsTo(Subcategory::class);
     }
+    public function fixers()
+    {
+        return $this->belongsToMany(Fixer::class, 'fixer_service');
+    }
+    
 
     public function serviceRequests()
     {

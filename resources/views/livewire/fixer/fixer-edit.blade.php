@@ -1,17 +1,17 @@
-<div class="container-fluid">
+<div class="container-fluid py-6">
     <div class="row justify-content-center">
-        <div class="card-body">
+        <div class="card p-4 shadow-sm w-100">
             @if (session()->has('success'))
-                <div class="bg-green-100 text-green-800 p-2 rounded mb-4">
+                <div class="alert alert-success mb-4">
                     {{ session('success') }}
                 </div>
             @endif
 
             <form wire:submit.prevent="submit" class="space-y-4">
-                <div class="row">
+                <div class="row g-4">
                     <div class="col-md-6">
-                        <label class="form-label" for="user_type">User Type</label>
-                        <select wire:model="user_id" class="form-control" required>
+                        <label for="user_id" class="form-label fw-semibold">User</label>
+                        <select wire:model="user_id" id="user_id" class="form-control" required>
                             <option value="">-- Choose User --</option>
                             @foreach ($users as $user)
                                 <option value="{{ $user->id }}">
@@ -20,35 +20,51 @@
                             @endforeach
                         </select>
                         @error('user_id')
-                            <span class="text-red-500">{{ $message }}</span>
+                            <small class="text-danger">{{ $message }}</small>
                         @enderror
                     </div>
+
                     <div class="col-md-6">
-                        <div>
-                            <label class="form-label">Status</label>
-                            <select wire:model="status" class="form-control">
-                                <option value="pending">Pending</option>
-                                <option value="approved">Approved</option>
-                                <option value="rejected">Rejected</option>
-                            </select>
-                            @error('status')
-                                <span class="text-red-500">{{ $message }}</span>
-                            @enderror
-                        </div>
+                        <label for="status" class="form-label fw-semibold">Status</label>
+                        <select wire:model="status" id="status" class="form-control">
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                        @error('status')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="mb-3">
-                            <label for="progresspill-address-input">Bio</label>
-                            <textarea id="progresspill-address-input" wire:model="bio" class="form-control" rows="2"></textarea>
-                        </div>
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <label for="bio" class="form-label fw-semibold">Bio</label>
+                        <textarea wire:model="bio" id="bio" rows="3" class="form-control"
+                            placeholder="Short description or background"></textarea>
+                        @error('bio')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary waves-effect waves-light">
-                    Edit Fixer
-                </button>
+                <div class="col-md-12 mt-3">
+                    <label for="selected_services" class="form-label fw-semibold">Services</label>
+                    <select wire:model="selected_services" id="selected_services" class="form-select" multiple>
+                        @foreach ($services as $service)
+                            <option value="{{ $service->id }}">{{ $service->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('selected_services')
+                        <div class="text-danger small">{{ $message }}</div>
+                    @enderror
+                </div>
+
+
+                <div class="mt-4 text-end">
+                    <button type="submit" class="btn btn-primary px-4">
+                        Update Fixer
+                    </button>
+                </div>
             </form>
         </div>
     </div>

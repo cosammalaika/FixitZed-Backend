@@ -67,7 +67,7 @@
                     @endforeach
                 </flux:checkbox.group>
                 <button type="submit" class="btn btn-primary waves-effect waves-light">
-                    Submit
+                    Update
                 </button>
             </form>
         </div>

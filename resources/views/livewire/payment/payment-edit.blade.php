@@ -46,7 +46,7 @@
                     </div>
                 </div>
                 <br>
-                <button class="btn btn-primary">Create</button>
+                <button class="btn btn-primary">Update</button>
             </form>
         </div>
     </div>

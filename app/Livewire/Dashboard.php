@@ -11,6 +11,7 @@ use Livewire\Component;
 class Dashboard extends Component
 {
     public $totalUsers, $totalFixers, $activeRequests, $serviceCompleted, $newUsersThisWeek, $newFixerThisWeek, $newActiveRequests, $newServiceCompleted, $recentCustomers, $recentRequests;
+    public $topRatedFixers;
 
     public function mount()
     {
@@ -37,6 +38,16 @@ class Dashboard extends Component
 
         $this->recentRequests = ServiceRequest::latest()
             ->take(5)
+            ->get();
+
+        $this->topRatedFixers = User::where('user_type', 'Fixer')
+            ->withAvg([
+                'receivedRatings as average_rating' => function ($query) {
+                    $query->where('role', 'customer');
+                }
+            ], 'rating')
+            ->orderByDesc('average_rating')
+            ->take(10)
             ->get();
     }
 

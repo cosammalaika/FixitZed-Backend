@@ -20,18 +20,6 @@
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label" for="fixer_id">Fixer</label>
-                        <select wire:model="fixer_id" class="form-control">
-                            <option value="">-- Select Fixer --</option>
-                            @foreach ($fixers as $fixer)
-                                <option value="{{ $fixer->id }}">{{ $fixer->user->first_name }}
-                                    {{ $fixer->user->last_name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6">
                         <label class="form-label" for="service_id">Service</label>
                         <select wire:model="service_id" class="form-control">
                             <option value="">-- Select Service --</option>
@@ -39,6 +27,22 @@
                                 <option value="{{ $service->id }}">{{ $service->name }}</option>
                             @endforeach
                         </select>
+                    </div>
+
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label" for="fixer_id">Fixer</label>
+                        <select wire:model="fixer_id" class="form-control" wire:key="fixer-select-{{ $service_id }}">
+                            <option value="">-- Select Fixer --</option>
+                            @foreach ($filteredFixers as $fixer)
+                                <option value="{{ $fixer->id }}">
+                                    {{ $fixer->user->first_name }} {{ $fixer->user->last_name }}
+                                </option>
+                            @endforeach
+                        </select>
+
+
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Scheduled At</label>

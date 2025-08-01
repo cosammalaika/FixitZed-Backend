@@ -61,6 +61,7 @@
                                      <th>Status</th>
                                      <th>Rating</th>
                                      <th>Bio</th>
+                                     <th>Services</th>
                                      <th>Joined</th>
                                      <th style="width: 80px; min-width: 80px;">Action</th>
                                  </tr>
@@ -84,6 +85,16 @@
                                          </td>
                                          <td>{{ number_format($fixer->rating_avg, 1) }}/5</td>
                                          <td>{{ Str::limit($fixer->bio, 40) ?? 'N/A' }}</td>
+                                         <td>
+                                             @if ($fixer->services->isNotEmpty())
+                                                 @foreach ($fixer->services as $service)
+                                                     <span class="badge bg-secondary me-1">{{ $service->name }}</span>
+                                                 @endforeach
+                                             @else
+                                                 <span class="text-muted">No services</span>
+                                             @endif
+                                         </td>
+
                                          <td>{{ $fixer->created_at->format('M d, Y') }}</td>
                                          <td>
                                              <div class="dropdown">

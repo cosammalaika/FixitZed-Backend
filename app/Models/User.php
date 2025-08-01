@@ -66,6 +66,11 @@ class User extends Authenticatable
         );
     }
 
+    public function receivedRatings()
+{
+    return $this->hasMany(\App\Models\Rating::class, 'rated_user_id');
+}
+
     public function fixer()
     {
         return $this->hasOne(Fixer::class);

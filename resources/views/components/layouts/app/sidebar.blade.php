@@ -36,6 +36,8 @@
     <div class="rightbar-overlay"></div>
 
     <!-- JAVASCRIPT -->
+    <script src="{{ asset('assets/js/pages/form-advanced.init.js') }}"></script>
+    <script src="{{ asset('assets/libs/choices.js/public/assets/scripts/choices.min.js') }}"></script>
     <script src="{{ asset('assets/libs/jquery/jquery.min.js') }}"></script>
     <script src="{{ asset('assets/libs/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ asset('assets/libs/metismenu/metisMenu.min.js') }}"></script>
@@ -74,6 +76,18 @@
     <script src="{{ asset('assets/js/pages/dashboard.init.js') }}"></script>
 
     <script src="{{ asset('assets/js/app.js') }}"></script>
+      <!-- choices js -->
+        <script src="assets/libs/choices.js/public/assets/scripts/choices.min.js"></script>
+
+        <!-- color picker js -->
+        <script src="{{ asset('assets/libs/%40simonwep/pickr/pickr.min.js') }}"></script>
+        <script src="{{ asset('assets/libs/%40simonwep/pickr/pickr.es5.min.js') }}"></script>
+
+        <!-- datepicker js -->
+        <script src="{{ asset('assets/libs/flatpickr/flatpickr.min.js') }}"></script>
+
+        <!-- init js -->
+        <script src="{{ asset('assets/js/pages/form-advanced.init.js') }}"></script>
 
 </body>
 

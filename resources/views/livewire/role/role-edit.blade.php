@@ -65,7 +65,7 @@
                 {{-- Submit Button --}}
                 <div class="text-end">
                     <button type="submit" class="btn btn-primary waves-effect waves-light">
-                        Submit
+                        Update
                     </button>
                 </div>
             </form>

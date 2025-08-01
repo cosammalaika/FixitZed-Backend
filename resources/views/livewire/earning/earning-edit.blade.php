@@ -27,6 +27,6 @@
             <input wire:model="amount" type="number" step="0.01" class="form-control" id="amount">
         </div>
 
-        <button class="btn btn-primary">Create</button>
+        <button class="btn btn-primary">Update</button>
     </form>
 </div>

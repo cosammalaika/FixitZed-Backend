@@ -33,20 +33,35 @@
                             @enderror
                         </div>
                     </div>
-                </div>
+                    <div class="col-md-6">
+                        <div>
+                            <label class="form-label">Service Skilled in</label>
+                            <select wire:model="selected_services" class="form-control">
+                                @foreach ($allServices as $service)
+                                    <option value="{{ $service->id }}">{{ $service->name }}</option>
+                                @endforeach
+                            </select>
 
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="mb-3">
-                            <label for="progresspill-address-input">Bio</label>
-                            <textarea id="progresspill-address-input" wire:model="bio" class="form-control" rows="2"></textarea>
                         </div>
                     </div>
+
                 </div>
-                <button type="submit" class="btn btn-primary waves-effect waves-light">
-                    Create Fixer
-                </button>
-            </form>
+
         </div>
+
+        <div class="row">
+
+            <div class="col-lg-12">
+                <div class="mb-3">
+                    <label for="progresspill-address-input">Bio</label>
+                    <textarea id="progresspill-address-input" wire:model="bio" class="form-control" rows="2"></textarea>
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary waves-effect waves-light">
+            Create Fixer
+        </button>
+        </form>
     </div>
+</div>
 </div>

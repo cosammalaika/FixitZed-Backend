@@ -14,6 +14,8 @@ class FixerShow extends Component
     {
         $this->fixerId = $id;
         $this->fixer = Fixer::with('user')->findOrFail($id);
+        $this->fixer = Fixer::with(['user', 'services'])->findOrFail($id);
+
     }
 
     public function render()

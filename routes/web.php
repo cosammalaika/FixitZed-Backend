@@ -18,14 +18,11 @@ use App\Livewire\UserLog\UserLogIndex;
 use App\Livewire\Users\{UserCreate, UserEdit, UserIndex, UserShow};
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
-
-Route::get('/', function () {
-    return view('welcome');
-})->name('home');
 Route::middleware(['auth', 'verified'])
     ->get('/dashboard', Dashboard::class)
     ->name('dashboard');
 
+Route::redirect('/', '/dashboard');
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', 'settings/profile');
 

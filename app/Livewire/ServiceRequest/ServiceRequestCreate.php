@@ -10,14 +10,42 @@ use Livewire\Component;
 
 class ServiceRequestCreate extends Component
 {
-    public $customer_id, $fixer_id, $service_id, $scheduled_at, $status = 'pending', $location, $customers, $fixers, $services;
+    public $customer_id, $fixer_id, $service_id, $scheduled_at, $status = 'pending', $location;
+    public $customers, $services;
+    public $filteredFixers = [];
 
     public function mount()
     {
-        $this->customers = User::all();
-        $this->fixers = Fixer::all();
+        $this->customers = User::where('user_type', 'Customer')
+            ->where('status', 'Active')
+            ->get();
+
         $this->services = Service::all();
+        $this->filteredFixers = collect();
     }
+
+
+public function updatedServiceId($value)
+{
+    if ($value) {
+        $service = Service::find($value);
+        if ($service) {
+            $fixersQuery = $service->fixers()
+                ->where('status', 'approved')
+                ->with('user');
+
+            $this->filteredFixers = $fixersQuery->get();
+
+            logger('Filtered fixers:', $this->filteredFixers->toArray());  // Logs to Laravel log
+        } else {
+            $this->filteredFixers = collect();
+        }
+    } else {
+        $this->filteredFixers = collect();
+    }
+    $this->fixer_id = '';
+}
+
 
     public function render()
     {
@@ -50,5 +78,4 @@ class ServiceRequestCreate extends Component
 
         return redirect()->route('serviceRequest.index');
     }
-
 }

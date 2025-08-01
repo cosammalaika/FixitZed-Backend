@@ -26,6 +26,12 @@ class Fixer extends Model
         return $this->hasMany(ServiceRequest::class);
     }
 
+    public function services()
+    {
+        return $this->belongsToMany(Service::class, 'fixer_service');
+    }
+
+
     public function earnings()
     {
         return $this->hasMany(Earning::class);

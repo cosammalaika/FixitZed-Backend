@@ -11,6 +11,13 @@ class FixerIndex extends Component
     {
         $fixers = Fixer::whereHas('user', function ($query) {
             $query->where('status', 'Active');
+        })
+            ->with(['user', 'services'])
+            ->latest()
+            ->get();
+
+        $fixers = Fixer::whereHas('user', function ($query) {
+            $query->where('status', 'Active');
         })->with('user')->latest()->get();
 
         return view('livewire.fixer.fixer-index', compact("fixers"));

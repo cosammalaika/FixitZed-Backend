@@ -50,7 +50,7 @@ class RatingEdit extends Component
         log_user_action('updated rating', "Rating ID: {$this->ratingId}, New Rating: {$this->rating}");
 
         session()->flash('success', 'Rating updated successfully.');
-        return redirect()->route('ratings.index');
+        return redirect()->route('rating.index');
     }
 
     public function render()

@@ -26,6 +26,6 @@ class CouponIndex extends Component
             session()->flash('success', "Coupon not found.");
         }
 
-        return redirect()->route('coupons.index');
+        return redirect()->route('coupon.index');
     }
 }

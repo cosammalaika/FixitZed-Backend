@@ -42,7 +42,7 @@ class CouponEdit extends Component
         log_user_action('updated coupon', "Updated coupon ID: {$this->coupon->id}, Code: {$this->code}");
 
         session()->flash('success', 'Coupon updated successfully!');
-        return redirect()->route('coupons.index');
+        return redirect()->route('coupon.index');
     }
     public function render()
     {

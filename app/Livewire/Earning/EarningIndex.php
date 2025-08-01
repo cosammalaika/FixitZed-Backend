@@ -28,6 +28,6 @@ class EarningIndex extends Component
             session()->flash('success', "Earning not found.");
         }
 
-        return redirect()->route('earnings.index');
+        return redirect()->route('earning.index');
     }
 }

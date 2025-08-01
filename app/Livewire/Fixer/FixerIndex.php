@@ -28,6 +28,6 @@ class FixerIndex extends Component
             session()->flash('success', "Fixer deleted successfully.");
         }
 
-        return redirect()->route('fixers.index');
+        return redirect()->route('fixer.index');
     }
 }

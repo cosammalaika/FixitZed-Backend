@@ -117,25 +117,19 @@
                         </div>
                     </li>
 
-                    <li class="nav-item dropdown">
+                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle arrow-none" href="{{ asset('#') }}" id="topnav-pages"
                             role="button">
                             {{-- <i data-feather="payments"></i> --}}
-                            <span data-key="t-elements"></span>
-                            <div class="arrow-down">Settings</div>
+                            <span data-key="t-elements">Settings</span>
+                            <div class="arrow-down"></div>
                         </a>
                         <div class="dropdown-menu" aria-labelledby="topnav-pages">
 
-                            <div class="dropdown">
-
-                                <a href="{{ route('role.index') }}" class="dropdown-item" data-key="t-inbox">
-                                    Role & Permission
-                                </a>
-                                <a href="{{ route('logs.index') }}" class="dropdown-item" data-key="t-inbox">
-                                    Logs
-                                </a>
-
-                            </div>
+                            <a href="{{ route('role.index') }}" class="dropdown-item"
+                                data-key="t-calendar">Role & Permission</a>
+                            <a href="{{ route('logs.index') }}" class="dropdown-item"
+                                data-key="t-calendar">System Logs</a>
                         </div>
                     </li>
 

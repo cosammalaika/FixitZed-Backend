@@ -26,10 +26,10 @@
 
 
  <!-- color picker css -->
- <link rel="stylesheet" href="{{ asset('assets/libs/%40simonwep/pickr/themes/classic.min.css') }}" />
- <link rel="stylesheet" href="{{ asset('assets/libs/%40simonwep/pickr/themes/monolith.min.css') }}" />
+ <link rel="stylesheet" href="{{ asset('assets/libs/@simonwep/pickr/themes/classic.min.css') }}" />
+ <link rel="stylesheet" href="{{ asset('assets/libs/@simonwep/pickr/themes/monolith.min.css') }}" />
  <!-- 'monolith' theme -->
- <link rel="stylesheet" href="{{ asset('assets/libs/%40simonwep/pickr/themes/nano.min.css') }}" />
+ <link rel="stylesheet" href="{{ asset('assets/libs/@simonwep/pickr/themes/nano.min.css') }}" />
 
  <!-- datepicker css -->
  <link rel="stylesheet" href="assets/libs/flatpickr/flatpickr.min.css">

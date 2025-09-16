@@ -13,6 +13,7 @@
                         </a>
                     </li>
 
+
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle arrow-none" href="{{ asset('#') }}" id="topnav-pages"
                             role="button">
@@ -134,6 +135,12 @@
                                 data-key="t-calendar">Locations</a>
                         </div>
                     </li>
+                     <li class="nav-item">
+                        <a class="nav-link" href="{{ route('reportd.index') }}">
+                            <span data-key="t-reports">Reports</span>
+                        </a>
+                    </li>
+
 
                 </ul>
             </div>

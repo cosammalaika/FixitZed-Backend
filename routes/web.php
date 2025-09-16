@@ -8,6 +8,7 @@ use App\Livewire\Fixer\{FixerCreate, FixerEdit, FixerIndex, FixerShow};
 use App\Livewire\Location\{LocationCreate, LocationEdit, LocationIndex, LocationShow};
 use App\Livewire\Notification\{NotificationCreate, NotificationEdit, NotificationIndex, NotificationShow};
 use App\Livewire\LocationOption\LocationOptionIndex;
+use App\Livewire\Reportd;
 use App\Livewire\Payment\{PaymentCreate, PaymentEdit, PaymentIndex, PaymentShow};
 use App\Livewire\Rating\{RatingCreate, RatingEdit, RatingIndex, RatingShow};
 use App\Livewire\Review\{ReviewCreate, ReviewEdit, ReviewIndex, ReviewShow};
@@ -17,6 +18,7 @@ use App\Livewire\ServiceRequest\{ServiceRequestCreate, ServiceRequestEdit, Servi
 use App\Livewire\Subcategory\{SubcategoryCreate, SubcategoryEdit, SubcategoryIndex, SubcategoryShow};
 use App\Livewire\UserLog\UserLogIndex;
 use App\Livewire\Users\{UserCreate, UserEdit, UserIndex, UserShow};
+use App\Http\Controllers\Auth\LockController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 Route::middleware(['auth', 'verified'])
@@ -26,6 +28,12 @@ Route::middleware(['auth', 'verified'])
 Route::redirect('/', '/dashboard');
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', 'settings/profile');
+
+    Route::get('reportd', Reportd::class)->name('reportd.index');
+
+    Route::get('lock', [LockController::class, 'activate'])->name('lock.activate');
+    Route::get('lock-screen', [LockController::class, 'show'])->name('lock.screen');
+    Route::post('lock-screen', [LockController::class, 'unlock'])->name('lock.unlock');
 
     Route::get('logs', UserLogIndex::class)->name('logs.index');
 

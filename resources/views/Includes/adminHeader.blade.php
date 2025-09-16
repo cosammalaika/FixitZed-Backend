@@ -1,5 +1,10 @@
  <meta charset="utf-8" />
- <title>Dashboard | FIXIT Zed</title>
+ @php
+     $pageHeading = trim($__env->yieldContent('page-title'));
+     $explicitTitle = trim($__env->yieldContent('title'));
+     $resolvedTitle = $explicitTitle !== '' ? $explicitTitle : ($pageHeading !== '' ? $pageHeading . ' | ' . config('app.name') : config('app.name'));
+ @endphp
+ <title>{{ $resolvedTitle }}</title>
  <meta name="viewport" content="width=device-width, initial-scale=1.0">
  <meta content="Premium Multipurpose Admin & Dashboard Template" name="description" />
  <meta content="Themesbrand" name="author" />

@@ -1,3 +1,5 @@
+@section('page-title', 'Dashboard')
+
 <div class="main-content">
 
     <div class="page-content">
@@ -38,8 +40,10 @@
                                 </div>
 
                                 <div class="col-6">
-                                    <div id="mini-chart1" data-colors='["#f1592a"]' class="apex-charts mb-2">
-                                    </div>
+                                    <div id="mini-chart1"
+                                        data-colors='["#f1592a"]'
+                                        data-series='@json($sparklineSeries['users'] ?? [])'
+                                        class="apex-charts mb-2"></div>
                                 </div>
                             </div>
                             <div class="text-nowrap">
@@ -65,8 +69,10 @@
                                     </h4>
                                 </div>
                                 <div class="col-4">
-                                    <div id="mini-chart2" data-colors='["#f1592a"]' class="apex-charts mb-2">
-                                    </div>
+                                    <div id="mini-chart2"
+                                        data-colors='["#f1592a"]'
+                                        data-series='@json($sparklineSeries['fixers'] ?? [])'
+                                        class="apex-charts mb-2"></div>
                                 </div>
                             </div>
                             <div class="text-nowrap">
@@ -92,8 +98,10 @@
                                     </h4>
                                 </div>
                                 <div class="col-6">
-                                    <div id="mini-chart3" data-colors='["#f1592a"]' class="apex-charts mb-2">
-                                    </div>
+                                    <div id="mini-chart3"
+                                        data-colors='["#f1592a"]'
+                                        data-series='@json($sparklineSeries['activeRequests'] ?? [])'
+                                        class="apex-charts mb-2"></div>
                                 </div>
                             </div>
                             <div class="text-nowrap">
@@ -119,8 +127,10 @@
                                     </h4>
                                 </div>
                                 <div class="col-5">
-                                    <div id="mini-chart4" data-colors='["#f1592a"]' class="apex-charts mb-2">
-                                    </div>
+                                    <div id="mini-chart4"
+                                        data-colors='["#f1592a"]'
+                                        data-series='@json($sparklineSeries['completedRequests'] ?? [])'
+                                        class="apex-charts mb-2"></div>
                                 </div>
                             </div>
                             <div class="text-nowrap">
@@ -137,72 +147,135 @@
 
             <div class="row">
                 <div class="col-xl-8">
-                    <!-- card -->
-                    <div class="card">
-                        <!-- inside .card-body -->
+                    <div class="card h-100">
                         <div class="card-body">
-                            <div class="d-flex flex-wrap align-items-center mb-4">
-                                <h5 class="card-title me-2">Monthly Earnings</h5>
-                                <!-- ... buttons ... -->
+                            <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+                                <h5 class="card-title mb-0">New Users</h5>
+                                <div class="text-muted small">Last 12 months</div>
                             </div>
-
-                            <div id="mini-chart4" data-colors='["#f1592a"]' class="apex-charts mb-2">
-                            </div>
-                            <!-- Your existing rows/cards -->
-                            <div class="row align-items-center">
-                                <!-- existing col-xl-4 content here -->
+                            <div id="new-users-chart"
+                                data-colors='["#f1592a", "#fbbf24"]'
+                                data-labels='@json($newUsersSeries['labels'])'
+                                data-series='@json($newUsersSeries['series'])'
+                                class="apex-charts"
+                                style="min-height: 320px;">
                             </div>
                         </div>
-
                     </div>
-                    <!-- end col -->
                 </div>
-                <!-- end row-->
 
                 <div class="col-xl-4">
-                    <!-- card -->
-                    <div class="card">
+                    <div class="card h-100">
                         <div class="card-body">
                             <div class="d-flex flex-wrap align-items-center mb-4">
-                                <h5 class="card-title me-2">Top 5 Rated Fixer</h5>
+                                <h5 class="card-title me-2 mb-0">Top Rated Fixers</h5>
+                                <span class="text-muted small">Based on customer reviews</span>
                             </div>
-                            <table class="table table-borderless dt-responsive nowrap w-100">
-                                <thead>
-                                    <tr class="text-primary">
-                                        <th>#</th>
-                                        <th>Name</th>
-                                        <th>Rating</th>
-                                    </tr>
-                                </thead>
-
-
-                                <tbody>
-                                    @forelse ($topRatedFixers as $index => $fixer)
+                            <div class="table-responsive">
+                                <table class="table table-borderless align-middle mb-0">
+                                    <thead class="text-muted">
                                         <tr>
-                                            <td><strong>{{ $index + 1  }}</strong></td>
-                                            <td> <strong>{{ $fixer->first_name  }} {{ $fixer->last_name  }}</strong><br>
-                                            </td>
-                                            <td>{{ number_format($fixer->average_rating, 1) }}/5</td>
+                                            <th scope="col">#</th>
+                                            <th scope="col">Name</th>
+                                            <th scope="col" class="text-end">Rating</th>
                                         </tr>
-                                    @empty
-                                        <p class="text-muted">No ratings available.</p>
-                                    @endforelse
-                                </tbody>
-                            </table>
-
-                                <!-- Your existing rows/cards -->
-                                <div class="row align-items-center">
-                                    <!-- existing col-xl-4 content here -->
-                                </div>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($topRatedFixers as $index => $fixer)
+                                            <tr>
+                                                <td class="fw-semibold">{{ $index + 1 }}</td>
+                                                <td>{{ $fixer->first_name }} {{ $fixer->last_name }}</td>
+                                                <td class="text-end">
+                                                    <span class="badge bg-soft-warning text-warning">
+                                                        {{ number_format($fixer->average_rating, 1) }}/5
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="3" class="text-center text-muted py-4">No ratings available.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-
-                        <!-- end card body -->
                     </div>
-                    <!-- end card -->
                 </div>
-                <!-- end col -->
             </div>
-            <!-- end row-->
+
+            <div class="row">
+                <div class="col-xl-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex flex-wrap align-items-center mb-4">
+                                <h5 class="card-title me-2 mb-0">Top 10 Active Users</h5>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-borderless align-middle mb-0">
+                                    <thead class="text-muted">
+                                        <tr>
+                                            <th scope="col">#</th>
+                                            <th scope="col">Name</th>
+                                            <th scope="col">Role</th>
+                                            <th scope="col" class="text-end">Jobs</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($topActiveUsers as $index => $activeUser)
+                                            <tr>
+                                                <td>{{ $index + 1 }}</td>
+                                                <td>{{ $activeUser['name'] }}</td>
+                                                <td><span class="badge bg-soft-primary text-primary">{{ $activeUser['role'] }}</span></td>
+                                                <td class="text-end fw-semibold">{{ $activeUser['total'] }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="4" class="text-center text-muted py-4">No activity recorded yet.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex flex-wrap align-items-center mb-4">
+                                <h5 class="card-title me-2 mb-0">Top Requested Services</h5>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-borderless align-middle mb-0">
+                                    <thead class="text-muted">
+                                        <tr>
+                                            <th scope="col">Service</th>
+                                            <th scope="col" class="text-center">Requests</th>
+                                            <th scope="col" class="text-end">Share</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($topRequestedServices as $service)
+                                            <tr>
+                                                <td>{{ $service['name'] }}</td>
+                                                <td class="text-center">{{ $service['total'] }}</td>
+                                                <td class="text-end">{{ $service['percentage'] }}%</td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="3" class="text-center text-muted py-4">No service requests yet.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end row -->
 
 
 

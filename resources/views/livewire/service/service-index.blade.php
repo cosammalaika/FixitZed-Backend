@@ -1,3 +1,5 @@
+@section('page-title', 'Services')
+
  <div class="page-content">
      <div class="container-fluid">
          <div class="row">

@@ -1,5 +1,7 @@
 
-<div class="page-content">
+@section('page-title', 'Subcategories')
+
+ <div class="page-content">
     <div class="container-fluid">
         <div class="row">
             <div class="col-12">

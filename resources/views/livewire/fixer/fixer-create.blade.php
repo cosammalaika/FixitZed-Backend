@@ -1,3 +1,5 @@
+@section('page-title', 'Create Fixer')
+
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="card-body">
@@ -33,17 +35,19 @@
                             @enderror
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div>
-                            <label class="form-label">Services Skilled In</label>
-                            <select wire:model="selected_services" class="form-multi-select" multiple data-trigger>
-                                @foreach ($allServices as $service)
-                                    <option value="{{ $service->id }}">{{ $service->name }}</option>
-                                @endforeach
-                            </select>
-                            <small class="text-muted">Search enabled; hold Ctrl/Cmd to select multiple.</small>
-                        </div>
+                <div class="col-md-6">
+                    <div>
+                        <label class="form-label">Services Skilled In</label>
+                        <select wire:model="selected_services" class="form-select" multiple size="8"
+                            aria-describedby="services-help">
+                            @foreach ($allServices as $service)
+                                <option value="{{ $service->id }}">{{ $service->name }}</option>
+                            @endforeach
+                        </select>
+                        <small id="services-help" class="text-muted">Hold Ctrl (Cmd on Mac) to select multiple
+                            services.</small>
                     </div>
+                </div>
 
                 </div>
 

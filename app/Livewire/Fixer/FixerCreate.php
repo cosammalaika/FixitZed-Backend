@@ -42,7 +42,14 @@ class FixerCreate extends Component
             'status' => $this->status,
         ]);
 
-        $fixer->services()->sync($this->selected_services);
+        $services = collect($this->selected_services ?? [])
+            ->filter(fn ($id) => filled($id))
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        $fixer->services()->sync($services);
 
         // Update the user's type to Fixer
         $user = User::find($this->user_id);

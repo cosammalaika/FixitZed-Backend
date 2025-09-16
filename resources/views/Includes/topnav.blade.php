@@ -117,7 +117,7 @@
                         </div>
                     </li>
 
-                     <li class="nav-item dropdown">
+                    <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle arrow-none" href="{{ asset('#') }}" id="topnav-pages"
                             role="button">
                             {{-- <i data-feather="payments"></i> --}}
@@ -130,6 +130,8 @@
                                 data-key="t-calendar">Role & Permission</a>
                             <a href="{{ route('logs.index') }}" class="dropdown-item"
                                 data-key="t-calendar">System Logs</a>
+                            <a href="{{ route('location-options.index') }}" class="dropdown-item"
+                                data-key="t-calendar">Locations</a>
                         </div>
                     </li>
 

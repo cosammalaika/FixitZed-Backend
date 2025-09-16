@@ -187,6 +187,66 @@
 <!-- dashboard init -->
 <script src="{{ asset('assets/js/pages/dashboard.init.js') }}"></script>
 
+<script>
+    // Apply persisted theme early for auth pages
+    (function () {
+        try {
+            var mode = localStorage.getItem('fixitzed-layout-mode');
+            if (mode === 'dark' || mode === 'light') {
+                document.body.setAttribute('data-layout-mode', mode);
+                document.body.setAttribute('data-topbar', mode);
+                document.body.setAttribute('data-sidebar', mode);
+            }
+        } catch (e) {}
+    })();
+  </script>
 <script src="{{ asset('assets/js/app.js') }}"></script>
+<script>
+    // Persist theme toggle and re-apply after Livewire SPA navigation
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('#mode-setting-btn')) return;
+        setTimeout(function () {
+            var mode = document.body.getAttribute('data-layout-mode') === 'dark' ? 'dark' : 'light';
+            try { localStorage.setItem('fixitzed-layout-mode', mode); } catch (e) {}
+        }, 0);
+    });
+    window.addEventListener('livewire:navigated', function () {
+        var mode = localStorage.getItem('fixitzed-layout-mode');
+        if (mode === 'dark' || mode === 'light') {
+            document.body.setAttribute('data-layout-mode', mode);
+            document.body.setAttribute('data-topbar', mode);
+            document.body.setAttribute('data-sidebar', mode);
+        }
+    });
+  </script>
+
+<script>
+    // Toggle password visibility for auth password input group
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('#password-addon');
+        if (!btn) return;
+        const group = btn.closest('.auth-pass-inputgroup');
+        if (!group) return;
+        const input = group.querySelector('input[type="password"], input[type="text"]');
+        if (!input) return;
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            const icon = btn.querySelector('i');
+            if (icon) {
+                icon.classList.remove('mdi-eye-outline');
+                icon.classList.add('mdi-eye-off-outline');
+            }
+        } else {
+            input.type = 'password';
+            const icon = btn.querySelector('i');
+            if (icon) {
+                icon.classList.remove('mdi-eye-off-outline');
+                icon.classList.add('mdi-eye-outline');
+            }
+        }
+    });
+    // Ensure Livewire DOM updates keep working via event delegation above
+</script>
 
 </html>

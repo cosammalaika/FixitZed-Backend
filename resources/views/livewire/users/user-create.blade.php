@@ -1,7 +1,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="card-body">
-            <form wire:submit.prevent="submit">
+            <form wire:submit.prevent="submit" enctype="multipart/form-data">
                 @if ($errors->any())
                     <div class="alert alert-danger">
                         <ul class="mb-0">
@@ -43,8 +43,16 @@
                             placeholder="Contact Number" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label" for="default-input">Address</label>
-                        <input class="form-control" type="text" wire:model="address" placeholder="address" required>
+                        <label class="form-label" for="location_option_id">Location</label>
+                        <select class="form-control" wire:model="location_option_id" required>
+                            <option value="">-- Select Location --</option>
+                            @foreach ($locationOptions as $opt)
+                                <option value="{{ $opt->id }}">{{ $opt->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('location_option_id')
+                            <span class="text-danger small">{{ $message }}</span>
+                        @enderror
                     </div>
                 </div>
                 <div class="row mt-6">
@@ -57,6 +65,32 @@
                         <label class="form-label" for="default-input">Confirm Password</label>
                         <input class="form-control" type="password" wire:model="confirm_password"
                             placeholder="Confirm Password" required>
+                    </div>
+                </div>
+                <div class="row mt-6">
+                    <div class="col-md-4">
+                        <label class="form-label">Profile Photo (optional)</label>
+                        <input class="form-control" type="file" wire:model="photo" accept="image/*">
+                        @error('photo') <span class="text-danger small">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">NRC Front (optional)</label>
+                        <input class="form-control" type="file" wire:model="nrc_front" accept="image/*">
+                        @error('nrc_front') <span class="text-danger small">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">NRC Back (optional)</label>
+                        <input class="form-control" type="file" wire:model="nrc_back" accept="image/*">
+                        @error('nrc_back') <span class="text-danger small">{{ $message }}</span> @enderror
+                    </div>
+                </div>
+                <div class="row mt-6">
+                    <div class="col-md-12">
+                        <label class="form-label">Supporting Documents (optional)</label>
+                        <input class="form-control" type="file" wire:model="documents" multiple
+                            accept=".pdf,image/*">
+                        <small class="text-muted">You may upload PDFs or images. Max 5MB each.</small>
+                        @error('documents.*') <span class="text-danger small">{{ $message }}</span> @enderror
                     </div>
                 </div>
                 <div class="row mt-4">

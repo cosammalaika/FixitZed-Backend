@@ -75,7 +75,40 @@
     <!-- dashboard init -->
     <script src="{{ asset('assets/js/pages/dashboard.init.js') }}"></script>
 
+    <script>
+        // Apply persisted theme before main app script
+        (function () {
+            try {
+                var mode = localStorage.getItem('fixitzed-layout-mode');
+                if (mode === 'dark' || mode === 'light') {
+                    document.body.setAttribute('data-layout-mode', mode);
+                    document.body.setAttribute('data-topbar', mode);
+                    document.body.setAttribute('data-sidebar', mode);
+                }
+            } catch (e) {}
+        })();
+    </script>
+
     <script src="{{ asset('assets/js/app.js') }}"></script>
+
+    <script>
+        // Persist theme on toggle and re-apply after Livewire navigation
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('#mode-setting-btn')) return;
+            setTimeout(function () {
+                var mode = document.body.getAttribute('data-layout-mode') === 'dark' ? 'dark' : 'light';
+                try { localStorage.setItem('fixitzed-layout-mode', mode); } catch (e) {}
+            }, 0);
+        });
+        window.addEventListener('livewire:navigated', function () {
+            var mode = localStorage.getItem('fixitzed-layout-mode');
+            if (mode === 'dark' || mode === 'light') {
+                document.body.setAttribute('data-layout-mode', mode);
+                document.body.setAttribute('data-topbar', mode);
+                document.body.setAttribute('data-sidebar', mode);
+            }
+        });
+    </script>
       <!-- choices js -->
         <script src="assets/libs/choices.js/public/assets/scripts/choices.min.js"></script>
 

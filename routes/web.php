@@ -7,6 +7,7 @@ use App\Livewire\Earning\{EarningCreate, EarningEdit, EarningIndex, EarningShow}
 use App\Livewire\Fixer\{FixerCreate, FixerEdit, FixerIndex, FixerShow};
 use App\Livewire\Location\{LocationCreate, LocationEdit, LocationIndex, LocationShow};
 use App\Livewire\Notification\{NotificationCreate, NotificationEdit, NotificationIndex, NotificationShow};
+use App\Livewire\LocationOption\LocationOptionIndex;
 use App\Livewire\Payment\{PaymentCreate, PaymentEdit, PaymentIndex, PaymentShow};
 use App\Livewire\Rating\{RatingCreate, RatingEdit, RatingIndex, RatingShow};
 use App\Livewire\Review\{ReviewCreate, ReviewEdit, ReviewIndex, ReviewShow};
@@ -74,6 +75,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('notification/create', NotificationCreate::class)->name(name: 'notification.create');
     Route::get('notification/{id}/edit', NotificationEdit::class)->name('notification.edit');
     Route::get('notification/{id}', NotificationShow::class)->name('notification.show');
+
+    // Managed Locations (Location Options)
+    Route::get('location-options', LocationOptionIndex::class)->name('location-options.index');
 
     Route::get('payment', PaymentIndex::class)->name('payment.index');
     Route::get('payment/create', PaymentCreate::class)->name(name: 'payment.create');

@@ -77,12 +77,15 @@
                 <button type="button" class="btn header-item bg-soft-light border-start border-end"
                     id="page-header-user-dropdown" data-bs-toggle="dropdown" aria-haspopup="true"
                     aria-expanded="false">
-                    <span class="rounded-circle header-profile-user">
-                        {{ auth()->user()->initials() }}
-                    </span>
-                    <span
-                        class="d-none d-xl-inline-block ms-1 fw-medium">{{ auth()->user()->first_name . ' ' . auth()->user()->last_name }}
-                    </span>
+                    @php($auth = auth()->user())
+                    @php($photo = $auth?->profile_photo_path)
+                    @php($hasPhoto = $photo && \Illuminate\Support\Facades\Storage::disk('public')->exists($photo))
+                    @if ($hasPhoto)
+                        <img src="{{ asset('storage/' . $photo) }}" alt="Profile Photo"
+                            class="rounded-circle header-profile-user" />
+                    @else
+                        <span class="d-none d-xl-inline-block ms-1 fw-medium">{{ $auth->first_name . ' ' . $auth->last_name }}</span>
+                    @endif
                     <i class="mdi mdi-chevron-down d-none d-xl-inline-block"></i>
                 </button>
                 <div class="dropdown-menu dropdown-menu-end">

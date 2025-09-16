@@ -40,7 +40,8 @@ new #[Layout('components.layouts.auth')] class extends Component {
         RateLimiter::clear($this->throttleKey());
         Session::regenerate();
 
-        $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
+        // Redirect to dashboard with full page load to ensure assets init
+        $this->redirectRoute('dashboard');
     }
 
     /**
@@ -133,9 +134,26 @@ new #[Layout('components.layouts.auth')] class extends Component {
         <h5 class="mb-0">Welcome Back !</h5>
         <p class="text-muted mt-2">Please Sign in</p>
     </div>
+    @if ($errors->any())
+        <div id="login-error-alert"
+            class="alert alert-danger alert-top-border alert-dismissible fade show" role="alert">
+            <i class="mdi mdi-alert-outline me-3 align-middle text-danger"></i>
+            <strong>Login error</strong> - {{ $errors->first('email') ?? $errors->first() }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <script>
+            setTimeout(() => {
+                const alert = document.getElementById('login-error-alert');
+                if (alert) {
+                    let bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+                    bsAlert.close();
+                }
+            }, 4000);
+        </script>
+    @endif
     <form class="mt-4 pt-2" wire:submit="login">
         <div class="mb-3">
-            <label class="form-label">Username</label>
+            <label class="form-label">Email</label>
             <input type="text" class="form-control" wire:model="email" placeholder="Enter username">
         </div>
         <div class="mb-3">
@@ -163,7 +181,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
         <div class="row mb-4">
             <div class="col">
                 <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="remember-check">
+                    <input class="form-check-input" type="checkbox" id="remember-check" wire:model="remember" name="remember">
                     <label class="form-check-label" for="remember-check">
                         Remember me
                     </label>

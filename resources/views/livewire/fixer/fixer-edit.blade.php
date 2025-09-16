@@ -11,7 +11,7 @@
                 <div class="row g-4">
                     <div class="col-md-6">
                         <label for="user_id" class="form-label fw-semibold">User</label>
-                        <select wire:model="user_id" id="user_id" class="form-control" required>
+                        <select wire:model="user_id" id="user_id" class="form-control" disabled>
                             <option value="">-- Choose User --</option>
                             @foreach ($users as $user)
                                 <option value="{{ $user->id }}">
@@ -26,7 +26,8 @@
 
                     <div class="col-md-6">
                         <label for="status" class="form-label fw-semibold">Status</label>
-                        <select wire:model="status" id="status" class="form-control">
+                        <select wire:model="status" id="status" class="form-control" data-trigger required>
+                            <option value="" disabled>-- Select Status --</option>
                             <option value="pending">Pending</option>
                             <option value="approved">Approved</option>
                             <option value="rejected">Rejected</option>
@@ -48,12 +49,13 @@
                     </div>
                 </div>
                 <div class="col-md-12 mt-3">
-                    <label for="selected_services" class="form-label fw-semibold">Services</label>
-                    <select wire:model="selected_services" id="selected_services" class="form-select" multiple>
+                    <label for="selected_services" class="form-label fw-semibold">Services Skilled In</label>
+                    <select wire:model="selected_services" id="selected_services" class="form-multi-select" multiple data-trigger>
                         @foreach ($services as $service)
-                            <option value="{{ $service->id }}">{{ $service->name }}</option>
+                            <option value="{{ $service->id }}" @selected(in_array($service->id, $selected_services ?? []))>{{ $service->name }}</option>
                         @endforeach
                     </select>
+                    <small class="text-muted">Hold Ctrl/Cmd to select multiple.</small>
                     @error('selected_services')
                         <div class="text-danger small">{{ $message }}</div>
                     @enderror

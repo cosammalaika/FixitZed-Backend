@@ -19,11 +19,16 @@ class FixerCreate extends Component
         'user_id' => 'required|exists:users,id',
         'bio' => 'nullable|string|max:1000',
         'status' => 'required|in:pending,approved,rejected',
+        'selected_services' => 'array',
+        'selected_services.*' => 'exists:services,id',
     ];
 
     public function mount()
     {
-        $this->users = User::where('status', 'Active')->get();
+        // Only show users who are not already fixers
+        $this->users = User::where('status', 'Active')
+            ->whereDoesntHave('fixer')
+            ->get();
         $this->allServices = Service::all();
     }
 
@@ -38,6 +43,13 @@ class FixerCreate extends Component
         ]);
 
         $fixer->services()->sync($this->selected_services);
+
+        // Update the user's type to Fixer
+        $user = User::find($this->user_id);
+        if ($user && $user->user_type !== 'Fixer') {
+            $user->user_type = 'Fixer';
+            $user->save();
+        }
 
         log_user_action('created fixer', "Fixer ID: {$fixer->id}, User ID: {$this->user_id}");
 

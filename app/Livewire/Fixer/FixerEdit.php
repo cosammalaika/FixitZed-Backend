@@ -31,10 +31,17 @@ class FixerEdit extends Component
 
         $this->user_id = $fixer->user_id;
         $this->bio = $fixer->bio;
-        $this->status = $fixer->status;
+        $this->status = strtolower($fixer->status ?? 'pending');
         $this->selected_services = $fixer->services->pluck('id')->toArray();
 
-        $this->users = User::where('status', 'Active')->get();
+        // Allow selecting the current user or any user who isn't already a fixer
+        $currentUserId = $this->user_id;
+        $this->users = User::where('status', 'Active')
+            ->where(function ($q) use ($currentUserId) {
+                $q->whereDoesntHave('fixer')
+                  ->orWhere('id', $currentUserId);
+            })
+            ->get();
         $this->services = Service::all();
     }
 
@@ -43,6 +50,7 @@ class FixerEdit extends Component
         $this->validate();
 
         $fixer = Fixer::findOrFail($this->fixerId);
+        $originalUserId = $fixer->user_id;
 
         $fixer->update([
             'user_id' => $this->user_id,
@@ -52,6 +60,21 @@ class FixerEdit extends Component
 
         // Sync selected services (many-to-many)
         $fixer->services()->sync($this->selected_services);
+
+        // If the assigned user changed, update user types accordingly
+        if ($originalUserId != $this->user_id) {
+            $oldUser = User::find($originalUserId);
+            if ($oldUser && $oldUser->user_type === 'Fixer') {
+                $oldUser->user_type = 'Customer';
+                $oldUser->save();
+            }
+
+            $newUser = User::find($this->user_id);
+            if ($newUser && $newUser->user_type !== 'Fixer') {
+                $newUser->user_type = 'Fixer';
+                $newUser->save();
+            }
+        }
 
         log_user_action('updated fixer', "Updated Fixer ID: {$fixer->id}");
 

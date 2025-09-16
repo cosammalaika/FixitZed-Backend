@@ -55,6 +55,18 @@ class ServiceRequestEdit extends Component
             'location' => 'nullable|string',
         ]);
 
+        // Ensure the selected fixer is approved and linked to the selected service
+        $isQualified = Fixer::where('id', $this->fixer_id)
+            ->where('status', 'approved')
+            ->whereHas('services', function ($q) {
+                $q->where('services.id', $this->service_id);
+            })
+            ->exists();
+        if (!$isQualified) {
+            $this->addError('fixer_id', 'Selected fixer is not qualified for the chosen service.');
+            return;
+        }
+
         $serviceRequest = ServiceRequest::findOrFail($this->serviceRequestId);
 
         if ($this->status === 'completed') {

@@ -5,12 +5,19 @@ namespace App\Livewire\Users;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Spatie\Permission\Models\Role;
 
 class UserEdit extends Component
 {
+    use WithFileUploads;
     public $user;
     public $first_name, $last_name, $username, $contact_number, $user_type, $status, $email, $address, $allRoles, $roles = [];
+    // Uploads (optional updates)
+    public $photo; // profile image
+    public $nrc_front;
+    public $nrc_back;
+    public $documents = [];
 
     public function mount($id)
     {
@@ -43,6 +50,11 @@ class UserEdit extends Component
             'user_type' => 'required|in:Customer, Fixer, Admin, Support',
             'status' => 'required|in:Active,Inactive',
             'address' => 'nullable|string|max:1000',
+            // files (increase limits to handle phone camera sizes)
+            'photo' => 'nullable|mimes:jpg,jpeg,png,webp|max:10240',
+            'nrc_front' => 'nullable|mimes:jpg,jpeg,png,webp|max:10240',
+            'nrc_back' => 'nullable|mimes:jpg,jpeg,png,webp|max:10240',
+            'documents.*' => 'nullable|file|max:20480|mimes:pdf,jpg,jpeg,png,webp',
             // 'password' => 'nullable|same:confirm_password|min:6',
         ]);
 
@@ -60,6 +72,31 @@ class UserEdit extends Component
         // }
 
         $this->user->save();
+
+        // Handle optional file updates
+        $baseDir = 'users/' . $this->user->id;
+        $updates = [];
+        if ($this->photo) {
+            $updates['profile_photo_path'] = $this->photo->store($baseDir, 'public');
+        }
+        if ($this->nrc_front) {
+            $updates['nrc_front_path'] = $this->nrc_front->store($baseDir, 'public');
+        }
+        if ($this->nrc_back) {
+            $updates['nrc_back_path'] = $this->nrc_back->store($baseDir, 'public');
+        }
+        if (is_array($this->documents) && count($this->documents)) {
+            $existing = is_array($this->user->documents) ? $this->user->documents : [];
+            foreach ($this->documents as $doc) {
+                if ($doc) {
+                    $existing[] = $doc->store($baseDir . '/documents', 'public');
+                }
+            }
+            $updates['documents'] = $existing;
+        }
+        if (!empty($updates)) {
+            $this->user->update($updates);
+        }
 
         $this->user->syncRoles($this->roles);
         log_user_action('updated user', "User ID: {$this->user->id}, Name: {$this->user->first_name} {$this->user->last_name}");

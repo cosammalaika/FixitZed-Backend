@@ -148,5 +148,6 @@ class OtherData extends Seeder
             'message' => 'You have a new service request scheduled for tomorrow.',
             'read' => false,
         ]);
+        $this->command->info('OtherData seeded successfully.');
     }
 }

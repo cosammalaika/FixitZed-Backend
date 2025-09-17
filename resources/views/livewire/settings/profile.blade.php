@@ -92,10 +92,17 @@ new class extends Component {
 
             @php
                 $user = auth()->user();
-                $serviceRequestBuilder = $user && method_exists($user, 'serviceRequests') ? $user->serviceRequests() : null;
-                $completedCount = $serviceRequestBuilder ? (clone $serviceRequestBuilder)->where('status', 'completed')->count() : 0;
-                $activeCount = $serviceRequestBuilder ? (clone $serviceRequestBuilder)->whereIn('status', ['pending', 'accepted', 'in_progress'])->count() : 0;
-                $recentRequests = $serviceRequestBuilder ? (clone $serviceRequestBuilder)->latest()->take(5)->get() : collect();
+                $serviceRequestBuilder =
+                    $user && method_exists($user, 'serviceRequests') ? $user->serviceRequests() : null;
+                $completedCount = $serviceRequestBuilder
+                    ? (clone $serviceRequestBuilder)->where('status', 'completed')->count()
+                    : 0;
+                $activeCount = $serviceRequestBuilder
+                    ? (clone $serviceRequestBuilder)->whereIn('status', ['pending', 'accepted', 'in_progress'])->count()
+                    : 0;
+                $recentRequests = $serviceRequestBuilder
+                    ? (clone $serviceRequestBuilder)->latest()->take(5)->get()
+                    : collect();
             @endphp
 
             <div class="row g-4">
@@ -107,17 +114,32 @@ new class extends Component {
                             </div>
                             <div class="d-flex align-items-center">
                                 <div class="me-3">
-                                    <span class="avatar avatar-xxl rounded-circle border border-white border-opacity-25">
-                                        <img src="{{ asset('assets/images/users/avatar-2.jpg') }}" alt="profile"
-                                            class="img-fluid rounded-circle">
+                                    <span
+                                        class="avatar avatar-xxl rounded-circle border border-white border-opacity-25 d-flex align-items-center justify-content-center overflow-hidden"
+                                        style="width:100px; height:100px;">
+                                        @php($photo = $user?->profile_photo_path)
+
+                                        @if ($photo)
+                                            <img src="{{ asset('storage/' . ltrim($photo, '/')) }}" alt="Profile Photo"
+                                                class="rounded-circle"
+                                                style="width:100%; height:100%; object-fit:cover;">
+                                        @else
+                                            <span class="fw-bold text-white"
+                                                style="font-size:32px; background:#6c757d; width:100%; height:100%; display:flex; align-items:center; justify-content:center; border-radius:50%;">
+                                                {{ strtoupper(substr($user->first_name, 0, 1) . substr($user->last_name, 0, 1)) }}
+                                            </span>
+                                        @endif
                                     </span>
                                 </div>
+
+
                                 <div>
-                                    <h3 class="fw-semibold mb-1">{{ $user->first_name }} {{ $user->last_name }}</h3>
+                                    <h3 class="fw-semibold mb-1 text-white">{{ $user->first_name }} {{ $user->last_name }}</h3>
                                     <div class="badge bg-light text-primary fw-semibold">
                                         {{ $user->user_type ?? 'Member' }}
                                     </div>
-                                    <p class="mb-0 mt-2 text-white-50"><i class="bx bx-envelope me-1"></i>{{ $user->email }}</p>
+                                    <p class="mb-0 mt-2 text-white-50"><i
+                                            class="bx bx-envelope me-1"></i>{{ $user->email }}</p>
                                 </div>
                             </div>
                         </div>
@@ -140,9 +162,14 @@ new class extends Component {
                             <div class="mb-4">
                                 <h6 class="fw-semibold text-uppercase text-muted mb-3">Contact Information</h6>
                                 <ul class="list-unstyled mb-0 small">
-                                    <li class="mb-2"><i class="bx bx-phone me-2 text-primary"></i>{{ $user->contact_number ?? 'Not provided' }}</li>
-                                    <li class="mb-2"><i class="bx bx-map me-2 text-primary"></i>{{ $user->address ?? 'Address not set' }}</li>
-                                    <li class="mb-0"><i class="bx bx-time me-2 text-primary"></i>Joined {{ optional($user->created_at)->format('d M, Y') }}</li>
+                                    <li class="mb-2"><i
+                                            class="bx bx-phone me-2 text-primary"></i>{{ $user->contact_number ?? 'Not provided' }}
+                                    </li>
+                                    <li class="mb-2"><i
+                                            class="bx bx-map me-2 text-primary"></i>{{ $user->address ?? 'Address not set' }}
+                                    </li>
+                                    <li class="mb-0"><i class="bx bx-time me-2 text-primary"></i>Joined
+                                        {{ optional($user->created_at)->format('d M, Y') }}</li>
                                 </ul>
                             </div>
 
@@ -154,13 +181,15 @@ new class extends Component {
                                 </div>
                                 <div class="d-flex justify-content-between mb-2">
                                     <span class="text-muted">Email Verified</span>
-                                    <span class="fw-semibold {{ $user->email_verified_at ? 'text-success' : 'text-warning' }}">
+                                    <span
+                                        class="fw-semibold {{ $user->email_verified_at ? 'text-success' : 'text-warning' }}">
                                         {{ $user->email_verified_at ? 'Yes' : 'Pending' }}
                                     </span>
                                 </div>
                                 <div class="d-flex justify-content-between">
                                     <span class="text-muted">Preferred Language</span>
-                                    <span class="fw-semibold">{{ strtoupper($user->preferred_locale ?? config('app.locale')) }}</span>
+                                    <span
+                                        class="fw-semibold">{{ strtoupper($user->preferred_locale ?? config('app.locale')) }}</span>
                                 </div>
                             </div>
                         </div>
@@ -197,16 +226,16 @@ new class extends Component {
                                     <form wire:submit="updateProfileInformation" class="needs-validation" novalidate>
                                         <div class="row g-3">
                                             <div class="col-md-6">
-                                                <flux:input wire:model="first_name" :label="__('First Name')" type="text"
-                                                    required autocomplete="given-name" />
+                                                <flux:input wire:model="first_name" :label="__('First Name')"
+                                                    type="text" required autocomplete="given-name" />
                                             </div>
                                             <div class="col-md-6">
-                                                <flux:input wire:model="last_name" :label="__('Last Name')" type="text"
-                                                    required autocomplete="family-name" />
+                                                <flux:input wire:model="last_name" :label="__('Last Name')"
+                                                    type="text" required autocomplete="family-name" />
                                             </div>
                                             <div class="col-12">
-                                                <flux:input wire:model="email" :label="__('Email Address')" type="email"
-                                                    required autocomplete="email" />
+                                                <flux:input wire:model="email" :label="__('Email Address')"
+                                                    type="email" required autocomplete="email" />
                                             </div>
                                         </div>
 
@@ -224,7 +253,8 @@ new class extends Component {
                                                 <div class="d-flex align-items-center">
                                                     <i class="bx bx-error-circle fs-4 me-2"></i>
                                                     <div>
-                                                        <p class="mb-1">{{ __('Your email address is unverified.') }}</p>
+                                                        <p class="mb-1">
+                                                            {{ __('Your email address is unverified.') }}</p>
                                                         <flux:link class="text-decoration-underline"
                                                             wire:click.prevent="resendVerificationNotification">
                                                             {{ __('Click here to re-send the verification email.') }}
@@ -245,7 +275,8 @@ new class extends Component {
                                     aria-labelledby="account-security-tab">
                                     <div class="border rounded p-4 bg-light">
                                         <h5 class="fw-semibold mb-3">Update Password</h5>
-                                        <p class="text-muted mb-4">Keep your account secure by using a strong password and
+                                        <p class="text-muted mb-4">Keep your account secure by using a strong password
+                                            and
                                             updating it regularly.</p>
                                         @livewire('settings.password')
                                     </div>
@@ -266,9 +297,11 @@ new class extends Component {
                                             <tbody>
                                                 @forelse ($recentRequests as $request)
                                                     <tr>
-                                                        <td>{{ optional($request->service)->name ?? 'Service Request' }}</td>
+                                                        <td>{{ optional($request->service)->name ?? 'Service Request' }}
+                                                        </td>
                                                         <td>
-                                                            <span class="badge bg-light text-capitalize text-dark border">
+                                                            <span
+                                                                class="badge bg-light text-capitalize text-dark border">
                                                                 {{ str_replace('_', ' ', $request->status) }}
                                                             </span>
                                                         </td>

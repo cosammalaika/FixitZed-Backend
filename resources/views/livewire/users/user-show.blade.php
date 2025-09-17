@@ -52,17 +52,20 @@
                     <label class="form-label">Profile Photo</label>
                     <div>
                         @if ($user->profile_photo_path)
-                            <img src="{{ asset('storage/' . $user->profile_photo_path) }}" alt="Profile Photo" class="img-thumbnail" style="max-height: 140px;">
+                            <img src="{{ asset('storage/' . ltrim($user->profile_photo_path, '/')) }}"
+                                alt="Profile Photo" class="img-thumbnail" style="max-height: 140px;">
                         @else
                             <span class="text-muted">No photo</span>
                         @endif
                     </div>
                 </div>
+
                 <div class="col-md-4 mb-4">
                     <label class="form-label">NRC Front</label>
                     <div>
                         @if ($user->nrc_front_path)
-                            <img src="{{ asset('storage/' . $user->nrc_front_path) }}" alt="NRC Front" class="img-thumbnail" style="max-height: 140px;">
+                            <img src="{{ Storage::disk('public')->url($user->nrc_front_path) }}" alt="NRC Front"
+                                class="img-thumbnail" style="max-height: 140px;">
                         @else
                             <span class="text-muted">No image</span>
                         @endif
@@ -72,7 +75,8 @@
                     <label class="form-label">NRC Back</label>
                     <div>
                         @if ($user->nrc_back_path)
-                            <img src="{{ asset('storage/' . $user->nrc_back_path) }}" alt="NRC Back" class="img-thumbnail" style="max-height: 140px;">
+                            <img src="{{ Storage::disk('public')->url($user->nrc_back_path) }}" alt="NRC Back"
+                                class="img-thumbnail" style="max-height: 140px;">
                         @else
                             <span class="text-muted">No image</span>
                         @endif
@@ -87,7 +91,8 @@
                     @if (count($docs))
                         <ul class="mb-0">
                             @foreach ($docs as $path)
-                                <li><a href="{{ asset('storage/' . $path) }}" target="_blank">{{ basename($path) }}</a></li>
+                                <li><a href="{{ Storage::disk('public')->url($path) }}"
+                                        target="_blank">{{ basename($path) }}</a></li>
                             @endforeach
                         </ul>
                     @else

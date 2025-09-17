@@ -244,7 +244,7 @@ new class extends Component {
                                                 <i class="bx bx-save me-1"></i> Save Changes
                                             </button>
                                             <x-action-message class="text-success" on="profile-updated">
-                                                {{ __('Profile updated successfully.') }}
+                                                Profile updated successfully.
                                             </x-action-message>
                                         </div>
 
@@ -254,16 +254,16 @@ new class extends Component {
                                                     <i class="bx bx-error-circle fs-4 me-2"></i>
                                                     <div>
                                                         <p class="mb-1">
-                                                            {{ __('Your email address is unverified.') }}</p>
+                                                            Your email address is unverified.</p>
                                                         <flux:link class="text-decoration-underline"
                                                             wire:click.prevent="resendVerificationNotification">
-                                                            {{ __('Click here to re-send the verification email.') }}
+                                                            Click here to re-send the verification email.
                                                         </flux:link>
                                                     </div>
                                                 </div>
                                                 @if (session('status') === 'verification-link-sent')
                                                     <span class="d-block mt-2 text-success fw-semibold">
-                                                        {{ __('A new verification link has been sent to your email address.') }}
+                                                        A new verification link has been sent to your email address.
                                                     </span>
                                                 @endif
                                             </div>

@@ -36,4 +36,14 @@ class Fixer extends Model
     {
         return $this->hasMany(Earning::class);
     }
+
+    public function wallet()
+    {
+        return $this->hasOne(FixerWallet::class);
+    }
+
+    public function subscriptions()
+    {
+        return $this->hasMany(FixerSubscription::class);
+    }
 }

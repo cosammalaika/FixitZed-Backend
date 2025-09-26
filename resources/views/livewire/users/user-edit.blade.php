@@ -38,11 +38,6 @@
                 </div>
                 <div class="row mt-6">
                     <div class="col-md-6">
-                        <label class="form-label" for="default-input">Username</label>
-                        <input class="form-control" type="text" wire:model="username" placeholder="Username"
-                            required>
-                    </div>
-                    <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label">Status</label>
                             <select class="form-select"  wire:model.defer="status">
@@ -52,7 +47,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="row mt-6">
                     <div class="col-md-4">
                         <label class="form-label">Profile Photo</label>

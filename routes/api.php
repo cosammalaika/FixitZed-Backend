@@ -14,6 +14,8 @@ use App\Http\Controllers\Api\RatingController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\SubscriptionController;
+use App\Http\Controllers\Api\FixerRequestController;
 
 // Guest routes (no authentication required)
 Route::post('login', [AuthController::class, 'login']);
@@ -28,16 +30,27 @@ Route::get('services/{service}', [ServiceController::class, 'show']);
 Route::get('subcategories', [SubcategoryController::class, 'index']);
 Route::get('subcategories/{subcategory}', [SubcategoryController::class, 'show']);
 Route::get('fixers', [FixerController::class, 'index']);
+Route::get('fixers/top', [FixerController::class, 'top']);
 Route::get('fixers/{fixer}', [FixerController::class, 'show']);
 Route::get('services/{service}/reviews', [ReviewController::class, 'index']);
+Route::get('coupons', [CouponController::class, 'index']);
+Route::get('coupons/{coupon}', [CouponController::class, 'show']);
 Route::post('coupons/validate', [CouponController::class, 'validateCode']);
 // Location options for dropdown
 Route::get('location-options', [LocationOptionController::class, 'index']);
 
+// Subscription plans (public)
+Route::get('subscription/plans', [SubscriptionController::class, 'plans']);
+
 // Authenticated routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('me', [AuthController::class, 'me']);
+    Route::patch('me', [AuthController::class, 'updateMe']);
     Route::post('logout', [AuthController::class, 'logout']);
+
+    // Account security
+    Route::post('password', [AuthController::class, 'changePassword']);
+    Route::patch('me/password', [AuthController::class, 'changePassword']);
 
     // Service Requests for the authenticated user
     Route::get('requests', [ServiceRequestController::class, 'index']);
@@ -70,4 +83,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // Payments
     Route::get('requests/{serviceRequest}/payment', [PaymentController::class, 'show']);
     Route::post('requests/{serviceRequest}/payment', [PaymentController::class, 'store']);
+
+    // Fixer wallet and subscriptions
+    Route::get('fixer/wallet', [SubscriptionController::class, 'myWallet']);
+    Route::post('subscription/checkout', [SubscriptionController::class, 'checkout']);
+    Route::post('subscription/webhook', [SubscriptionController::class, 'webhook']);
+
+    // Fixer requests
+    Route::get('fixer/requests', [FixerRequestController::class, 'index']);
+    Route::post('service-requests/{serviceRequest}/accept', [FixerRequestController::class, 'accept']);
 });

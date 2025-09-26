@@ -59,7 +59,9 @@
                                  <tr>
                                      <th>#</th>
                                      <th>Code</th>
+                                     <th>Title</th>
                                      <th>Discount Percent</th>
+                                     <th>Discount Amount</th>
                                      <th>Valid From</th>
                                      <th>Valid To</th>
                                      <th>Usage Limit</th>
@@ -74,7 +76,9 @@
                                      <tr>
                                          <td>{{ $index + 1 }}</td>
                                          <td>{{ $coupon->code }}</td>
+                                         <td>{{ $coupon->title }}</td>
                                          <td>{{ $coupon->discount_percent }}%</td>
+                                         <td>{{ $coupon->discount_amount }}</td>
                                          <td>{{ $coupon->valid_from }}</td>
                                          <td>{{ $coupon->valid_to }}</td>
                                          <td>{{ $coupon->usage_limit }}</td>

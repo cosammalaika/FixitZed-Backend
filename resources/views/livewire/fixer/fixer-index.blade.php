@@ -60,7 +60,9 @@
                                      <th>#</th>
                                      <th>Name</th>
                                      <th>Email</th>
-                                     <th>Status</th>
+                                    <th>Status</th>
+                                    <th>Subscription</th>
+                                    <th>Coins</th>
                                      <th>Rating</th>
                                      <th>Bio</th>
                                      <th>Services</th>
@@ -85,6 +87,13 @@
                                                  {{ $fixer->status }}
                                              </span>
                                          </td>
+                                         <td class="py-2 px-4">
+                                             @php($sub = optional($fixer->wallet)->subscription_status ?? 'pending')
+                                             <span class="badge rounded-pill {{ $sub === 'approved' ? 'badge-soft-success' : 'badge-soft-warning' }}">
+                                                 {{ ucfirst($sub) }}
+                                             </span>
+                                         </td>
+                                         <td class="py-2 px-4">{{ optional($fixer->wallet)->coin_balance ?? 0 }}</td>
                                          <td>{{ number_format($fixer->rating_avg, 1) }}/5</td>
                                          <td>{{ Str::limit($fixer->bio, 40) ?? 'N/A' }}</td>
                                          <td>

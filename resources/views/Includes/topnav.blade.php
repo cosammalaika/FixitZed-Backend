@@ -119,6 +119,19 @@
                     </li>
 
                     <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle arrow-none" href="{{ asset('#') }}" id="topnav-subscriptions"
+                            role="button">
+                            <span data-key="t-elements">Subscriptions</span>
+                            <div class="arrow-down"></div>
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="topnav-subscriptions">
+                            <a href="{{ route('subscriptions.plans') }}" class="dropdown-item" data-key="t-chat">Plans</a>
+                            <a href="{{ route('subscriptions.purchases') }}" class="dropdown-item" data-key="t-chat">Purchases</a>
+                            <a href="{{ route('wallet.index') }}" class="dropdown-item" data-key="t-chat">Wallets</a>
+                        </div>
+                    </li>
+
+                    <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle arrow-none" href="{{ asset('#') }}" id="topnav-pages"
                             role="button">
                             {{-- <i data-feather="payments"></i> --}}

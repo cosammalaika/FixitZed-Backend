@@ -6,7 +6,7 @@
              <div class="col-12">
                  <div class="card">
                      <div class="card-header d-flex justify-content-between align-items-center">
-                         <h4 class="card-title mb-0">Services List</h4>
+                         <h4 class="card-title mb-0">Category List</h4>
 
                          <button type="button" class="btn btn-primary waves-effect waves-light" data-bs-toggle="modal"
                              data-bs-target="#createRoleModal">

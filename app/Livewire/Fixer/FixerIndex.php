@@ -12,7 +12,7 @@ class FixerIndex extends Component
         $fixers = Fixer::whereHas('user', function ($query) {
             $query->where('status', 'Active');
         })
-            ->with(['user', 'services'])
+            ->with(['user', 'services', 'wallet'])
             ->latest()
             ->get();
 

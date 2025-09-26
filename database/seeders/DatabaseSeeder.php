@@ -60,5 +60,8 @@ class DatabaseSeeder extends Seeder
 
         // Seed Zambian users
         $this->call(ZambianUsersSeeder::class);
+
+        // Seed coupons (Zambia-tailored)
+        $this->call(CouponSeeder::class);
     }
 }

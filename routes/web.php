@@ -16,6 +16,8 @@ use App\Livewire\Role\{RoleCreate, RoleEdit, RoleIndex, RoleShow};
 use App\Livewire\Service\{ServiceCreate, ServiceEdit, ServiceIndex, ServiceShow};
 use App\Livewire\ServiceRequest\{ServiceRequestCreate, ServiceRequestEdit, ServiceRequestIndex, ServiceRequestShow};
 use App\Livewire\Subcategory\{SubcategoryCreate, SubcategoryEdit, SubcategoryIndex, SubcategoryShow};
+use App\Livewire\Subscription\{PlanIndex as SubscriptionPlanIndex, SubscriptionIndex as SubscriptionPurchaseIndex};
+use App\Livewire\Wallet\WalletIndex as WalletIndex;
 use App\Livewire\UserLog\UserLogIndex;
 use App\Livewire\Users\{UserCreate, UserEdit, UserIndex, UserShow};
 use App\Http\Controllers\Auth\LockController;
@@ -101,6 +103,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('review/create', ReviewCreate::class)->name(name: 'review.create');
     Route::get('review/{id}/edit', ReviewEdit::class)->name('review.edit');
     Route::get('review/{id}', ReviewShow::class)->name('review.show');
+
+    // Subscriptions (admin)
+    Route::get('subscriptions/plans', SubscriptionPlanIndex::class)->name('subscriptions.plans');
+    Route::get('subscriptions/purchases', SubscriptionPurchaseIndex::class)->name('subscriptions.purchases');
+    Route::get('wallets', WalletIndex::class)->name('wallet.index');
 
     Route::get('subcategory', action: SubcategoryIndex::class)->name('subcategory.index');
     Route::get('subcategory/create', SubcategoryCreate::class)->name(name: 'subcategory.create');

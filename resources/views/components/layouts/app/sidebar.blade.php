@@ -155,6 +155,13 @@
                     :current="request()->routeIs('services.index')" wire:navigate>{{ __('Services') }}</flux:navlist.item>
                 @endif
 
+                <flux:navlist.item icon="banknotes" :href="route('subscriptions.plans')"
+                    :current="request()->routeIs('subscriptions.plans')" wire:navigate>{{ __('Subscription Plans') }}</flux:navlist.item>
+                <flux:navlist.item icon="receipt-percent" :href="route('subscriptions.purchases')"
+                    :current="request()->routeIs('subscriptions.purchases')" wire:navigate>{{ __('Purchases') }}</flux:navlist.item>
+                <flux:navlist.item icon="wallet" :href="route('wallet.index')"
+                    :current="request()->routeIs('wallet.index')" wire:navigate>{{ __('Wallets') }}</flux:navlist.item>
+
             </flux:navlist.group>
         </flux:navlist>
 

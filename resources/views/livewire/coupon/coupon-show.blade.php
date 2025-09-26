@@ -6,6 +6,10 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-4">
+                        <strong>Title</strong>
+                        <p> {{ $coupon->title }}</p>
+                    </div>
+                    <div class="mb-4">
                         <strong>Code</strong>
                         <p> {{ $coupon->code }}</p>
                     </div>
@@ -14,11 +18,19 @@
                         <p>{{ $coupon->discount_percent }}%</p>
                     </div>
                     <div class="mb-4">
+                        <strong>Discount Amount</strong>
+                        <p>{{ $coupon->discount_amount }}</p>
+                    </div>
+                    <div class="mb-4">
                         <strong>Valid From</strong>
                         <p>{{ $coupon->valid_from }}</p>
                     </div>
                 </div>
                 <div class="col-md-6">
+                    <div class="mb-4">
+                        <strong>Description</strong>
+                        <p>{{ $coupon->description }}</p>
+                    </div>
 
                     <div class="mb-4">
                         <strong>Usage Limit</strong>

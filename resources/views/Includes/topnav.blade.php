@@ -82,9 +82,8 @@
                             <div class="arrow-down"></div>
                         </a>
                         <div class="dropdown-menu" aria-labelledby="topnav-pages">
-
-                            <a href="{{ route('payment.index') }}" class="dropdown-item"
-                                data-key="t-calendar">Payments</a>
+                            <a href="{{ route('payment.index') }}" class="dropdown-item" data-key="t-calendar">Payments</a>
+                            <a href="{{ route('payment-methods.index') }}" class="dropdown-item" data-key="t-chat">Payment Methods</a>
                             <a href="{{ route('earning.index') }}" class="dropdown-item" data-key="t-chat">Earnings</a>
                         </div>
                     </li>

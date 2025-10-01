@@ -61,7 +61,7 @@ class ServiceRequestController extends Controller
         $validated = $request->validate([
             'status' => [
                 'sometimes',
-                Rule::in(['pending', 'accepted', 'completed', 'cancelled'])
+                Rule::in(['pending', 'accepted', 'completed', 'cancelled', 'awaiting_payment'])
             ],
             'scheduled_at' => ['sometimes', 'date'],
             'location' => ['sometimes', 'string', 'max:255'],
@@ -80,4 +80,3 @@ class ServiceRequestController extends Controller
         abort_if($serviceRequest->customer_id !== $request->user()->id, 403, 'Forbidden');
     }
 }
-

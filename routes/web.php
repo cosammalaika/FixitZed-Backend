@@ -10,6 +10,7 @@ use App\Livewire\Notification\{NotificationCreate, NotificationEdit, Notificatio
 use App\Livewire\LocationOption\LocationOptionIndex;
 use App\Livewire\Reportd;
 use App\Livewire\Payment\{PaymentCreate, PaymentEdit, PaymentIndex, PaymentShow};
+use App\Livewire\PaymentMethod\PaymentMethodIndex;
 use App\Livewire\Rating\{RatingCreate, RatingEdit, RatingIndex, RatingShow};
 use App\Livewire\Review\{ReviewCreate, ReviewEdit, ReviewIndex, ReviewShow};
 use App\Livewire\Role\{RoleCreate, RoleEdit, RoleIndex, RoleShow};
@@ -93,6 +94,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('payment/create', PaymentCreate::class)->name(name: 'payment.create');
     Route::get('payment/{id}/edit', PaymentEdit::class)->name('payment.edit');
     Route::get('payment/{id}', PaymentShow::class)->name('payment.show');
+
+    // Payment Methods (manage methods shown in apps)
+    Route::get('payment-methods', PaymentMethodIndex::class)->name('payment-methods.index');
 
     Route::get('rating', RatingIndex::class)->name('rating.index');
     Route::get('rating/create', RatingCreate::class)->name(name: 'rating.create');

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Fixer;
 use App\Models\ServiceRequest;
+use App\Models\Payment;
+use App\Models\Notification;
 use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -70,5 +72,71 @@ class FixerRequestController extends Controller
             'message' => '1 coin deducted. Request accepted.',
         ]);
     }
-}
 
+    /**
+     * POST /api/fixer/requests/{id}/bill
+     * Allows an assigned fixer to create/update a bill for a service request.
+     */
+    public function bill(ServiceRequest $serviceRequest, Request $request): JsonResponse
+    {
+        $user = $request->user();
+        /** @var Fixer|null $fixer */
+        $fixer = $user->fixer;
+        if (! $fixer) abort(403, 'Forbidden');
+
+        // Must be assigned to this fixer
+        if ($serviceRequest->fixer_id !== $fixer->id) abort(403, 'Forbidden');
+
+        $validated = $request->validate([
+            'amount' => ['required', 'numeric', 'min:0'],
+            'note' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $payment = $serviceRequest->payment;
+        if ($payment) {
+            if ($payment->status === 'paid') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payment has already been completed for this request.',
+                ], 422);
+            }
+
+            $payment->update([
+                'amount' => $validated['amount'],
+                'status' => 'pending',
+            ]);
+        } else {
+            $payment = Payment::create([
+                'service_request_id' => $serviceRequest->id,
+                'amount' => $validated['amount'],
+                'status' => 'pending',
+            ]);
+        }
+
+        // Set awaiting_payment so both apps can reflect the state clearly
+        $serviceRequest->status = 'awaiting_payment';
+        $serviceRequest->save();
+
+        // Optionally: set request state to accepted (or leave) and notify customer here
+        // $serviceRequest->status = 'accepted';
+        // $serviceRequest->save();
+
+        // Create an in-app notification for the customer
+        try {
+            Notification::create([
+                'user_id' => $serviceRequest->customer_id,
+                'title' => 'Payment Required',
+                'message' => 'A bill of ' . number_format((float) $validated['amount'], 2) . ' has been issued for your ' . optional($serviceRequest->service)->name . ' request.',
+                'read' => false,
+            ]);
+        } catch (\Throwable $e) {
+            // ignore if notification model/schema differs
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $payment->fresh(),
+            'message' => 'Bill created and sent to customer.',
+        ]);
+    }
+}

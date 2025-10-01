@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\RatingController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\PaymentMethodController;
 use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\FixerRequestController;
 
@@ -36,6 +37,7 @@ Route::get('services/{service}/reviews', [ReviewController::class, 'index']);
 Route::get('coupons', [CouponController::class, 'index']);
 Route::get('coupons/{coupon}', [CouponController::class, 'show']);
 Route::post('coupons/validate', [CouponController::class, 'validateCode']);
+Route::get('payment-methods', [PaymentMethodController::class, 'index']);
 // Location options for dropdown
 Route::get('location-options', [LocationOptionController::class, 'index']);
 
@@ -92,4 +94,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Fixer requests
     Route::get('fixer/requests', [FixerRequestController::class, 'index']);
     Route::post('service-requests/{serviceRequest}/accept', [FixerRequestController::class, 'accept']);
+    // Fixer creates a bill for a request they own
+    Route::post('fixer/requests/{serviceRequest}/bill', [FixerRequestController::class, 'bill']);
+    // Customer applies to become a fixer
+    Route::post('fixer/apply', [FixerController::class, 'apply']);
 });

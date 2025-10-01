@@ -21,6 +21,7 @@ use App\Livewire\Subscription\{PlanIndex as SubscriptionPlanIndex, SubscriptionI
 use App\Livewire\Wallet\WalletIndex as WalletIndex;
 use App\Livewire\UserLog\UserLogIndex;
 use App\Livewire\Users\{UserCreate, UserEdit, UserIndex, UserShow};
+use App\Livewire\Settings\GeneralSettings;
 use App\Http\Controllers\Auth\LockController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
@@ -39,6 +40,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('lock-screen', [LockController::class, 'unlock'])->name('lock.unlock');
 
     Route::get('logs', UserLogIndex::class)->name('logs.index');
+
+    Route::get('settings/general', GeneralSettings::class)->name('settings.general');
 
     Route::get('users', UserIndex::class)->name('users.index');
     Route::get('users/create', UserCreate::class)->name('users.create');

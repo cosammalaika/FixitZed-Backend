@@ -10,11 +10,15 @@ class PaymentMethodIndex extends Component
     public $name = '';
     public $code = '';
     public $sort_order = 0;
+    public $requires_integration = false;
+    public $integration_note = '';
 
     protected $rules = [
         'name' => 'required|string|max:100',
         'code' => 'required|string|max:50|unique:payment_methods,code',
         'sort_order' => 'nullable|integer',
+        'requires_integration' => 'boolean',
+        'integration_note' => 'nullable|string|max:1000',
     ];
 
     public function add()
@@ -25,8 +29,10 @@ class PaymentMethodIndex extends Component
             'code' => $data['code'],
             'sort_order' => $data['sort_order'] ?? 0,
             'active' => true,
+            'requires_integration' => $data['requires_integration'] ?? false,
+            'integration_note' => $data['integration_note'] ?? null,
         ]);
-        $this->reset(['name', 'code', 'sort_order']);
+        $this->reset(['name', 'code', 'sort_order', 'requires_integration', 'integration_note']);
         session()->flash('success', 'Payment method added');
     }
 
@@ -50,4 +56,3 @@ class PaymentMethodIndex extends Component
         ]);
     }
 }
-

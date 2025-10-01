@@ -138,6 +138,8 @@
                             <div class="arrow-down"></div>
                         </a>
                         <div class="dropdown-menu" aria-labelledby="topnav-pages">
+                            <a href="{{ route('settings.general') }}" class="dropdown-item"
+                                data-key="t-calendar">General</a>
 
                             <a href="{{ route('role.index') }}" class="dropdown-item"
                                 data-key="t-calendar">Role & Permission</a>

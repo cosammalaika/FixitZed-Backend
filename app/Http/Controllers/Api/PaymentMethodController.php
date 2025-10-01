@@ -17,9 +17,8 @@ class PaymentMethodController extends Controller
         $methods = PaymentMethod::query()
             ->where('active', true)
             ->orderBy('sort_order')
-            ->get(['id', 'name', 'code', 'active', 'sort_order']);
+            ->get(['id', 'name', 'code', 'active', 'sort_order', 'requires_integration', 'integration_note']);
 
         return response()->json(['success' => true, 'data' => $methods]);
     }
 }
-

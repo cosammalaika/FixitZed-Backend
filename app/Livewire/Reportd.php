@@ -2,14 +2,14 @@
 
 namespace App\Livewire;
 
-use App\Models\Earning;
 use App\Models\Fixer;
-use App\Models\Service;
+use App\Models\Payment;
 use App\Models\ServiceRequest;
 use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Livewire\Component;
+use Illuminate\Support\Facades\DB;
 
 class Reportd extends Component
 {
@@ -63,9 +63,26 @@ class Reportd extends Component
         $endOfRange = Carbon::now()->endOfMonth();
         $startOfRange = (clone $endOfRange)->subMonths(11)->startOfMonth();
 
-        $totalsByMonth = Earning::whereBetween('created_at', [$startOfRange, $endOfRange])
-            ->get()
-            ->groupBy(fn (Earning $earning) => $earning->created_at->format('Y-m'))
+        $payments = Payment::where('status', 'paid')
+            ->where(function ($query) use ($startOfRange, $endOfRange) {
+                $query->whereBetween('paid_at', [$startOfRange, $endOfRange])
+                    ->orWhere(function ($inner) use ($startOfRange, $endOfRange) {
+                        $inner->whereNull('paid_at')
+                            ->whereBetween('updated_at', [$startOfRange, $endOfRange]);
+                    })
+                    ->orWhere(function ($inner) use ($startOfRange, $endOfRange) {
+                        $inner->whereNull('paid_at')
+                            ->whereNull('updated_at')
+                            ->whereBetween('created_at', [$startOfRange, $endOfRange]);
+                    });
+            })
+            ->get();
+
+        $totalsByMonth = $payments
+            ->groupBy(function (Payment $payment) {
+                $date = $payment->paid_at ?? $payment->updated_at ?? $payment->created_at;
+                return Carbon::parse($date)->format('Y-m');
+            })
             ->map(fn ($group) => round($group->sum('amount'), 2));
 
         $period = CarbonPeriod::create($startOfRange, '1 month', $endOfRange);
@@ -100,8 +117,9 @@ class Reportd extends Component
 
     protected function buildSummary(): array
     {
-        $totalRevenue = (float) Earning::sum('amount');
-        $averagePayout = (float) Earning::avg('amount');
+        $revenueQuery = Payment::where('status', 'paid');
+        $totalRevenue = (float) (clone $revenueQuery)->sum('amount');
+        $averagePayout = (float) (clone $revenueQuery)->avg('amount');
 
         $pendingStatuses = ['pending', 'accepted', 'in_progress'];
         $completedRequests = ServiceRequest::where('status', 'completed')->count();
@@ -200,27 +218,32 @@ class Reportd extends Component
 
     protected function buildRevenueSplit(): array
     {
-        $topFixers = Earning::selectRaw('fixer_id, SUM(amount) as total')
-            ->groupBy('fixer_id')
-            ->with('fixer.user')
+        $baseQuery = Payment::where('payments.status', 'paid')
+            ->join('service_requests', 'payments.service_request_id', '=', 'service_requests.id')
+            ->join('fixers', 'service_requests.fixer_id', '=', 'fixers.id')
+            ->join('users', 'fixers.user_id', '=', 'users.id')
+            ->selectRaw('fixers.id as fixer_id, users.first_name, users.last_name, SUM(payments.amount) as total')
+            ->groupBy('fixers.id', 'users.first_name', 'users.last_name');
+
+        $topRows = (clone $baseQuery)
             ->orderByDesc('total')
             ->take(5)
             ->get();
 
         $labels = [];
         $series = [];
+        $displayedIds = [];
 
-        foreach ($topFixers as $earning) {
-            $user = $earning->fixer?->user;
-            $name = trim(($user->first_name ?? 'Unknown') . ' ' . ($user->last_name ?? ''));
-            $labels[] = $name ?: 'Unknown Fixer';
-            $series[] = round((float) $earning->total, 2);
+        foreach ($topRows as $row) {
+          $name = trim(($row->first_name ?? 'Unknown') . ' ' . ($row->last_name ?? ''));
+          $labels[] = $name !== '' ? $name : 'Unknown fixer';
+          $series[] = round((float) $row->total, 2);
+          $displayedIds[] = $row->fixer_id;
         }
 
-        $displayedIds = $topFixers->pluck('fixer_id')->filter()->all();
-        $otherTotal = empty($displayedIds)
-            ? (float) Earning::sum('amount')
-            : (float) Earning::whereNotIn('fixer_id', $displayedIds)->sum('amount');
+        $totalForAssignedFixers = (clone $baseQuery)->sum('payments.amount');
+        $topTotal = array_sum($series);
+        $otherTotal = max(0, $totalForAssignedFixers - $topTotal);
 
         if ($otherTotal > 0) {
             $labels[] = 'Others';
@@ -235,18 +258,20 @@ class Reportd extends Component
 
     protected function buildTopFixers(): array
     {
-        return Earning::selectRaw('fixer_id, SUM(amount) as total')
-            ->groupBy('fixer_id')
-            ->with('fixer.user')
+        return Payment::where('payments.status', 'paid')
+            ->join('service_requests', 'payments.service_request_id', '=', 'service_requests.id')
+            ->join('fixers', 'service_requests.fixer_id', '=', 'fixers.id')
+            ->join('users', 'fixers.user_id', '=', 'users.id')
+            ->selectRaw('fixers.id as fixer_id, users.first_name, users.last_name, SUM(payments.amount) as total')
+            ->groupBy('fixers.id', 'users.first_name', 'users.last_name')
             ->orderByDesc('total')
             ->take(10)
             ->get()
-            ->map(function ($earning) {
-                $user = $earning->fixer?->user;
-
+            ->map(function ($row) {
+                $name = trim(($row->first_name ?? 'Unknown') . ' ' . ($row->last_name ?? ''));
                 return [
-                    'name' => trim(($user->first_name ?? 'Unknown') . ' ' . ($user->last_name ?? '')),
-                    'total' => round((float) $earning->total, 2),
+                    'name' => $name !== '' ? $name : 'Unknown fixer',
+                    'total' => round((float) $row->total, 2),
                 ];
             })
             ->toArray();
@@ -254,23 +279,25 @@ class Reportd extends Component
 
     protected function buildTopServices(): array
     {
-        $services = ServiceRequest::selectRaw('service_id, COUNT(*) as total')
-            ->whereNotNull('service_id')
-            ->groupBy('service_id')
-            ->orderByDesc('total')
-            ->with('service')
+        $services = Payment::where('payments.status', 'paid')
+            ->join('service_requests', 'payments.service_request_id', '=', 'service_requests.id')
+            ->join('services', 'service_requests.service_id', '=', 'services.id')
+            ->selectRaw('services.id as service_id, services.name, COUNT(*) as bookings, SUM(payments.amount) as revenue')
+            ->groupBy('services.id', 'services.name')
+            ->orderByDesc('revenue')
             ->take(10)
             ->get();
 
-        $totalRequests = max($services->sum('total'), 1);
+        $totalRevenue = max((float) $services->sum('revenue'), 1.0);
 
-        return $services->map(function ($row) use ($totalRequests) {
-            $service = $row->service;
-
+        return $services->map(function ($row) use ($totalRevenue) {
+            $name = $row->name ?? 'Unknown service';
+            $revenue = (float) $row->revenue;
             return [
-                'name' => $service?->name ?? 'Unknown Service',
-                'total' => (int) $row->total,
-                'percentage' => round(($row->total / $totalRequests) * 100),
+                'name' => $name,
+                'total' => (int) $row->bookings,
+                'revenue' => round($revenue, 2),
+                'percentage' => round(($revenue / $totalRevenue) * 100),
             ];
         })->toArray();
     }

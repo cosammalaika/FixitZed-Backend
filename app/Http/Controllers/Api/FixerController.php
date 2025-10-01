@@ -138,6 +138,7 @@ class FixerController extends Controller
 
         $validated = $request->validate([
             'bio' => ['required', 'string', 'max:2000'],
+            'location' => ['nullable', 'string', 'max:255'],
             'service_ids' => ['required', 'array', 'min:1'],
             'service_ids.*' => ['integer', 'exists:services,id'],
             'profile_photo' => ['nullable', 'file', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
@@ -176,7 +177,12 @@ class FixerController extends Controller
                 }
             }
 
-            if (! empty($updates) || $request->hasFile('supporting_documents')) {
+            $locationProvided = ! empty($validated['location']);
+            if ($locationProvided) {
+                $updates['address'] = $validated['location'];
+            }
+
+            if (! empty($updates) || $request->hasFile('supporting_documents') || $locationProvided) {
                 $user->fill($updates);
                 if (! empty($documents)) {
                     $user->documents = $documents;

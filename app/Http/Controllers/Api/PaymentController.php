@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Coupon;
 use App\Models\Payment;
 use App\Models\ServiceRequest;
+use App\Support\Loyalty;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\Request;
 
 class PaymentController extends Controller
@@ -42,6 +44,8 @@ class PaymentController extends Controller
             $status = strtolower($validated['status']);
             $isPaid = in_array($status, ['paid', 'completed'], true);
 
+            /** @var \App\Models\User $user */
+            $user = $request->user();
             $payment = $serviceRequest->payment;
             $previousCouponId = $payment?->coupon_id;
 
@@ -53,6 +57,9 @@ class PaymentController extends Controller
             $coupon = null;
             $discount = 0.0;
             $finalAmount = $validated['amount'];
+            $loyaltyValue = 0.0;
+            $loyaltyPointsUsed = 0;
+            $loyaltyPointsEarned = 0;
 
             $couponCode = trim((string) ($validated['coupon_code'] ?? ''));
             if ($couponCode !== '') {
@@ -73,13 +80,43 @@ class PaymentController extends Controller
                 $discount = max(0, round($originalAmount - $finalAmount, 2));
             }
 
+            $requestedPoints = (int) ($request->input('loyalty_points') ?? 0);
+            if ($requestedPoints > 0 && Schema::hasColumn('payments', 'loyalty_points_used')) {
+                $available = (int) $user->loyalty_points;
+                $maxNeeded = Loyalty::pointsForValue($finalAmount);
+                $pointsToUse = min($requestedPoints, $available, $maxNeeded);
+                if ($pointsToUse > 0) {
+                    $loyaltyPointsUsed = Loyalty::applyRedemption($user, $pointsToUse);
+                    if ($loyaltyPointsUsed > 0) {
+                        $loyaltyValue = Loyalty::maxRedeemableValue($loyaltyPointsUsed);
+                        $finalAmount = max(0, round($finalAmount - $loyaltyValue, 2));
+                        $discount += $loyaltyValue;
+                    }
+                }
+            }
+
+            $loyaltyPointsEarned = Loyalty::earnForAmount($finalAmount);
+
             $attributes = [
                 'amount' => $finalAmount,
-                'original_amount' => $originalAmount,
-                'discount_amount' => $discount,
                 'status' => $isPaid ? 'paid' : $status,
-                'coupon_id' => $coupon?->id,
             ];
+
+            if (Schema::hasColumn('payments', 'original_amount')) {
+                $attributes['original_amount'] = $originalAmount;
+            }
+
+            if (Schema::hasColumn('payments', 'discount_amount')) {
+                $attributes['discount_amount'] = $discount;
+            }
+
+            if (Schema::hasColumn('payments', 'coupon_id')) {
+                $attributes['coupon_id'] = $coupon?->id;
+            }
+
+            if (Schema::hasColumn('payments', 'loyalty_points_used')) {
+                $attributes['loyalty_points_used'] = $loyaltyPointsUsed;
+            }
 
             if (array_key_exists('payment_method', $validated)) {
                 $attributes['payment_method'] = $validated['payment_method'];
@@ -113,12 +150,22 @@ class PaymentController extends Controller
                 $coupon->increment('used_count');
             }
 
+            if ($loyaltyPointsEarned > 0) {
+                Loyalty::award($user, $loyaltyPointsEarned);
+            }
+
             if ($isPaid) {
                 $serviceRequest->status = 'completed';
                 $serviceRequest->save();
             }
 
-            return response()->json(['success' => true, 'data' => $payment->fresh(['coupon'])]);
+            $freshPayment = $payment->fresh(['coupon']);
+
+            $responseData = $freshPayment ? $freshPayment->toArray() : [];
+            $responseData['loyalty_points_balance'] = $user->loyalty_points;
+            $responseData['loyalty_points_earned'] = $loyaltyPointsEarned;
+
+            return response()->json(['success' => true, 'data' => $responseData]);
         });
     }
 }

@@ -32,6 +32,21 @@ class Coupon extends Model
     public function isValid(): bool
     {
         $now = now();
-        return $this->valid_from <= $now && $this->valid_to >= $now && $this->used_count < $this->usage_limit;
+
+        if ($this->valid_from && $this->valid_from->isFuture()) {
+            return false;
+        }
+
+        if ($this->valid_to && $this->valid_to->isPast()) {
+            return false;
+        }
+
+        $limit = $this->usage_limit;
+        $used = $this->used_count ?? 0;
+        if ($limit !== null && $limit > 0 && $used >= $limit) {
+            return false;
+        }
+
+        return true;
     }
 }

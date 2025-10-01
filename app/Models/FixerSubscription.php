@@ -12,6 +12,7 @@ class FixerSubscription extends Model
     protected $fillable = [
         'fixer_id', 'subscription_plan_id', 'payment_reference', 'status',
         'coins_awarded', 'starts_at', 'expires_at',
+        'amount_paid_cents', 'loyalty_points_used', 'loyalty_points_awarded',
     ];
 
     protected $casts = [
@@ -29,4 +30,3 @@ class FixerSubscription extends Model
         return $this->belongsTo(SubscriptionPlan::class, 'subscription_plan_id');
     }
 }
-

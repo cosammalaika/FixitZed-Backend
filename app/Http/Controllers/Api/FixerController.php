@@ -7,6 +7,7 @@ use App\Models\Fixer;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class FixerController extends Controller
 {
@@ -61,6 +62,11 @@ class FixerController extends Controller
                     $query->where('role', 'customer');
                 }
             ], 'rating')
+            ->withCount([
+                'receivedRatings as ratings_count' => function ($query) {
+                    $query->where('role', 'customer');
+                }
+            ])
             ->orderByDesc('average_rating')
             ->take($limit)
             ->get();
@@ -69,6 +75,7 @@ class FixerController extends Controller
             $name = trim(($u->first_name ?? '') . ' ' . ($u->last_name ?? ''));
             $fixer = $u->fixer;
             $avg = $u->average_rating ? round((float) $u->average_rating, 1) : null;
+            $ratingsCount = (int) ($u->ratings_count ?? 0);
 
             $services = $fixer?->services
                 ? $fixer->services->map(function ($service) {
@@ -94,7 +101,26 @@ class FixerController extends Controller
                 'average_rating' => $avg,
                 'avg_rating' => $avg,
                 'rating' => $avg,
+                'ratings_count' => $ratingsCount,
                 'services' => $services,
+                'user' => [
+                    'id' => $u->id,
+                    'first_name' => $u->first_name,
+                    'last_name' => $u->last_name,
+                    'name' => $name !== '' ? $name : ($u->username ?? 'Fixer'),
+                    'username' => $u->username,
+                    'email' => $u->email,
+                    'contact_number' => $u->contact_number,
+                    'avatar_url' => $u->avatar_url,
+                    'average_rating' => $avg,
+                    'ratings_count' => $ratingsCount,
+                ],
+                'fixer_profile' => $fixer ? [
+                    'id' => $fixer->id,
+                    'bio' => $fixer->bio,
+                    'status' => $fixer->status,
+                    'services' => $services,
+                ] : null,
             ];
         });
 
@@ -108,17 +134,54 @@ class FixerController extends Controller
     {
         $user = $request->user();
 
+        $user = $request->user();
+
         $validated = $request->validate([
             'bio' => ['required', 'string', 'max:2000'],
             'service_ids' => ['required', 'array', 'min:1'],
             'service_ids.*' => ['integer', 'exists:services,id'],
+            'profile_photo' => ['nullable', 'file', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'nrc_front' => [Rule::requiredIf(! $user->nrc_front_path), 'file', 'mimes:jpeg,png,jpg,webp,pdf', 'max:5120'],
+            'nrc_back' => [Rule::requiredIf(! $user->nrc_back_path), 'file', 'mimes:jpeg,png,jpg,webp,pdf', 'max:5120'],
+            'supporting_documents' => ['nullable', 'array', 'max:5'],
+            'supporting_documents.*' => ['file', 'mimes:jpeg,png,jpg,webp,pdf', 'max:5120'],
         ]);
 
-        return DB::transaction(function () use ($user, $validated) {
+        return DB::transaction(function () use ($user, $validated, $request) {
             $fixer = $user->fixer;
 
             if ($fixer && $fixer->status === 'approved') {
                 abort(422, 'You are already an approved fixer.');
+            }
+
+            $updates = [];
+            if ($request->hasFile('profile_photo')) {
+                $path = $request->file('profile_photo')->store('fixers/profile_photos', 'public');
+                $updates['profile_photo_path'] = $path;
+            }
+            if ($request->hasFile('nrc_front')) {
+                $path = $request->file('nrc_front')->store('fixers/nrc', 'public');
+                $updates['nrc_front_path'] = $path;
+            }
+            if ($request->hasFile('nrc_back')) {
+                $path = $request->file('nrc_back')->store('fixers/nrc', 'public');
+                $updates['nrc_back_path'] = $path;
+            }
+
+            $documents = (array) ($user->documents ?? []);
+            if ($request->hasFile('supporting_documents')) {
+                $documents = [];
+                foreach ($request->file('supporting_documents') as $file) {
+                    $documents[] = $file->store('fixers/documents', 'public');
+                }
+            }
+
+            if (! empty($updates) || $request->hasFile('supporting_documents')) {
+                $user->fill($updates);
+                if (! empty($documents)) {
+                    $user->documents = $documents;
+                }
+                $user->save();
             }
 
             if (! $fixer) {

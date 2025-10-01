@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PaymentMethodController;
 use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\FixerRequestController;
+use App\Http\Controllers\Api\LoyaltyController;
 
 // Guest routes (no authentication required)
 Route::post('login', [AuthController::class, 'login']);
@@ -85,6 +86,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Payments
     Route::get('requests/{serviceRequest}/payment', [PaymentController::class, 'show']);
     Route::post('requests/{serviceRequest}/payment', [PaymentController::class, 'store']);
+
+    // Loyalty summary
+    Route::get('loyalty', [LoyaltyController::class, 'show']);
 
     // Fixer wallet and subscriptions
     Route::get('fixer/wallet', [SubscriptionController::class, 'myWallet']);

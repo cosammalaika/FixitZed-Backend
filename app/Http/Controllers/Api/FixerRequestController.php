@@ -34,7 +34,12 @@ class FixerRequestController extends Controller
         if ($status) {
             $q->where('status', $status);
         }
-        return response()->json(['success' => true, 'data' => $q->paginate(20)]);
+
+        $requests = $q->paginate(20)->through(function (ServiceRequest $sr) {
+            return $this->transformForFixer($sr);
+        });
+
+        return response()->json(['success' => true, 'data' => $requests]);
     }
 
     /**
@@ -138,5 +143,25 @@ class FixerRequestController extends Controller
             'data' => $payment->fresh(),
             'message' => 'Bill created and sent to customer.',
         ]);
+    }
+
+    protected function transformForFixer(ServiceRequest $serviceRequest): array
+    {
+        $data = $serviceRequest->toArray();
+
+        $status = strtolower((string) ($serviceRequest->status ?? ''));
+        $contactVisible = in_array($status, ['accepted', 'awaiting_payment', 'completed'], true);
+
+        if (isset($data['customer']) && ! $contactVisible) {
+            foreach (['contact_number', 'phone', 'mobile', 'email'] as $field) {
+                if (array_key_exists($field, $data['customer'])) {
+                    $data['customer'][$field] = null;
+                }
+            }
+        }
+
+        $data['customer_contact_visible'] = $contactVisible;
+
+        return $data;
     }
 }

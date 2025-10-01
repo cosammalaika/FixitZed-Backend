@@ -34,6 +34,7 @@ class User extends Authenticatable
         'nrc_front_path',
         'nrc_back_path',
         'documents',
+        'loyalty_points',
         'password',
     ];
 
@@ -63,6 +64,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'documents' => 'array',
+            'loyalty_points' => 'integer',
         ];
     }
 

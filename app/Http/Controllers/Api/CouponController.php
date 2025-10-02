@@ -45,7 +45,8 @@ class CouponController extends Controller
     public function validateCode(Request $request)
     {
         $data = $request->validate(['code' => ['required', 'string']]);
-        $coupon = Coupon::where('code', $data['code'])->first();
+        $code = trim(strtolower($data['code']));
+        $coupon = Coupon::whereRaw('LOWER(code) = ?', [$code])->first();
 
         if (!$coupon || !$coupon->isValid()) {
             return response()->json(['success' => false, 'message' => 'Invalid or expired coupon'], 422);

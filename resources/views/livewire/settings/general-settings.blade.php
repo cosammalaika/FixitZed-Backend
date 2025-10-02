@@ -26,6 +26,24 @@
                                     placeholder="e.g., Zambian Kwacha">
                                 @error('currency_name') <small class="text-danger">{{ $message }}</small> @enderror
                             </div>
+                            <hr class="my-3">
+                            <div class="col-12">
+                                <h5 class="mb-2">Loyalty Settings</h5>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Point value (K per 1 point)</label>
+                                <input type="number" step="0.0001" min="0" class="form-control" wire:model.defer="loyalty_point_value"
+                                    placeholder="e.g., 0.01">
+                                @error('loyalty_point_value') <small class="text-danger">{{ $message }}</small> @enderror
+                                <small class="text-muted">Example: 0.01 means 1pt = K0.01</small>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Redeem threshold (K)</label>
+                                <input type="number" step="0.01" min="0" class="form-control" wire:model.defer="loyalty_redeem_threshold_value"
+                                    placeholder="e.g., 50">
+                                @error('loyalty_redeem_threshold_value') <small class="text-danger">{{ $message }}</small> @enderror
+                                <small class="text-muted">Users can redeem points starting at this amount.</small>
+                            </div>
                             <div class="col-12 d-flex justify-content-end">
                                 <button type="submit" class="btn btn-primary">Save changes</button>
                             </div>

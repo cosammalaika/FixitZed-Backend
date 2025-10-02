@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\CurrencyController;
 use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\FixerRequestController;
 use App\Http\Controllers\Api\LoyaltyController;
+use App\Http\Controllers\Api\ReportController;
 
 // Guest routes (no authentication required)
 Route::post('login', [AuthController::class, 'login']);
@@ -91,6 +92,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Loyalty summary
     Route::get('loyalty', [LoyaltyController::class, 'show']);
+
+    // Reports
+    Route::post('reports', [ReportController::class, 'store']);
+    Route::get('reports', [ReportController::class, 'index']); // admin only
+    Route::patch('reports/{report}', [ReportController::class, 'update']); // admin only
 
     // Fixer wallet and subscriptions
     Route::get('fixer/wallet', [SubscriptionController::class, 'myWallet']);

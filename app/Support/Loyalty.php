@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\Setting;
 use App\Models\User;
 
 class Loyalty
@@ -9,14 +10,14 @@ class Loyalty
     /**
      * Points earned per kwacha spent. e.g. earn 1 point per 10 ZMW.
      */
-    protected const EARN_DIVISOR = 10; // amount / 10
+    protected const EARN_DIVISOR = 10; // amount / 10 (fallback)
 
     /**
      * Monetary value of a single point in kwacha.
      */
-    protected const POINT_VALUE = 1; // 1 point = 1 ZMW
+    protected const POINT_VALUE = 1; // fallback: 1 point = 1 ZMW
 
-    protected const REDEEM_THRESHOLD = 50; // minimum points before highlighting redemption
+    protected const REDEEM_THRESHOLD = 50; // fallback: minimum points (if settings missing)
 
     public static function earnForAmount(float $amount): int
     {
@@ -33,7 +34,7 @@ class Loyalty
             return 0.0;
         }
 
-        return $points * static::POINT_VALUE;
+        return $points * static::pointValue();
     }
 
     public static function pointsForValue(float $value): int
@@ -42,7 +43,8 @@ class Loyalty
             return 0;
         }
 
-        return (int) floor($value / static::POINT_VALUE);
+        $pv = static::pointValue();
+        return (int) floor($value / ($pv > 0 ? $pv : 1));
     }
 
     public static function applyRedemption(User $user, int $requestedPoints): int
@@ -70,16 +72,27 @@ class Loyalty
 
     public static function threshold(): int
     {
-        return static::REDEEM_THRESHOLD;
+        // Admin sets a monetary threshold (e.g., 50 ZMW) in general settings.
+        // Convert to points based on point value.
+        $thresholdValue = (float) Setting::get('loyalty.redeem_threshold_value', 50);
+        $pv = static::pointValue();
+        if ($pv <= 0) {
+            $pv = 0.01; // sane default to avoid div/0
+        }
+        return (int) ceil($thresholdValue / $pv);
     }
 
     public static function pointValue(): float
     {
-        return static::POINT_VALUE;
+        // Admin-configured value: monetary value per 1 point, default K0.01
+        $value = (float) Setting::get('loyalty.point_value', 0.01);
+        return $value > 0 ? $value : 0.01;
     }
 
     public static function earnDivisor(): int
     {
-        return static::EARN_DIVISOR;
+        // Optional admin setting for earn rate; default 10.
+        $div = (int) Setting::get('loyalty.earn_divisor', static::EARN_DIVISOR);
+        return $div > 0 ? $div : static::EARN_DIVISOR;
     }
 }

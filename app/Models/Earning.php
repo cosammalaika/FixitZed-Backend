@@ -20,8 +20,4 @@ class Earning extends Model
         return $this->belongsTo(Fixer::class);
     }
 
-    public function serviceRequest()
-    {
-        return $this->belongsTo(ServiceRequest::class, 'service_count');
-    }
 }

@@ -9,8 +9,8 @@ class CouponSeeder extends Seeder
 {
     public function run(): void
     {
-        // Wipe existing coupons
-        Coupon::truncate();
+        // Wipe existing coupons while respecting FK constraints
+        Coupon::query()->delete();
 
         $today = now()->toDateString();
         $in60 = now()->addDays(60)->toDateString();
@@ -53,4 +53,3 @@ class CouponSeeder extends Seeder
         ]);
     }
 }
-

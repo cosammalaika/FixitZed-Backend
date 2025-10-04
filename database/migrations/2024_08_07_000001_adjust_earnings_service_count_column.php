@@ -8,7 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (Schema::hasTable('earnings') && Schema::hasColumn('earnings', 'service_count')) {
+        if (! Schema::hasTable('earnings')) {
+            return;
+        }
+
+        if (Schema::hasColumn('earnings', 'service_count')) {
             Schema::table('earnings', function (Blueprint $table) {
                 try {
                     $table->dropForeign(['service_count']);
@@ -20,7 +24,7 @@ return new class extends Migration
         }
 
         Schema::table('earnings', function (Blueprint $table) {
-            if (!Schema::hasColumn('earnings', 'service_count')) {
+            if (! Schema::hasColumn('earnings', 'service_count')) {
                 $table->unsignedInteger('service_count')->default(0);
             }
         });
@@ -28,6 +32,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (! Schema::hasTable('earnings')) {
+            return;
+        }
+
         Schema::table('earnings', function (Blueprint $table) {
             if (Schema::hasColumn('earnings', 'service_count')) {
                 $table->dropColumn('service_count');
@@ -35,7 +43,7 @@ return new class extends Migration
         });
 
         Schema::table('earnings', function (Blueprint $table) {
-            if (!Schema::hasColumn('earnings', 'service_count')) {
+            if (! Schema::hasColumn('earnings', 'service_count')) {
                 $table->foreignId('service_count')->constrained('service_requests')->cascadeOnDelete();
             }
         });

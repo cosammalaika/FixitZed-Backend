@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Earning;
+use App\Models\Payment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -22,41 +22,52 @@ class EarningController extends Controller
         }
 
         $range = $request->query('filter', 'all');
-        $query = Earning::where('fixer_id', $fixer->id)->latest();
 
+        $query = Payment::with(['serviceRequest.service'])
+            ->whereHas('serviceRequest', function ($q) use ($fixer) {
+                $q->where('fixer_id', $fixer->id);
+            })
+            ->whereNotNull('paid_at')
+            ->orderByDesc('paid_at');
+
+        $now = now();
         switch ($range) {
             case '7d':
-                $query->where('created_at', '>=', now()->subDays(7));
+                $query->where('paid_at', '>=', $now->copy()->subDays(7));
                 break;
             case '30d':
-                $query->where('created_at', '>=', now()->subDays(30));
+                $query->where('paid_at', '>=', $now->copy()->subDays(30));
                 break;
             case '90d':
-                $query->where('created_at', '>=', now()->subDays(90));
+                $query->where('paid_at', '>=', $now->copy()->subDays(90));
                 break;
             case 'year':
-                $query->where('created_at', '>=', now()->subYear());
+                $query->where('paid_at', '>=', $now->copy()->startOfYear());
                 break;
             case 'all':
             default:
-                // no additional filter
+                // no date filter
                 break;
         }
 
-        $earnings = $query->get()->map(function (Earning $earning) {
+        $payments = $query->get()->map(function (Payment $payment) {
+            $service = $payment->serviceRequest;
             return [
-                'id' => $earning->id,
-                'type' => 'earning',
-                'amount' => (float) $earning->amount,
-                'service_count' => $earning->service_count,
-                'created_at' => $earning->created_at?->toIso8601String(),
-                'note' => $earning->service_count ? $earning->service_count . ' services' : null,
+                'id' => $payment->id,
+                'amount' => (float) $payment->amount,
+                'payment_method' => $payment->payment_method,
+                'transaction_id' => $payment->transaction_id,
+                'service_request_id' => $service?->id,
+                'service_name' => $service?->service?->name,
+                'scheduled_at' => $service?->scheduled_at?->toIso8601String(),
+                'paid_at' => $payment->paid_at?->toIso8601String() ?? $payment->created_at?->toIso8601String(),
+                'location' => $service?->location,
             ];
         });
 
         return response()->json([
             'success' => true,
-            'data' => $earnings,
+            'data' => $payments,
         ]);
     }
 }

@@ -5,9 +5,12 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Fixer;
 use App\Models\ServiceRequest;
+use App\Models\ServiceRequestDecline;
 use App\Models\Payment;
 use App\Models\Notification;
+use App\Models\Setting;
 use App\Services\WalletService;
+use App\Support\Loyalty;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -28,6 +31,30 @@ class FixerRequestController extends Controller
         }
 
         $status = $request->query('status');
+        if ($status === 'declined') {
+            $declines = ServiceRequestDecline::with(['serviceRequest.service', 'serviceRequest.customer'])
+                ->where('fixer_id', $fixer->id)
+                ->latest('declined_at')
+                ->paginate(20)
+                ->through(function (ServiceRequestDecline $decline) {
+                    $sr = $decline->serviceRequest;
+                    if (! $sr) {
+                        return [
+                            'id' => $decline->service_request_id,
+                            'status' => 'declined',
+                            'declined_at' => $decline->declined_at,
+                        ];
+                    }
+
+                    $data = $this->transformForFixer($sr);
+                    $data['status'] = 'declined';
+                    $data['declined_at'] = $decline->declined_at;
+                    return $data;
+                });
+
+            return response()->json(['success' => true, 'data' => $declines]);
+        }
+
         $q = ServiceRequest::with(['service', 'customer'])
             ->where('fixer_id', $fixer->id)
             ->latest();
@@ -71,10 +98,84 @@ class FixerRequestController extends Controller
             $serviceRequest->save();
         });
 
+        $points = (int) Setting::get('loyalty.fixer_accept_points', 5);
+        if ($points > 0 && $fixer->user) {
+            Loyalty::award($fixer->user, $points);
+        }
+
         return response()->json([
             'success' => true,
             'data' => $serviceRequest->fresh()->load(['service', 'fixer.user']),
             'message' => '1 coin deducted. Request accepted.',
+        ]);
+    }
+
+    public function decline(ServiceRequest $serviceRequest, Request $request): JsonResponse
+    {
+        $user = $request->user();
+        /** @var Fixer|null $fixer */
+        $fixer = $user->fixer;
+        if (! $fixer || $serviceRequest->fixer_id !== $fixer->id) {
+            abort(403, 'Forbidden');
+        }
+
+        $nextFixer = null;
+
+        DB::transaction(function () use ($serviceRequest, $fixer, &$nextFixer) {
+            ServiceRequestDecline::create([
+                'service_request_id' => $serviceRequest->id,
+                'fixer_id' => $fixer->id,
+                'declined_at' => now(),
+            ]);
+
+            $serviceRequest->fixer_snoozed_until = null;
+            $serviceRequest->fixer_id = null;
+            $serviceRequest->status = 'pending';
+            $serviceRequest->save();
+
+            $this->notifyCustomerDeclined($serviceRequest, $fixer);
+
+            $nextFixer = $this->assignNextFixer($serviceRequest, $fixer->id);
+
+            if (! $nextFixer) {
+                $serviceRequest->status = 'cancelled';
+                $serviceRequest->save();
+                $this->notifyCustomerNoReplacement($serviceRequest, $fixer);
+            }
+        });
+
+        if (! $nextFixer) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Fixer declined the request and no other fixer is currently available.',
+                'data' => $serviceRequest->fresh(['service', 'fixer']),
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Request declined and reassigned.',
+            'data' => $serviceRequest->fresh(['service', 'fixer']),
+            'reassigned_to' => $nextFixer?->id,
+        ]);
+    }
+
+    public function snooze(ServiceRequest $serviceRequest, Request $request): JsonResponse
+    {
+        $user = $request->user();
+        /** @var Fixer|null $fixer */
+        $fixer = $user->fixer;
+        if (! $fixer || $serviceRequest->fixer_id !== $fixer->id) {
+            abort(403, 'Forbidden');
+        }
+
+        $serviceRequest->fixer_snoozed_until = now()->addHour();
+        $serviceRequest->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'We will remind you again in one hour.',
+            'data' => $serviceRequest->fresh(),
         ]);
     }
 
@@ -161,7 +262,93 @@ class FixerRequestController extends Controller
         }
 
         $data['customer_contact_visible'] = $contactVisible;
+        $data['fixer_snoozed_until'] = $serviceRequest->fixer_snoozed_until;
 
         return $data;
+    }
+
+    protected function assignNextFixer(ServiceRequest $serviceRequest, int $excludeFixerId): ?Fixer
+    {
+        $candidate = Fixer::query()
+            ->where('status', 'approved')
+            ->where('id', '!=', $excludeFixerId)
+            ->whereHas('wallet', function ($q) {
+                $q->where('coin_balance', '>', 0);
+            })
+            ->whereDoesntHave('declines', function ($q) use ($serviceRequest) {
+                $q->where('service_request_id', $serviceRequest->id);
+            })
+            ->with('user')
+            ->orderByDesc(DB::raw('COALESCE(rating_avg, 0)'))
+            ->first();
+
+        if (! $candidate) {
+            return null;
+        }
+
+        $serviceRequest->fixer_id = $candidate->id;
+        $serviceRequest->status = 'pending';
+        $serviceRequest->fixer_snoozed_until = null;
+        $serviceRequest->save();
+
+        $this->notifyFixerAssigned($serviceRequest, $candidate);
+
+        return $candidate;
+    }
+
+    protected function notifyCustomerDeclined(ServiceRequest $serviceRequest, Fixer $fixer): void
+    {
+        try {
+            Notification::create([
+                'user_id' => $serviceRequest->customer_id,
+                'recipient_type' => 'customer',
+                'title' => 'Fixer declined your booking',
+                'message' => sprintf(
+                    '%s declined your %s request. We are finding another available fixer.',
+                    optional($fixer->user)->name ?? 'A fixer',
+                    optional($serviceRequest->service)->name ?? 'service'
+                ),
+                'read' => false,
+            ]);
+        } catch (\Throwable $e) {
+            // ignore
+        }
+    }
+
+    protected function notifyFixerAssigned(ServiceRequest $serviceRequest, Fixer $fixer): void
+    {
+        try {
+            Notification::create([
+                'user_id' => $fixer->user_id,
+                'recipient_type' => 'fixer',
+                'title' => 'New booking available',
+                'message' => sprintf(
+                    'A customer needs %s on %s.',
+                    optional($serviceRequest->service)->name ?? 'a service',
+                    optional($serviceRequest->scheduled_at)?->format('d M Y • H:i') ?? 'an upcoming date'
+                ),
+                'read' => false,
+            ]);
+        } catch (\Throwable $e) {
+            // ignore
+        }
+    }
+
+    protected function notifyCustomerNoReplacement(ServiceRequest $serviceRequest, Fixer $fixer): void
+    {
+        try {
+            Notification::create([
+                'user_id' => $serviceRequest->customer_id,
+                'recipient_type' => 'customer',
+                'title' => 'Booking cancelled',
+                'message' => sprintf(
+                    'Fixer declined the request and no other fixer is currently available for your %s booking.',
+                    optional($serviceRequest->service)->name ?? 'service'
+                ),
+                'read' => false,
+            ]);
+        } catch (\Throwable $e) {
+            // ignore
+        }
     }
 }

@@ -14,25 +14,55 @@
                          </button>
 
                      </div>
-                     @if (session('success'))
-                         <div id="success-alert"
-                             class="alert alert-success alert-top-border alert-dismissible fade show" role="alert">
-                             <i class="mdi mdi-check-all me-3 align-middle text-success"></i><strong>Success</strong> -
-                             {{ session('success') }}
-                             <button type="button" class="btn-close" data-bs-dismiss="alert"
-                                 aria-label="Close"></button>
-                         </div>
+                    @if (session('success'))
+                        <div id="success-alert"
+                            class="alert alert-success alert-top-border alert-dismissible fade show" role="alert">
+                            <i class="mdi mdi-check-all me-3 align-middle text-success"></i><strong>Success</strong> -
+                            {{ session('success') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                aria-label="Close"></button>
+                        </div>
+                    @endif
 
-                         <script>
-                             setTimeout(() => {
-                                 const alert = document.getElementById('success-alert');
-                                 if (alert) {
-                                     let bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-                                     bsAlert.close();
-                                 }
-                             }, 4000);
-                         </script>
-                     @endif
+                    @if (session('error'))
+                        <div id="error-alert"
+                            class="alert alert-danger alert-top-border alert-dismissible fade show" role="alert">
+                            <i class="mdi mdi-alert-circle-outline me-3 align-middle text-danger"></i><strong>Error</strong>
+                            -
+                            {{ session('error') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                aria-label="Close"></button>
+                        </div>
+                    @endif
+
+                    @once
+                        @push('scripts')
+                            <script>
+                                document.addEventListener('livewire:init', () => {
+                                    const scheduleDismiss = () => {
+                                        const alertIds = ['success-alert', 'error-alert'];
+                                        alertIds.forEach((id) => {
+                                            const el = document.getElementById(id);
+                                            if (!el) {
+                                                return;
+                                            }
+
+                                            setTimeout(() => {
+                                                const instance = bootstrap.Alert.getOrCreateInstance(el);
+                                                instance.close();
+                                            }, 4000);
+                                        });
+                                    };
+
+                                    scheduleDismiss();
+
+                                    Livewire.on('flash-message-added', () => {
+                                        setTimeout(scheduleDismiss, 100);
+                                    });
+                                });
+                            </script>
+                        @endpush
+                    @endonce
 
                      <div class="modal fade" id="createRoleModal" tabindex="-1" aria-labelledby="createRoleModalLabel"
                          aria-hidden="true">
@@ -75,8 +105,14 @@
                                          <td>{{ $index + 1 }}</td>
                                          <td>{{ $request->customer->first_name }} {{ $request->customer->last_name }}
                                          </td>
-                                         <td>{{ $request->fixer->user->first_name }}
-                                             {{ $request->fixer->user->last_name }}</td>
+                                        <td>
+                                            @if ($request->fixer && $request->fixer->user)
+                                                {{ $request->fixer->user->first_name }}
+                                                {{ $request->fixer->user->last_name }}
+                                            @else
+                                                <span class="text-muted">Unassigned</span>
+                                            @endif
+                                        </td>
                                          <td>{{ $request->service->name ?? 'N/A' }}</td>
 
                                          <td>{{ $request->scheduled_at }}</td>

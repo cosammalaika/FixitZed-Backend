@@ -38,7 +38,7 @@
                                  <tr>
                                      <th>#</th>
                                      <th>Fixer</th>
-                                     <th>Paid Request</th>
+                                     <th>Paid Requests</th>
                                      <th>Total Amount Earned</th>
                                      <th style="width: 80px; min-width: 80px;">Action</th>
                                  </tr>
@@ -50,8 +50,8 @@
                                      <tr>
                                          <td>{{ $earning->id }}</td>
                                          <td>{{ $earning->fixer->user->first_name }} {{ $earning->fixer->user->last_name }}</td>
-                                         <td>{{ $earning->service_count }}</td>
-                                         <td>ZMW {{ number_format($earning->amount, 2) }}</td>
+                                         <td>{{ (int) $earning->service_count }}</td>
+                                         <td>ZMW {{ number_format($earning->amount ?? 0, 2) }}</td>
                                          <td>
                                              <div class="dropdown">
                                                  <button

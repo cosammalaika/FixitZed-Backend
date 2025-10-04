@@ -146,9 +146,17 @@ class SubscriptionController extends Controller
             ]);
         }
         $fixer->load('wallet');
+        $wallet = $fixer->wallet;
+
+        $totalEarnings = $fixer->earnings()->sum('amount');
+
+        $payload = $wallet ? $wallet->toArray() : [];
+        $payload['total_earnings'] = (float) $totalEarnings;
+        $payload['total_earnings_formatted'] = number_format($totalEarnings, 2, '.', '');
+
         return response()->json([
             'success' => true,
-            'data' => $fixer->wallet,
+            'data' => $payload,
         ]);
     }
 }

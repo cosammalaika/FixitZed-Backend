@@ -10,7 +10,7 @@ class EarningIndex extends Component
     public function render()
     {
         return view('livewire.earning.earning-index', [
-            'earnings' => Earning::latest()->with(['fixer.user', 'serviceRequest'])->get()
+            'earnings' => Earning::latest()->with(['fixer.user'])->get()
         ]);
     }
 

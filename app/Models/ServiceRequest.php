@@ -16,10 +16,12 @@ class ServiceRequest extends Model
         'scheduled_at',
         'status',
         'location',
+        'fixer_snoozed_until',
     ];
 
     protected $casts = [
         'scheduled_at' => 'datetime',
+        'fixer_snoozed_until' => 'datetime',
     ];
 
     public function customer()
@@ -45,5 +47,10 @@ class ServiceRequest extends Model
     public function rating()
     {
         return $this->hasOne(Rating::class);
+    }
+
+    public function declines()
+    {
+        return $this->hasMany(ServiceRequestDecline::class);
     }
 }

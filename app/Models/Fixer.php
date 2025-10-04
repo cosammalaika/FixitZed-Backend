@@ -46,4 +46,9 @@ class Fixer extends Model
     {
         return $this->hasMany(FixerSubscription::class);
     }
+
+    public function declines()
+    {
+        return $this->hasMany(ServiceRequestDecline::class);
+    }
 }

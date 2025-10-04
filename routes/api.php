@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\FixerRequestController;
 use App\Http\Controllers\Api\LoyaltyController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\EarningController;
 
 // Guest routes (no authentication required)
 Route::post('login', [AuthController::class, 'login']);
@@ -100,6 +101,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Fixer wallet and subscriptions
     Route::get('fixer/wallet', [SubscriptionController::class, 'myWallet']);
+    Route::get('fixer/earnings/history', [EarningController::class, 'history']);
     Route::post('subscription/checkout', [SubscriptionController::class, 'checkout']);
     Route::post('subscription/webhook', [SubscriptionController::class, 'webhook']);
 
@@ -108,6 +110,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('service-requests/{serviceRequest}/accept', [FixerRequestController::class, 'accept']);
     // Fixer creates a bill for a request they own
     Route::post('fixer/requests/{serviceRequest}/bill', [FixerRequestController::class, 'bill']);
+    Route::post('fixer/requests/{serviceRequest}/decline', [FixerRequestController::class, 'decline']);
+    Route::post('fixer/requests/{serviceRequest}/snooze', [FixerRequestController::class, 'snooze']);
     // Customer applies to become a fixer
     Route::post('fixer/apply', [FixerController::class, 'apply']);
 });

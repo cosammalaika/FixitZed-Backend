@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Coupon;
+use App\Models\Earning;
 use App\Models\Payment;
 use App\Models\ServiceRequest;
+use App\Models\Setting;
 use App\Support\Loyalty;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -47,6 +49,7 @@ class PaymentController extends Controller
             /** @var \App\Models\User $user */
             $user = $request->user();
             $payment = $serviceRequest->payment;
+            $wasPaid = $payment && in_array(strtolower($payment->status), ['paid', 'completed'], true);
             $previousCouponId = $payment?->coupon_id;
 
             $originalAmount = $validated['original_amount'] ?? ($payment->original_amount ?? $validated['amount']);
@@ -154,9 +157,22 @@ class PaymentController extends Controller
                 Loyalty::award($user, $loyaltyPointsEarned);
             }
 
-            if ($isPaid) {
+            if ($isPaid && ! $wasPaid) {
                 $serviceRequest->status = 'completed';
                 $serviceRequest->save();
+
+                $fixer = $serviceRequest->fixer;
+                if ($fixer) {
+                    $earning = Earning::firstOrNew(['fixer_id' => $fixer->id]);
+                    $earning->amount = ($earning->amount ?? 0) + $finalAmount;
+                    $earning->service_count = ($earning->service_count ?? 0) + 1;
+                    $earning->save();
+
+                    $points = (int) Setting::get('loyalty.fixer_completion_points', 10);
+                    if ($points > 0 && $fixer->user) {
+                        Loyalty::award($fixer->user, $points);
+                    }
+                }
             }
 
             $freshPayment = $payment->fresh(['coupon']);

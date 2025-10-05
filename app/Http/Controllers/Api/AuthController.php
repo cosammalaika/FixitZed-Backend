@@ -51,10 +51,16 @@ class AuthController extends Controller
             'email'          => $validated['email'],
             'contact_number' => $validated['contact_number'],
             'address'        => $validated['address'] ?? null,
-            'user_type'      => $validated['user_type'] ?? 'Customer',
             'status'         => $validated['status'] ?? 'Active',
             'password'       => Hash::make($validated['password']),
         ]);
+
+        $roleFromRequest = $validated['user_type'] ?? null;
+        $roles = ['Customer'];
+        if ($roleFromRequest && ! in_array($roleFromRequest, $roles, true)) {
+            $roles[] = $roleFromRequest;
+        }
+        $user->syncRoles($roles);
 
         event(new Registered($user)); // WHY: triggers any listeners (e.g., verification)
 
@@ -96,9 +102,10 @@ class AuthController extends Controller
 
     public function me(Request $request): JsonResponse
     {
+        $user = $request->user()->loadMissing('roles');
         return response()->json([
             'success' => true,
-            'user'    => $request->user(),
+            'user'    => $user,
         ], 200);
     }
 

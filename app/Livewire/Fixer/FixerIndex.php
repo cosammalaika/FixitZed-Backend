@@ -30,9 +30,11 @@ class FixerIndex extends Component
             log_user_action('deleted fixer', "Deleted Fixer ID: {$fixer->id}");
 
             // Revert user type back to Customer if they are no longer a fixer
-            if ($user && $user->user_type === 'Fixer') {
-                $user->user_type = 'Customer';
-                $user->save();
+            if ($user) {
+                $user->removeRole('Fixer');
+                if (! $user->hasRole('Customer')) {
+                    $user->assignRole('Customer');
+                }
             }
 
             session()->flash('success', "Fixer deleted successfully.");

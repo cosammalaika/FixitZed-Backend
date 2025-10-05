@@ -136,7 +136,7 @@ new class extends Component {
                                 <div>
                                     <h3 class="fw-semibold mb-1 text-white">{{ $user->first_name }} {{ $user->last_name }}</h3>
                                     <div class="badge bg-light text-primary fw-semibold">
-                                        {{ $user->user_type ?? 'Member' }}
+                                        {{ $user->primary_role ?? 'Member' }}
                                     </div>
                                     <p class="mb-0 mt-2 text-white-50"><i
                                             class="bx bx-envelope me-1"></i>{{ $user->email }}</p>

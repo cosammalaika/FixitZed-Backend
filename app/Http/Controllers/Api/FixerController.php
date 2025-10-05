@@ -55,7 +55,7 @@ class FixerController extends Controller
     {
         $limit = (int) $request->query('limit', 10);
 
-        $users = User::where('user_type', 'Fixer')
+        $users = User::role('Fixer')
             ->with(['fixer.services'])
             ->withAvg([
                 'receivedRatings as average_rating' => function ($query) {
@@ -205,9 +205,11 @@ class FixerController extends Controller
 
             $fixer->services()->sync($validated['service_ids']);
 
-            if ($user->user_type !== 'Fixer') {
-                $user->user_type = 'Fixer';
-                $user->save();
+            if (! $user->hasRole('Fixer')) {
+                $user->assignRole('Fixer');
+            }
+            if (! $user->hasRole('Customer')) {
+                $user->assignRole('Customer');
             }
 
             return response()->json([

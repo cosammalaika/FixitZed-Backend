@@ -25,7 +25,7 @@ use App\Livewire\Settings\GeneralSettings;
 use App\Http\Controllers\Auth\LockController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
-Route::middleware(['auth', 'verified'])
+Route::middleware(['auth', 'verified', 'permission:view.dashboard'])
     ->get('/dashboard', Dashboard::class)
     ->name('dashboard');
 
@@ -33,98 +33,221 @@ Route::redirect('/', '/dashboard');
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', 'settings/profile');
 
-    Route::get('reportd', Reportd::class)->name('reportd.index');
+    Route::get('reportd', Reportd::class)
+        ->name('reportd.index')
+        ->middleware('permission:view.reports');
 
     Route::get('lock', [LockController::class, 'activate'])->name('lock.activate');
     Route::get('lock-screen', [LockController::class, 'show'])->name('lock.screen');
     Route::post('lock-screen', [LockController::class, 'unlock'])->name('lock.unlock');
 
-    Route::get('logs', UserLogIndex::class)->name('logs.index');
+    Route::get('logs', UserLogIndex::class)
+        ->name('logs.index')
+        ->middleware('permission:view.logs');
 
-    Route::get('settings/general', GeneralSettings::class)->name('settings.general');
+    Route::get('settings/general', GeneralSettings::class)
+        ->name('settings.general')
+        ->middleware('permission:edit.settings');
 
-    Route::get('users', UserIndex::class)->name('users.index');
-    Route::get('users/create', UserCreate::class)->name('users.create');
-    Route::get('users/{id}/edit', UserEdit::class)->name('users.edit');
-    Route::get('users/{id}', UserShow::class)->name('users.show');
+    Route::get('users', UserIndex::class)
+        ->name('users.index')
+        ->middleware('permission:view.users');
+    Route::get('users/create', UserCreate::class)
+        ->name('users.create')
+        ->middleware('permission:create.users');
+    Route::get('users/{id}/edit', UserEdit::class)
+        ->name('users.edit')
+        ->middleware('permission:edit.users');
+    Route::get('users/{id}', UserShow::class)
+        ->name('users.show')
+        ->middleware('permission:show.users');
 
-    // ->middleware("permission:view.services|create.services|edit.services|show.services|delete.services")
-    Route::get('services', ServiceIndex::class)->name('services.index');
-    Route::get('services/create', ServiceCreate::class)->name('services.create');
-    Route::get('services/{id}/edit', ServiceEdit::class)->name('services.edit');
-    Route::get('services/{id}', ServiceShow::class)->name('services.show');
+    Route::get('services', ServiceIndex::class)
+        ->name('services.index')
+        ->middleware('permission:view.services');
+    Route::get('services/create', ServiceCreate::class)
+        ->name('services.create')
+        ->middleware('permission:create.services');
+    Route::get('services/{id}/edit', ServiceEdit::class)
+        ->name('services.edit')
+        ->middleware('permission:edit.services');
+    Route::get('services/{id}', ServiceShow::class)
+        ->name('services.show')
+        ->middleware('permission:show.services');
 
-    Route::get('role', RoleIndex::class)->name('role.index');
-    Route::get('role/create', RoleCreate::class)->name(name: 'roles.create');
-    Route::get('role/{id}/edit', RoleEdit::class)->name('roles.edit');
-    Route::get('role/{id}', RoleShow::class)->name('roles.show');
+    Route::get('role', RoleIndex::class)
+        ->name('role.index')
+        ->middleware('permission:view.roles');
+    Route::get('role/create', RoleCreate::class)
+        ->name('roles.create')
+        ->middleware('permission:create.roles');
+    Route::get('role/{id}/edit', RoleEdit::class)
+        ->name('roles.edit')
+        ->middleware('permission:edit.roles');
+    Route::get('role/{id}', RoleShow::class)
+        ->name('roles.show')
+        ->middleware('permission:show.roles');
 
-    
-    Route::get('category', CategoryIndex::class)->name('category.index');
-    Route::get('category/create', CategoryCreate::class)->name(name: 'category.create');
-    Route::get('category/{id}/edit', CategoryEdit::class)->name('category.edit');
-    Route::get('category/{id}', CategoryShow::class)->name('category.show');
+    Route::get('category', CategoryIndex::class)
+        ->name('category.index')
+        ->middleware('permission:view.categories');
+    Route::get('category/create', CategoryCreate::class)
+        ->name('category.create')
+        ->middleware('permission:create.categories');
+    Route::get('category/{id}/edit', CategoryEdit::class)
+        ->name('category.edit')
+        ->middleware('permission:edit.categories');
+    Route::get('category/{id}', CategoryShow::class)
+        ->name('category.show')
+        ->middleware('permission:show.categories');
 
-    Route::get('coupon', CouponIndex::class)->name('coupon.index');
-    Route::get('coupon/create', CouponCreate::class)->name(name: 'coupon.create');
-    Route::get('coupon/{id}/edit', CouponEdit::class)->name('coupon.edit');
-    Route::get('coupon/{id}', CouponShow::class)->name('coupon.show');
+    Route::get('coupon', CouponIndex::class)
+        ->name('coupon.index')
+        ->middleware('permission:view.coupons');
+    Route::get('coupon/create', CouponCreate::class)
+        ->name('coupon.create')
+        ->middleware('permission:create.coupons');
+    Route::get('coupon/{id}/edit', CouponEdit::class)
+        ->name('coupon.edit')
+        ->middleware('permission:edit.coupons');
+    Route::get('coupon/{id}', CouponShow::class)
+        ->name('coupon.show')
+        ->middleware('permission:show.coupons');
 
-    Route::get('earning', EarningIndex::class)->name('earning.index');
-    Route::get('earning/create', EarningCreate::class)->name(name: 'earning.create');
-    Route::get('earning/{id}/edit', EarningEdit::class)->name('earning.edit');
-    Route::get('earning/{id}', EarningShow::class)->name('earning.show');
+    Route::get('earning', EarningIndex::class)
+        ->name('earning.index')
+        ->middleware('permission:view.earnings');
+    Route::get('earning/create', EarningCreate::class)
+        ->name('earning.create')
+        ->middleware('permission:create.earnings');
+    Route::get('earning/{id}/edit', EarningEdit::class)
+        ->name('earning.edit')
+        ->middleware('permission:edit.earnings');
+    Route::get('earning/{id}', EarningShow::class)
+        ->name('earning.show')
+        ->middleware('permission:show.earnings');
 
-    Route::get('fixer', FixerIndex::class)->name('fixer.index');
-    Route::get('fixer/create', FixerCreate::class)->name(name: 'fixer.create');
-    Route::get('fixer/{id}/edit', FixerEdit::class)->name('fixer.edit');
-    Route::get('fixer/{id}', FixerShow::class)->name('fixer.show');
+    Route::get('fixer', FixerIndex::class)
+        ->name('fixer.index')
+        ->middleware('permission:view.fixers');
+    Route::get('fixer/create', FixerCreate::class)
+        ->name('fixer.create')
+        ->middleware('permission:create.fixers');
+    Route::get('fixer/{id}/edit', FixerEdit::class)
+        ->name('fixer.edit')
+        ->middleware('permission:edit.fixers');
+    Route::get('fixer/{id}', FixerShow::class)
+        ->name('fixer.show')
+        ->middleware('permission:show.fixers');
 
-    Route::get('location', LocationIndex::class)->name('location.index');
-    Route::get('location/create', LocationCreate::class)->name(name: 'location.create');
-    Route::get('location/{id}/edit', LocationEdit::class)->name('location.edit');
-    Route::get('location/{id}', LocationShow::class)->name('location.show');
+    Route::get('location', LocationIndex::class)
+        ->name('location.index')
+        ->middleware('permission:view.locations');
+    Route::get('location/create', LocationCreate::class)
+        ->name('location.create')
+        ->middleware('permission:create.locations');
+    Route::get('location/{id}/edit', LocationEdit::class)
+        ->name('location.edit')
+        ->middleware('permission:edit.locations');
+    Route::get('location/{id}', LocationShow::class)
+        ->name('location.show')
+        ->middleware('permission:show.locations');
 
-    Route::get('notification', NotificationIndex::class)->name('notification.index');
-    Route::get('notification/create', NotificationCreate::class)->name(name: 'notification.create');
-    Route::get('notification/{id}/edit', NotificationEdit::class)->name('notification.edit');
-    Route::get('notification/{id}', NotificationShow::class)->name('notification.show');
+    Route::get('notification', NotificationIndex::class)
+        ->name('notification.index')
+        ->middleware('permission:view.notifications');
+    Route::get('notification/create', NotificationCreate::class)
+        ->name('notification.create')
+        ->middleware('permission:create.notifications');
+    Route::get('notification/{id}/edit', NotificationEdit::class)
+        ->name('notification.edit')
+        ->middleware('permission:edit.notifications');
+    Route::get('notification/{id}', NotificationShow::class)
+        ->name('notification.show')
+        ->middleware('permission:show.notifications');
 
-    // Managed Locations (Location Options)
-    Route::get('location-options', LocationOptionIndex::class)->name('location-options.index');
+    Route::get('location-options', LocationOptionIndex::class)
+        ->name('location-options.index')
+        ->middleware('permission:view.location_options');
 
-    Route::get('payment', PaymentIndex::class)->name('payment.index');
-    Route::get('payment/create', PaymentCreate::class)->name(name: 'payment.create');
-    Route::get('payment/{id}/edit', PaymentEdit::class)->name('payment.edit');
-    Route::get('payment/{id}', PaymentShow::class)->name('payment.show');
+    Route::get('payment', PaymentIndex::class)
+        ->name('payment.index')
+        ->middleware('permission:view.payments');
+    Route::get('payment/create', PaymentCreate::class)
+        ->name('payment.create')
+        ->middleware('permission:create.payments');
+    Route::get('payment/{id}/edit', PaymentEdit::class)
+        ->name('payment.edit')
+        ->middleware('permission:edit.payments');
+    Route::get('payment/{id}', PaymentShow::class)
+        ->name('payment.show')
+        ->middleware('permission:show.payments');
 
-    // Payment Methods (manage methods shown in apps)
-    Route::get('payment-methods', PaymentMethodIndex::class)->name('payment-methods.index');
+    Route::get('payment-methods', PaymentMethodIndex::class)
+        ->name('payment-methods.index')
+        ->middleware('permission:view.payment_methods');
 
-    Route::get('rating', RatingIndex::class)->name('rating.index');
-    Route::get('rating/create', RatingCreate::class)->name(name: 'rating.create');
-    Route::get('rating/{id}/edit', RatingEdit::class)->name('rating.edit');
-    Route::get('rating/{id}', RatingShow::class)->name('rating.show');
+    Route::get('rating', RatingIndex::class)
+        ->name('rating.index')
+        ->middleware('permission:view.ratings');
+    Route::get('rating/create', RatingCreate::class)
+        ->name('rating.create')
+        ->middleware('permission:create.ratings');
+    Route::get('rating/{id}/edit', RatingEdit::class)
+        ->name('rating.edit')
+        ->middleware('permission:edit.ratings');
+    Route::get('rating/{id}', RatingShow::class)
+        ->name('rating.show')
+        ->middleware('permission:show.ratings');
 
-    Route::get('review', ReviewIndex::class)->name('review.index');
-    Route::get('review/create', ReviewCreate::class)->name(name: 'review.create');
-    Route::get('review/{id}/edit', ReviewEdit::class)->name('review.edit');
-    Route::get('review/{id}', ReviewShow::class)->name('review.show');
+    Route::get('review', ReviewIndex::class)
+        ->name('review.index')
+        ->middleware('permission:view.reviews');
+    Route::get('review/create', ReviewCreate::class)
+        ->name('review.create')
+        ->middleware('permission:create.reviews');
+    Route::get('review/{id}/edit', ReviewEdit::class)
+        ->name('review.edit')
+        ->middleware('permission:edit.reviews');
+    Route::get('review/{id}', ReviewShow::class)
+        ->name('review.show')
+        ->middleware('permission:show.reviews');
 
-    // Subscriptions (admin)
-    Route::get('subscriptions/plans', SubscriptionPlanIndex::class)->name('subscriptions.plans');
-    Route::get('subscriptions/purchases', SubscriptionPurchaseIndex::class)->name('subscriptions.purchases');
-    Route::get('wallets', WalletIndex::class)->name('wallet.index');
+    Route::get('subscriptions/plans', SubscriptionPlanIndex::class)
+        ->name('subscriptions.plans')
+        ->middleware('permission:view.subscriptions');
+    Route::get('subscriptions/purchases', SubscriptionPurchaseIndex::class)
+        ->name('subscriptions.purchases')
+        ->middleware('permission:view.subscriptions');
+    Route::get('wallets', WalletIndex::class)
+        ->name('wallet.index')
+        ->middleware('permission:view.wallet');
 
-    Route::get('subcategory', action: SubcategoryIndex::class)->name('subcategory.index');
-    Route::get('subcategory/create', SubcategoryCreate::class)->name(name: 'subcategory.create');
-    Route::get('subcategory/{id}/edit', SubcategoryEdit::class)->name('subcategory.edit');
-    Route::get('subcategory/{id}', SubcategoryShow::class)->name('subcategory.show');
+    Route::get('subcategory', SubcategoryIndex::class)
+        ->name('subcategory.index')
+        ->middleware('permission:view.subcategories');
+    Route::get('subcategory/create', SubcategoryCreate::class)
+        ->name('subcategory.create')
+        ->middleware('permission:create.subcategories');
+    Route::get('subcategory/{id}/edit', SubcategoryEdit::class)
+        ->name('subcategory.edit')
+        ->middleware('permission:edit.subcategories');
+    Route::get('subcategory/{id}', SubcategoryShow::class)
+        ->name('subcategory.show')
+        ->middleware('permission:show.subcategories');
 
-    Route::get('serviceRequest', action: ServiceRequestIndex::class)->name('serviceRequest.index');
-    Route::get('serviceRequest/create', ServiceRequestCreate::class)->name(name: 'serviceRequest.create');
-    Route::get('serviceRequest/{id}/edit', ServiceRequestEdit::class)->name('serviceRequest.edit');
-    Route::get('serviceRequest/{id}', ServiceRequestShow::class)->name('serviceRequest.show');
+    Route::get('serviceRequest', ServiceRequestIndex::class)
+        ->name('serviceRequest.index')
+        ->middleware('permission:view.service_requests');
+    Route::get('serviceRequest/create', ServiceRequestCreate::class)
+        ->name('serviceRequest.create')
+        ->middleware('permission:create.service_requests');
+    Route::get('serviceRequest/{id}/edit', ServiceRequestEdit::class)
+        ->name('serviceRequest.edit')
+        ->middleware('permission:edit.service_requests');
+    Route::get('serviceRequest/{id}', ServiceRequestShow::class)
+        ->name('serviceRequest.show')
+        ->middleware('permission:show.service_requests');
 
 
     Volt::route('settings/profile', 'settings.profile')->name('settings.profile');

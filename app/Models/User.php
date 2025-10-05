@@ -27,7 +27,6 @@ class User extends Authenticatable
         'username',
         'email',
         'contact_number',
-        'user_type',
         'status',
         'address',
         'profile_photo_path',
@@ -51,6 +50,7 @@ class User extends Authenticatable
 
     protected $appends = [
         'avatar_url',
+        'primary_role',
     ];
 
     /**
@@ -119,6 +119,11 @@ class User extends Authenticatable
     public function notifications()
     {
         return $this->hasMany(Notification::class);
+    }
+
+    public function getPrimaryRoleAttribute(): ?string
+    {
+        return $this->getRoleNames()->first() ?: null;
     }
 
     public function getAvatarUrlAttribute(): ?string

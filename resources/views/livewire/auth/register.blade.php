@@ -14,7 +14,6 @@ new #[Layout('components.layouts.auth')] class extends Component {
         $username = '',
         $email = '',
         $contact_number = '',
-        $user_type = 'Customer'; // Default role
     public string $status = 'Active',
         $address = '',
         $password = '',
@@ -28,7 +27,6 @@ new #[Layout('components.layouts.auth')] class extends Component {
             'username' => ['required', 'string', 'max:255', 'unique:users,username'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'contact_number' => ['required', 'string', 'max:20'],
-            'user_type' => ['required', 'in:Customer,Fixer,Admin,Support'],
             'status' => ['required', 'in:Active,Inactive'],
             'address' => ['nullable', 'string', 'max:1000'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
@@ -36,7 +34,10 @@ new #[Layout('components.layouts.auth')] class extends Component {
 
         $validated['password'] = Hash::make($validated['password']);
 
-        event(new Registered(($user = User::create($validated))));
+        $user = User::create($validated);
+        $user->assignRole('Customer');
+
+        event(new Registered($user));
 
         Auth::login($user);
 

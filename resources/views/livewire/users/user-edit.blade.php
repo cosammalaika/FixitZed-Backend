@@ -107,19 +107,22 @@
                     </div>
                 </div>
 
-                <flux:checkbox.group wire:model="roles" label="roles">
-                    @foreach ($allRoles as $role)
-                        <div class="col-md-4">
-                            <div class="form-check form-switch mb-2">
-                                <input type="checkbox" class="form-check-input" id="perm-{{ $role->id }}"
-                                    value="{{ $role->name }}" wire:model="roles">
-                                <label class="form-check-label" for="perm-{{ $role->id }}">
-                                    {{ $role->name }}
-                                </label>
-                            </div>
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <label class="form-label">Roles</label>
+                        <div class="d-flex flex-wrap gap-3">
+                            @foreach ($allRoles as $role)
+                                <div class="form-check form-switch mb-1">
+                                    <input type="checkbox" class="form-check-input" id="perm-{{ $role->id }}"
+                                        value="{{ $role->name }}" wire:model="roles">
+                                    <label class="form-check-label" for="perm-{{ $role->id }}">
+                                        {{ $role->name }}
+                                    </label>
+                                </div>
+                            @endforeach
                         </div>
-                    @endforeach
-                </flux:checkbox.group>
+                    </div>
+                </div>
                 <button type="submit" class="btn btn-primary waves-effect waves-light">
                     Update
                 </button>

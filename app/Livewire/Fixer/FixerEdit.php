@@ -64,15 +64,21 @@ class FixerEdit extends Component
         // If the assigned user changed, update user types accordingly
         if ($originalUserId != $this->user_id) {
             $oldUser = User::find($originalUserId);
-            if ($oldUser && $oldUser->user_type === 'Fixer') {
-                $oldUser->user_type = 'Customer';
-                $oldUser->save();
+            if ($oldUser) {
+                $oldUser->removeRole('Fixer');
+                if (! $oldUser->hasRole('Customer')) {
+                    $oldUser->assignRole('Customer');
+                }
             }
 
             $newUser = User::find($this->user_id);
-            if ($newUser && $newUser->user_type !== 'Fixer') {
-                $newUser->user_type = 'Fixer';
-                $newUser->save();
+            if ($newUser) {
+                if (! $newUser->hasRole('Fixer')) {
+                    $newUser->assignRole('Fixer');
+                }
+                if (! $newUser->hasRole('Customer')) {
+                    $newUser->assignRole('Customer');
+                }
             }
         }
 

@@ -33,12 +33,12 @@ class OtherData extends Seeder
             'username' => 'johndoe',
             'email' => 'john@example.com',
             'contact_number' => '0970000001',
-            'user_type' => 'customer',
             'status' => 'Active',
             'address' => 'Lusaka, Zambia',
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
         ]);
+        $customer->assignRole('Customer');
 
         $fixerUser = User::create([
             'first_name' => 'Mary',
@@ -46,12 +46,12 @@ class OtherData extends Seeder
             'username' => 'maryfix',
             'email' => 'mary@example.com',
             'contact_number' => '0970000002',
-            'user_type' => 'fixer',
             'status' => 'Active',
             'address' => 'Ndola, Zambia',
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
         ]);
+        $fixerUser->assignRole('Fixer');
 
         // Categories
         $plumbing = Category::create(['name' => 'Plumbing', 'description' => 'All plumbing related services']);

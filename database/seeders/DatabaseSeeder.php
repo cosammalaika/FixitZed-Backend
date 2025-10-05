@@ -3,65 +3,65 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $this->call(PermissionSeeder::class);
 
-       User::factory()->create([
+        $customer = User::firstOrCreate([
+            'email' => 'cosammalaika@example.com',
+        ], [
             'first_name' => 'Cosam',
             'last_name' => 'Malaika',
             'username' => 'AngelOnIt',
-            'email' => 'cosammalaika@example.com',
             'contact_number' => '0970000000',
-            'user_type' => 'Customer',
-            'password' => bcrypt('password'), 
+            'status' => 'Active',
+            'password' => Hash::make('password'),
         ]);
+        $customer->assignRole('Customer');
 
-        // Additional named users
-        User::factory()->create([
+        $adminUser = User::firstOrCreate([
+            'email' => 'admin@example.com',
+        ], [
             'first_name' => 'Admin',
             'last_name' => 'User',
             'username' => 'admin',
-            'email' => 'admin@example.com',
-            'user_type' => 'Admin',
+            'contact_number' => '0970000000',
             'status' => 'Active',
-            'password' => bcrypt('password'),
+            'password' => Hash::make('password'),
         ]);
+        $adminUser->assignRole('Super Admin');
 
-        User::factory()->create([
+        $supportUser = User::firstOrCreate([
+            'email' => 'support@example.com',
+        ], [
             'first_name' => 'Support',
             'last_name' => 'Agent',
             'username' => 'support',
-            'email' => 'support@example.com',
-            'user_type' => 'Support',
+            'contact_number' => '0960000000',
             'status' => 'Active',
-            'password' => bcrypt('password'),
+            'password' => Hash::make('password'),
         ]);
+        $supportUser->assignRole('Support');
 
-        // Bulk customers
         User::factory(15)->create([
-            'user_type' => 'Customer',
             'status' => 'Active',
+        ])->each(fn (User $user) => $user->assignRole('Customer'));
+
+        $this->call([
+            LocationOptionSeeder::class,
+            ServiceCatalogSeeder::class,
+            ZambianUsersSeeder::class,
+            CouponSeeder::class,
         ]);
 
-        // Seed default location options
-        $this->call(LocationOptionSeeder::class);
-
-        // Seed service catalog (categories, subcategories, services)
-        $this->call(ServiceCatalogSeeder::class);
-
-        // Seed Zambian users
-        $this->call(ZambianUsersSeeder::class);
-
-        // Seed coupons (Zambia-tailored)
-        $this->call(CouponSeeder::class);
+        // Ensure every user has at least the Customer role
+        User::doesntHave('roles')->each(function (User $user) {
+            $user->assignRole('Customer');
+        });
     }
 }

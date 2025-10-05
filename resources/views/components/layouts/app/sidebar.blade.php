@@ -74,6 +74,7 @@
     </script>
     <!-- dashboard init -->
     <script src="{{ asset('assets/js/pages/dashboard.init.js') }}"></script>
+    <script src="{{ asset('assets/js/datatables.responsive.fix.js') }}"></script>
 
     <script>
         // Apply persisted theme before main app script
@@ -108,6 +109,45 @@
                 document.body.setAttribute('data-sidebar', mode);
             }
         });
+    </script>
+
+    <script>
+        (function () {
+            const permissions = new Set(@json(auth()->user()?->getAllPermissions()->pluck('name') ?? []));
+
+            function applyPermissionGuards(root) {
+                if (!root) return;
+                root.querySelectorAll('[data-permission]').forEach((el) => {
+                    const required = (el.dataset.permission || '')
+                        .split('|')
+                        .map((value) => value.trim())
+                        .filter(Boolean);
+
+                    if (required.length && !required.every((permission) => permissions.has(permission))) {
+                        el.remove();
+                    }
+                });
+
+                root.querySelectorAll('[data-permission-any]').forEach((el) => {
+                    const options = (el.dataset.permissionAny || '')
+                        .split('|')
+                        .map((value) => value.trim())
+                        .filter(Boolean);
+
+                    if (options.length && !options.some((permission) => permissions.has(permission))) {
+                        el.remove();
+                    }
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                applyPermissionGuards(document);
+            });
+
+            window.addEventListener('livewire:navigated', function () {
+                applyPermissionGuards(document);
+            });
+        })();
     </script>
       <!-- choices js -->
         <script src="assets/libs/choices.js/public/assets/scripts/choices.min.js"></script>

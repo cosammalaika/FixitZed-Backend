@@ -15,7 +15,7 @@ class RoleEdit extends Component
         $this->role = Role::find($id);
         $this->allPermissions = Permission::all();
         $this->name = $this->role->name;
-        $this->permissions = $this->role->permissions()->pluck("name");
+        $this->permissions = $this->role->permissions()->pluck('name')->all();
     }
     public function submit()
     {
@@ -30,7 +30,16 @@ class RoleEdit extends Component
         $this->role->save();
         $this->role->syncPermissions($this->permissions);
 
-        log_user_action('updated role', "From '{$oldName}' to '{$this->name}', Permissions: " . implode(', ', $this->permissions));
+        $permissionList = is_array($this->permissions)
+            ? $this->permissions
+            : ($this->permissions instanceof \Illuminate\Support\Collection
+                ? $this->permissions->all()
+                : []);
+
+        log_user_action(
+            'updated role',
+            "From '{$oldName}' to '{$this->name}', Permissions: " . implode(', ', $permissionList)
+        );
 
         return to_route("role.index")->with("success", "Role edited successfully");
     }

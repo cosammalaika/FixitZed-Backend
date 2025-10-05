@@ -17,7 +17,6 @@ return new class extends Migration {
             $table->string('username')->unique();
             $table->string('email')->unique();
             $table->string('contact_number');
-            $table->enum('user_type', ['Customer', 'Fixer', 'Admin', 'Support'])->default('Customer');
             $table->string('status')->default('Active');
             $table->text('address')->nullable();
             $table->timestamp('email_verified_at')->nullable();

@@ -15,13 +15,11 @@
                 <div class="row">
                     <div class="col-md-6">
                         <label class="form-label" for="default-input">First Name</label>
-                        <input class="form-control" type="text" wire:model="first_name" placeholder="First Name"
-                            required>
+                        <input class="form-control" type="text" wire:model="first_name" placeholder="First Name" required>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label" for="default-input">Last Name</label>
-                        <input class="form-control" type="text" wire:model="last_name" placeholder="Last Name"
-                            required>
+                        <input class="form-control" type="text" wire:model="last_name" placeholder="Last Name" required>
                     </div>
                 </div>
                 <div class="row mt-6">
@@ -31,16 +29,14 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label" for="default-input">Username</label>
-                        <input class="form-control" type="text" wire:model="username" placeholder="Username"
-                            required>
+                        <input class="form-control" type="text" wire:model="username" placeholder="Username" required>
                     </div>
 
                 </div>
                 <div class="row mt-6">
                     <div class="col-md-6">
                         <label class="form-label" for="default-input">Contact Number</label>
-                        <input class="form-control" type="text" wire:model="contact_number"
-                            placeholder="Contact Number" required>
+                        <input class="form-control" type="text" wire:model="contact_number" placeholder="Contact Number" required>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label" for="location_option_id">Location</label>
@@ -58,13 +54,11 @@
                 <div class="row mt-6">
                     <div class="col-md-6">
                         <label class="form-label" for="default-input">Password</label>
-                        <input class="form-control" type="password" wire:model="password" placeholder="Password"
-                            required>
+                        <input class="form-control" type="password" wire:model="password" placeholder="Password" required>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label" for="default-input">Confirm Password</label>
-                        <input class="form-control" type="password" wire:model="confirm_password"
-                            placeholder="Confirm Password" required>
+                        <input class="form-control" type="password" wire:model="confirm_password" placeholder="Confirm Password" required>
                     </div>
                 </div>
                 <div class="row mt-6">
@@ -87,24 +81,12 @@
                 <div class="row mt-6">
                     <div class="col-md-12">
                         <label class="form-label">Supporting Documents (optional)</label>
-                        <input class="form-control" type="file" wire:model="documents" multiple
-                            accept=".pdf,image/*">
+                        <input class="form-control" type="file" wire:model="documents" multiple accept=".pdf,image/*">
                         <small class="text-muted">You may upload PDFs or images. Max 5MB each.</small>
                         @error('documents.*') <span class="text-danger small">{{ $message }}</span> @enderror
                     </div>
                 </div>
                 <div class="row mt-4">
-                    <div class="col-md-6">
-                        <label class="form-label" for="user_type">User Type</label>
-                        <select wire:model="user_type" class="form-control" required>
-                            <option value="">-- Select User Type --</option>
-                            <option value="Customer">Customer</option>
-                            <option value="Fixer">Fixer</option>
-                            <option value="Admin">Admin</option>
-                            <option value="Support">Support</option>
-                        </select>
-                    </div>
-
                     <div class="col-md-6">
                         <label class="form-label" for="status">Status</label>
                         <select wire:model="status" class="form-control" required>
@@ -114,20 +96,30 @@
                     </div>
                 </div>
 
-
-                <flux:checkbox.group wire:model="roles" label="roles">
-                    @foreach ($allRoles as $role)
-                        <div class="col-md-4">
-                            <div class="form-check form-switch mb-2">
-                                <input type="checkbox" class="form-check-input" id="perm-{{ $role->id }}"
-                                    value="{{ $role->name }}" wire:model="roles">
-                                <label class="form-check-label" for="perm-{{ $role->id }}">
-                                    {{ $role->name }}
-                                </label>
+                @if ($canAssignRoles)
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <label class="form-label">Roles</label>
+                            <div class="d-flex flex-wrap gap-3">
+                                @foreach ($allRoles as $role)
+                                    <div class="form-check form-switch mb-1">
+                                        <input type="checkbox" class="form-check-input"
+                                            id="perm-{{ $role->id }}" value="{{ $role->name }}"
+                                            wire:model="roles">
+                                        <label class="form-check-label" for="perm-{{ $role->id }}">
+                                            {{ $role->name }}
+                                        </label>
+                                    </div>
+                                @endforeach
                             </div>
                         </div>
-                    @endforeach
-                </flux:checkbox.group>
+                    </div>
+                @else
+                    <div class="mt-4">
+                        <span class="badge bg-light text-muted">Role: Customer (default)</span>
+                    </div>
+                @endif
+
                 <button type="submit" class="btn btn-primary waves-effect waves-light">
                     Submit
                 </button>

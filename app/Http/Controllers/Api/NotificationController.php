@@ -11,13 +11,17 @@ class NotificationController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+        $audiences = $this->audiencesForUser($user);
 
-        $baseQuery = Notification::query()->where(function ($query) use ($user) {
+        $baseQuery = Notification::query()->where(function ($query) use ($user, $audiences) {
             $query->where(function ($q) use ($user) {
                 $q->where('recipient_type', 'Individual')
                   ->where('user_id', $user->id);
-            })->orWhere(function ($q) use ($user) {
-                $q->where('recipient_type', $user->user_type);
+            })->orWhere(function ($q) use ($audiences) {
+                if (empty($audiences)) {
+                    return;
+                }
+                $q->whereIn('recipient_type', $audiences);
             });
         })->latest();
 
@@ -45,8 +49,9 @@ class NotificationController extends Controller
     public function markRead(Notification $notification, Request $request)
     {
         $user = $request->user();
+        $audiences = $this->audiencesForUser($user);
         $isIndividualForUser = $notification->recipient_type === 'Individual' && $notification->user_id === $user->id;
-        $isBroadcastForUser = $notification->recipient_type === $user->user_type;
+        $isBroadcastForUser = in_array($notification->recipient_type, $audiences, true);
         abort_unless($isIndividualForUser || $isBroadcastForUser, 403, 'Forbidden');
         $notification->update(['read' => true]);
         return response()->json(['success' => true]);
@@ -55,14 +60,43 @@ class NotificationController extends Controller
     public function markAllRead(Request $request)
     {
         $user = $request->user();
-        Notification::where(function ($q) use ($user) {
+        $audiences = $this->audiencesForUser($user);
+
+        Notification::where(function ($q) use ($user, $audiences) {
             $q->where(function ($qq) use ($user) {
                 $qq->where('recipient_type', 'Individual')->where('user_id', $user->id);
-            })->orWhere(function ($qq) use ($user) {
-                $qq->where('recipient_type', $user->user_type);
+            })->orWhere(function ($qq) use ($audiences) {
+                if (empty($audiences)) {
+                    return;
+                }
+                $qq->whereIn('recipient_type', $audiences);
             });
         })->update(['read' => true]);
 
         return response()->json(['success' => true]);
+    }
+
+    private function audiencesForUser($user): array
+    {
+        $roles = collect($user?->getRoleNames() ?? [])
+            ->filter()
+            ->map(fn ($role) => trim($role));
+
+        if ($roles->isEmpty()) {
+            return [];
+        }
+
+        return $roles->flatMap(function ($role) {
+            $normalized = ucfirst(strtolower($role));
+            return [
+                $role,
+                $normalized,
+                strtoupper($role),
+                strtolower($role),
+            ];
+        })->push('All')
+          ->unique()
+          ->values()
+          ->all();
     }
 }

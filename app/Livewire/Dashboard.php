@@ -42,8 +42,8 @@ class Dashboard extends Component
             ->where('created_at', '>=', Carbon::now()->subWeek())
             ->count();
 
-        $this->recentCustomers = User::where('status', 'Active')
-            ->where('user_type', 'Customer')
+        $this->recentCustomers = User::role('Customer')
+            ->where('status', 'Active')
             ->latest()
             ->take(5)
             ->get();
@@ -52,7 +52,7 @@ class Dashboard extends Component
             ->take(5)
             ->get();
 
-        $this->topRatedFixers = User::where('user_type', 'Fixer')
+        $this->topRatedFixers = User::role('Fixer')
             ->withAvg([
                 'receivedRatings as average_rating' => function ($query) {
                     $query->where('role', 'customer');
@@ -79,7 +79,7 @@ class Dashboard extends Component
         $endOfRange = Carbon::now()->endOfMonth();
         $startOfRange = (clone $endOfRange)->subMonths(11)->startOfMonth();
 
-        $customerCounts = User::where('user_type', 'Customer')
+        $customerCounts = User::role('Customer')
             ->whereBetween('created_at', [$startOfRange, $endOfRange])
             ->get()
             ->groupBy(fn (User $user) => $user->created_at->format('Y-m'))
@@ -165,7 +165,7 @@ class Dashboard extends Component
 
                 return [
                     'name' => trim(($user->first_name ?? 'Unknown') . ' ' . ($user->last_name ?? '')),
-                    'role' => $user->user_type ?? 'Fixer',
+                    'role' => $user?->primary_role ?? 'Fixer',
                     'total' => (int) $request->total,
                 ];
             })

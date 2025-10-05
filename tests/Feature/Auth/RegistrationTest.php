@@ -15,7 +15,6 @@ test('new users can register', function () {
         ->set('username', 'testuser')
         ->set('email', 'test@example.com')
         ->set('contact_number', '123456789')
-        ->set('user_type', 'Customer')
         ->set('status', 'Active')
         ->set('password', 'password')
         ->set('password_confirmation', 'password')

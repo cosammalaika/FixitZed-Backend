@@ -36,46 +36,45 @@ class ZambianUsersSeeder extends Seeder
             $msisdnPrefixes = ['095','096','097'];
             $contact = $msisdnPrefixes[array_rand($msisdnPrefixes)] . str_pad((string) random_int(0, 9999999), 7, '0', STR_PAD_LEFT);
 
-            User::updateOrCreate(
+            $user = User::updateOrCreate(
                 ['email' => (string) $email],
                 [
                     'first_name' => $fn,
                     'last_name' => $ln,
                     'username' => (string) $username,
                     'contact_number' => $contact,
-                    'user_type' => 'Customer',
                     'status' => 'Active',
                     'address' => $towns[array_rand($towns)],
                     'password' => Hash::make('password'),
                 ]
             );
+            $user->assignRole('Customer');
         }
 
-        User::updateOrCreate([
+        $regionalAdmin = User::updateOrCreate([
             'email' => 'admin.zm@example.com',
         ], [
             'first_name' => 'Chanda',
             'last_name' => 'Mulenga',
             'username' => 'admin_zm',
             'contact_number' => '097' . str_pad((string) random_int(0, 9999999), 7, '0', STR_PAD_LEFT),
-            'user_type' => 'Admin',
             'status' => 'Active',
             'address' => $towns[array_rand($towns)],
             'password' => Hash::make('password'),
         ]);
+        $regionalAdmin->assignRole('Admin');
 
-        User::updateOrCreate([
+        $regionalSupport = User::updateOrCreate([
             'email' => 'support.zm@example.com',
         ], [
             'first_name' => 'Thandiwe',
             'last_name' => 'Phiri',
             'username' => 'support_zm',
             'contact_number' => '096' . str_pad((string) random_int(0, 9999999), 7, '0', STR_PAD_LEFT),
-            'user_type' => 'Support',
             'status' => 'Active',
             'address' => $towns[array_rand($towns)],
             'password' => Hash::make('password'),
         ]);
+        $regionalSupport->assignRole('Support');
     }
 }
-

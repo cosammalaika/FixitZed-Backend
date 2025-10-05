@@ -13,7 +13,7 @@ class UserEdit extends Component
 {
     use WithFileUploads;
     public $user;
-    public $first_name, $last_name, $username, $contact_number, $user_type, $status, $email, $address, $allRoles, $roles = [];
+    public $first_name, $last_name, $username, $contact_number, $status, $email, $address, $allRoles, $roles = [];
     // Uploads (optional updates)
     public $photo; // profile image
     public $nrc_front;
@@ -27,12 +27,11 @@ class UserEdit extends Component
         $this->last_name = $this->user->last_name;
         $this->username = $this->user->username;
         $this->contact_number = $this->user->contact_number;
-        $this->user_type = $this->user->user_type;
         $this->status = $this->user->status;
         $this->email = $this->user->email;
         $this->address = $this->user->address;
         $this->allRoles = Role::all();
-        $this->roles = $this->user->roles()->pluck("name");
+        $this->roles = $this->user->roles()->pluck('name')->all();
     }
 
     public function render()
@@ -48,7 +47,6 @@ class UserEdit extends Component
         'username' => 'required|string|max:255|unique:users,username,' . $this->user->id,
         'email' => 'required|email|max:255|unique:users,email,' . $this->user->id,
         'contact_number' => 'required|string|max:20',
-        'user_type' => 'required|in:Customer,Fixer,Admin,Support', // now valid
         'status' => 'required|in:Active,Inactive',
         'address' => 'nullable|string|max:1000',
         'photo' => 'nullable|mimes:jpg,jpeg,png,webp|max:10240',
@@ -62,7 +60,6 @@ class UserEdit extends Component
         'last_name' => $this->last_name,
         'username' => $this->username,
         'contact_number' => $this->contact_number,
-        'user_type' => $this->user_type,
         'status' => $this->status,
         'email' => $this->email,
         'address' => $this->address,
@@ -116,7 +113,11 @@ class UserEdit extends Component
 
         $this->reset(['photo', 'nrc_front', 'nrc_back', 'documents']);
 
-        $this->user->syncRoles($this->roles);
+        $roles = array_filter((array) $this->roles);
+        if (empty($roles)) {
+            $roles = ['Customer'];
+        }
+        $this->user->syncRoles($roles);
         log_user_action('updated user', "User ID: {$this->user->id}, Name: {$this->user->first_name} {$this->user->last_name}");
 
 

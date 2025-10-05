@@ -13,8 +13,9 @@ use Spatie\Permission\Models\Role;
 class UserCreate extends Component
 {
     use WithFileUploads;
-    public $first_name, $last_name, $email, $password, $confirm_password, $username, $contact_number, $user_type = 'user', $status = 'Active', $address;
+    public $first_name, $last_name, $email, $password, $confirm_password, $username, $contact_number, $status = 'Active', $address;
     public $allRoles, $roles = [];
+    public bool $canAssignRoles = false;
     public $location_option_id;
     public $locationOptions = [];
 
@@ -27,7 +28,13 @@ class UserCreate extends Component
 
     public function mount()
     {
-        $this->allRoles = Role::all();
+        $this->canAssignRoles = auth()->user()?->can('assign.permissions') ?? false;
+        if ($this->canAssignRoles) {
+            $this->allRoles = Role::orderBy('name')->get();
+        } else {
+            $this->roles = ['Customer'];
+            $this->allRoles = Role::where('name', 'Customer')->get();
+        }
         if (Schema::hasTable('location_options')) {
             $this->locationOptions = LocationOption::where('is_active', true)->orderBy('name')->get();
         } else {
@@ -42,13 +49,17 @@ class UserCreate extends Component
 
     public function submit()
     {
+        $rolesToAssign = $this->canAssignRoles ? array_filter((array) $this->roles) : ['Customer'];
+        if (empty($rolesToAssign)) {
+            $rolesToAssign = ['Customer'];
+        }
+
         $this->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users,username',
             'email' => 'required|email|unique:users,email',
             'contact_number' => 'required|string|max:20',
-            'user_type' => 'required|in:Customer,Fixer,Admin,Support',
             'status' => 'required|in:Active,Inactive',
             'location_option_id' => 'required|exists:location_options,id',
             'roles' => 'nullable',
@@ -68,7 +79,6 @@ class UserCreate extends Component
             'username' => $this->username,
             'email' => $this->email,
             'contact_number' => $this->contact_number,
-            'user_type' => $this->user_type,
             'status' => $this->status,
             'address' => $selectedLocation?->name,
             'password' => Hash::make($this->password),
@@ -102,8 +112,7 @@ class UserCreate extends Component
 
         $user->update($paths);
 
-
-        $user->syncRoles($this->roles);
+        $user->syncRoles($rolesToAssign);
         log_user_action('created user', "Created user ID: {$user->id}, Email: {$user->email}");
 
 

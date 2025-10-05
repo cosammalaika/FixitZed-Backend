@@ -53,9 +53,13 @@ class FixerCreate extends Component
 
         // Update the user's type to Fixer
         $user = User::find($this->user_id);
-        if ($user && $user->user_type !== 'Fixer') {
-            $user->user_type = 'Fixer';
-            $user->save();
+        if ($user) {
+            if (! $user->hasRole('Fixer')) {
+                $user->assignRole('Fixer');
+            }
+            if (! $user->hasRole('Customer')) {
+                $user->assignRole('Customer');
+            }
         }
 
         log_user_action('created fixer', "Fixer ID: {$fixer->id}, User ID: {$this->user_id}");

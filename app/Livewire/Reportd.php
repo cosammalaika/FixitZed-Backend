@@ -126,7 +126,7 @@ class Reportd extends Component
         $pendingRequests = ServiceRequest::whereIn('status', $pendingStatuses)->count();
 
         $startOfMonth = Carbon::now()->startOfMonth();
-        $newCustomers = User::where('user_type', 'Customer')
+        $newCustomers = User::role('Customer')
             ->where('created_at', '>=', $startOfMonth)
             ->count();
 
@@ -144,7 +144,7 @@ class Reportd extends Component
         $endOfRange = Carbon::now()->endOfMonth();
         $startOfRange = (clone $endOfRange)->subMonths(11)->startOfMonth();
 
-        $customerCounts = User::where('user_type', 'Customer')
+        $customerCounts = User::role('Customer')
             ->whereBetween('created_at', [$startOfRange, $endOfRange])
             ->get()
             ->groupBy(fn (User $user) => $user->created_at->format('Y-m'))

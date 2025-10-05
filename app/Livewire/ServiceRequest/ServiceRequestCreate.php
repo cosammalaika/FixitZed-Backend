@@ -21,7 +21,7 @@ class ServiceRequestCreate extends Component
 
     public function mount()
     {
-        $this->customers = User::where('user_type', 'Customer')
+        $this->customers = User::role('Customer')
             ->where('status', 'Active')
             ->get();
 

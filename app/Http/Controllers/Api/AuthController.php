@@ -78,16 +78,19 @@ class AuthController extends Controller
      */
     public function login(Request $request): JsonResponse
     {
-        $credentials = $request->validate([
-            'email'    => ['required', 'email'],
-            'password' => ['required', 'string'],
+        $validated = $request->validate([
+            'identifier' => ['required_without:email', 'string'],
+            'email'      => ['nullable', 'email'],
+            'password'   => ['required', 'string'],
         ]);
 
-        $user = User::where('email', $credentials['email'])->first();
+        $identifier = $validated['identifier'] ?? $validated['email'];
+        $user = $identifier ? $this->findUserByIdentifier($identifier) : null;
 
-        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
+        if (! $user || ! Hash::check($validated['password'], $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
+                'identifier' => ['The provided credentials are incorrect.'],
+                'email'      => ['The provided credentials are incorrect.'],
             ]);
         }
 
@@ -196,6 +199,44 @@ class AuthController extends Controller
         if ($name === '') return ['', null];
         $parts = explode(' ', $name, 2);
         return [$parts[0], $parts[1] ?? null];
+    }
+
+    private function findUserByIdentifier(string $identifier): ?User
+    {
+        $identifier = trim($identifier);
+        if ($identifier === '') {
+            return null;
+        }
+
+        if (filter_var($identifier, FILTER_VALIDATE_EMAIL)) {
+            return User::where('email', $identifier)->first();
+        }
+
+        $normalized = $this->normalizePhone($identifier);
+
+        return User::where(function ($query) use ($identifier, $normalized) {
+            $query->where('contact_number', $identifier);
+
+            if ($normalized !== null) {
+                $query->orWhere('contact_number', $normalized)
+                      ->orWhere('contact_number', '+' . $normalized)
+                      ->orWhereRaw(
+                          "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(contact_number, ' ', ''), '-', ''), '(', ''), ')', ''), '+', '') = ?",
+                          [$normalized]
+                      );
+            }
+        })->first();
+    }
+
+    private function normalizePhone(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', $value);
+
+        return $digits !== '' ? $digits : null;
     }
 
     private function makeUniqueUsername(string $seed, string $fallbackEmail): string

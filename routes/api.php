@@ -105,6 +105,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('subscription/checkout', [SubscriptionController::class, 'checkout']);
     Route::post('subscription/webhook', [SubscriptionController::class, 'webhook']);
 
+    // Fixer profile management
+    Route::get('fixer/me', [FixerController::class, 'current']);
+    Route::patch('fixer/me', [FixerController::class, 'update']);
+
     // Fixer requests
     Route::get('fixer/requests', [FixerRequestController::class, 'index']);
     Route::post('service-requests/{serviceRequest}/accept', [FixerRequestController::class, 'accept']);

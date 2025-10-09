@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Fixer;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -130,6 +131,73 @@ class FixerController extends Controller
         ]);
     }
 
+    public function current(Request $request)
+    {
+        $user = $request->user()->loadMissing('fixer.services');
+        $fixer = $user->fixer;
+
+        if (! $fixer) {
+            return response()->json([
+                'success' => true,
+                'data' => null,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $this->formatFixer($fixer),
+        ]);
+    }
+
+    public function update(Request $request)
+    {
+        /** @var User $user */
+        $user = $request->user()->loadMissing('fixer');
+        $fixer = $user->fixer;
+
+        if (! $fixer) {
+            abort(404, 'Fixer profile not found.');
+        }
+
+        $validated = $request->validate([
+            'bio' => ['nullable', 'string', 'max:2000'],
+            'availability' => ['nullable', 'string', 'max:255'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'service_ids' => ['nullable', 'array', 'min:1'],
+            'service_ids.*' => ['integer', 'exists:services,id'],
+        ]);
+
+        return DB::transaction(function () use ($validated, $user, $fixer) {
+            if (array_key_exists('bio', $validated)) {
+                $fixer->bio = $validated['bio'];
+            }
+
+            if (array_key_exists('availability', $validated) &&
+                Schema::hasColumn('fixers', 'availability')) {
+                $fixer->availability = $validated['availability'];
+            }
+
+            if (! empty($validated['location'])) {
+                $user->address = $validated['location'];
+                $user->save();
+            }
+
+            $fixer->save();
+
+            if (array_key_exists('service_ids', $validated)) {
+                $fixer->services()->sync($validated['service_ids']);
+            }
+
+            $fixer->load(['services', 'user']);
+
+            return response()->json([
+                'success' => true,
+                'data' => $this->formatFixer($fixer),
+                'message' => 'Profile updated successfully.',
+            ]);
+        });
+    }
+
     public function apply(Request $request)
     {
         $user = $request->user();
@@ -218,5 +286,33 @@ class FixerController extends Controller
                 'message' => 'Application submitted. We will review it shortly.',
             ]);
         });
+    }
+
+    protected function formatFixer(Fixer $fixer): array
+    {
+        $fixer->loadMissing(['services', 'user']);
+        $user = $fixer->user;
+
+        return [
+            'id' => $fixer->id,
+            'bio' => $fixer->bio,
+            'status' => $fixer->status,
+            'availability' => $fixer->availability ?? 'available',
+            'rating_avg' => $fixer->rating_avg,
+            'services' => $fixer->services->map(function ($service) {
+                return [
+                    'id' => $service->id,
+                    'name' => $service->name,
+                    'price' => $service->price,
+                ];
+            })->values()->all(),
+            'user' => [
+                'id' => $user->id,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'email' => $user->email,
+                'profile_photo_url' => $user->profile_photo_url,
+            ],
+        ];
     }
 }

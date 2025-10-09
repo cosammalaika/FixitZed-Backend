@@ -20,9 +20,9 @@ return new class extends Migration {
 
         // Seed default plans
         DB::table('subscription_plans')->insert([
-            ['name' => 'Fixer Lite', 'price_cents' => 5000, 'coins' => 5,  'valid_days' => null, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'Fixer Plus', 'price_cents' => 10000, 'coins' => 12, 'valid_days' => null, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'Fixer Max',  'price_cents' => 15000, 'coins' => 15, 'valid_days' => null, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Fixer Lite', 'price_cents' => 5000, 'coins' => 4,  'valid_days' => null, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Fixer Plus', 'price_cents' => 10000, 'coins' => 10, 'valid_days' => null, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Fixer Max',  'price_cents' => 15000, 'coins' => 16, 'valid_days' => null, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
         ]);
     }
 

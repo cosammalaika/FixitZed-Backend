@@ -48,10 +48,6 @@ class DatabaseSeeder extends Seeder
         ]);
         $supportUser->assignRole('Support');
 
-        User::factory(15)->create([
-            'status' => 'Active',
-        ])->each(fn (User $user) => $user->assignRole('Customer'));
-
         $this->call([
             LocationOptionSeeder::class,
             ServiceCatalogSeeder::class,

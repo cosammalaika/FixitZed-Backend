@@ -77,21 +77,45 @@
                 <button type="button" class="btn header-item bg-soft-light border-start border-end"
                     id="page-header-user-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 
-                    @php($auth = auth()->user())
-                    @php($photo = $auth?->profile_photo_path)
+                    @php
+                        $auth = auth()->user();
+                        $photo = $auth?->profile_photo_path;
+                        $photoPath = $photo ? ltrim($photo, '/') : null;
+                        $hasPhoto = $photoPath && \Illuminate\Support\Facades\Storage::disk('public')->exists($photoPath);
 
-                    @if ($photo)
-                        <img src="{{ asset('storage/' . ltrim($photo, '/')) }}" alt="Profile Photo"
+                        $nameSeed = trim(($auth->first_name ?? '') . ' ' . ($auth->last_name ?? ''));
+                        $parts = preg_split('/\s+/u', $nameSeed) ?: [];
+                        $initials = '';
+                        foreach ($parts as $part) {
+                            if ($part === '') {
+                                continue;
+                            }
+                            $initials .= mb_strtoupper(mb_substr($part, 0, 1, 'UTF-8'), 'UTF-8');
+                            if (mb_strlen($initials, 'UTF-8') >= 2) {
+                                break;
+                            }
+                        }
+                        if ($initials === '' && !empty($auth?->email)) {
+                            $initials = mb_strtoupper(mb_substr($auth->email, 0, 1, 'UTF-8'), 'UTF-8');
+                        }
+                        if ($initials === '') {
+                            $initials = 'U';
+                        }
+                    @endphp
+
+                    @if ($hasPhoto)
+                        <img src="{{ asset('storage/' . $photoPath) }}" alt="Profile Photo"
                             class="rounded-circle header-profile-user" />
                     @else
-                        {{-- Optional: show a placeholder avatar --}}
-                        <img src="{{ asset('images/default-avatar.png') }}" alt="Default Avatar"
-                            class="rounded-circle header-profile-user" />
+                        <span class="rounded-circle header-profile-user d-inline-flex align-items-center justify-content-center bg-primary text-white fw-semibold"
+                            style="width: 40px; height: 40px;">
+                            {{ $initials }}
+                        </span>
                     @endif
 
                     {{-- Always display the name --}}
                     <span class="d-none d-xl-inline-block ms-1 fw-medium">
-                        {{ $auth->first_name . ' ' . $auth->last_name }}
+                        {{ trim(($auth->first_name ?? '') . ' ' . ($auth->last_name ?? '')) ?: ($auth->name ?? 'User') }}
                     </span>
 
                     <i class="mdi mdi-chevron-down d-none d-xl-inline-block"></i>

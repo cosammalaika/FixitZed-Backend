@@ -16,6 +16,15 @@ class Kernel extends ConsoleKernel
         $schedule->command('model:prune', [
             '--model' => [\App\Models\Notification::class],
         ])->dailyAt('01:00');
+
+        $schedule->command('priority:weekly-recovery')
+            ->weeklyOn(1, '02:00');
+
+        $schedule->command('priority:idle-bonus')
+            ->weeklyOn(1, '02:30');
+
+        $schedule->command('priority:dormancy-guard')
+            ->dailyAt('03:00');
     }
 
     /**
@@ -27,4 +36,3 @@ class Kernel extends ConsoleKernel
         require base_path('routes/console.php');
     }
 }
-

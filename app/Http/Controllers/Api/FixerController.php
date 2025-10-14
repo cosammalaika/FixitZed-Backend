@@ -299,6 +299,8 @@ class FixerController extends Controller
             'status' => $fixer->status,
             'availability' => $fixer->availability ?? 'available',
             'rating_avg' => $fixer->rating_avg,
+            'priority_points' => (int) ($fixer->priority_points ?? 0),
+            'priorityPoints' => (int) ($fixer->priority_points ?? 0),
             'services' => $fixer->services->map(function ($service) {
                 return [
                     'id' => $service->id,

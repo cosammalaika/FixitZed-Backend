@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\PriorityPointService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -14,6 +15,20 @@ class Fixer extends Model
         'bio',
         'status',
         'rating_avg',
+        'priority_points',
+    ];
+
+    protected $casts = [
+        'priority_points' => 'integer',
+        'last_offered_at' => 'datetime',
+        'last_assigned_at' => 'datetime',
+        'last_completed_at' => 'datetime',
+        'last_idle_bonus_at' => 'datetime',
+        'priority_low_since_at' => 'datetime',
+    ];
+
+    protected $attributes = [
+        'priority_points' => 100,
     ];
 
     public function user()
@@ -50,5 +65,29 @@ class Fixer extends Model
     public function declines()
     {
         return $this->hasMany(ServiceRequestDecline::class);
+    }
+
+    public function priorityHistory()
+    {
+        return $this->hasMany(PriorityPointLog::class)->latest();
+    }
+
+    public function adjustPriorityPoints(
+        int $delta,
+        string $reason,
+        array $meta = [],
+        ?int $performedBy = null,
+        ?int $floor = null,
+        ?int $cap = null
+    ) {
+        return app(PriorityPointService::class)->adjust(
+            $this,
+            $delta,
+            $reason,
+            $meta,
+            $performedBy,
+            $floor,
+            $cap
+        );
     }
 }

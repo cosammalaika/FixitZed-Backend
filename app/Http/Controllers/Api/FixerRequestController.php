@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\NotifyCustomerNoFixerJob;
 use App\Models\Fixer;
 use App\Models\ServiceRequest;
 use App\Models\ServiceRequestDecline;
 use App\Models\Payment;
 use App\Models\Notification;
-use App\Models\Setting;
+use App\Services\PriorityPointService;
 use App\Services\WalletService;
-use App\Support\Loyalty;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +18,9 @@ use Illuminate\Validation\ValidationException;
 
 class FixerRequestController extends Controller
 {
+    public function __construct(private PriorityPointService $priorityPoints)
+    {
+    }
     /**
      * GET /api/fixer/requests
      */
@@ -98,10 +101,11 @@ class FixerRequestController extends Controller
             $serviceRequest->save();
         });
 
-        $points = (int) Setting::get('loyalty.fixer_accept_points', 5);
-        if ($points > 0 && $fixer->user) {
-            Loyalty::award($fixer->user, $points);
-        }
+        $this->priorityPoints->onAssignment($fixer, [
+            'service_request_id' => $serviceRequest->id,
+        ]);
+
+        $fixer->forceFill(['last_assigned_at' => now()])->save();
 
         return response()->json([
             'success' => true,
@@ -138,16 +142,19 @@ class FixerRequestController extends Controller
             $nextFixer = $this->assignNextFixer($serviceRequest, $fixer->id);
 
             if (! $nextFixer) {
-                $serviceRequest->status = 'cancelled';
-                $serviceRequest->save();
-                $this->notifyCustomerNoReplacement($serviceRequest, $fixer);
+                NotifyCustomerNoFixerJob::dispatch($serviceRequest->id)
+                    ->delay(now()->addMinutes(5));
             }
         });
+
+        $this->priorityPoints->onTimeout($fixer, [
+            'service_request_id' => $serviceRequest->id,
+        ]);
 
         if (! $nextFixer) {
             return response()->json([
                 'success' => true,
-                'message' => 'Fixer declined the request and no other fixer is currently available.',
+                'message' => 'Fixer declined the request. We will notify you if another fixer becomes available.',
                 'data' => $serviceRequest->fresh(['service', 'fixer']),
             ]);
         }
@@ -269,7 +276,14 @@ class FixerRequestController extends Controller
 
     protected function assignNextFixer(ServiceRequest $serviceRequest, int $excludeFixerId): ?Fixer
     {
-        $candidate = Fixer::query()
+        $candidates = Fixer::query()
+            ->with(['user'])
+            ->withCount([
+                'serviceRequests as accepted_requests_count' => function ($q) {
+                    $q->whereIn('status', ['accepted', 'completed']);
+                },
+                'serviceRequests as total_requests_count',
+            ])
             ->where('status', 'approved')
             ->where('id', '!=', $excludeFixerId)
             ->whereHas('wallet', function ($q) {
@@ -278,13 +292,41 @@ class FixerRequestController extends Controller
             ->whereDoesntHave('declines', function ($q) use ($serviceRequest) {
                 $q->where('service_request_id', $serviceRequest->id);
             })
-            ->with('user')
-            ->orderByDesc(DB::raw('COALESCE(rating_avg, 0)'))
-            ->first();
+            ->get();
 
-        if (! $candidate) {
+        if ($candidates->isEmpty()) {
+            NotifyCustomerNoFixerJob::dispatch($serviceRequest->id)
+                ->delay(now()->addMinutes(5));
             return null;
         }
+
+        $selected = $candidates
+            ->map(function (Fixer $fixer) use ($serviceRequest) {
+                $total = (int) ($fixer->total_requests_count ?? 0);
+                $accepted = (int) ($fixer->accepted_requests_count ?? 0);
+                $acceptRate = $total > 0 ? $accepted / $total : 0;
+                $distance = $this->estimateDistanceKm($fixer, $serviceRequest);
+
+                $score = $this->priorityPoints->compositeScore($fixer, [
+                    'distance_km' => $distance,
+                    'accept_rate' => $acceptRate,
+                ]);
+
+                return compact('fixer', 'score');
+            })
+            ->sortByDesc('score')
+            ->first();
+
+        if (! $selected) {
+            return null;
+        }
+
+        /** @var Fixer $candidate */
+        $candidate = $selected['fixer'];
+
+        $this->priorityPoints->onOffer($candidate, [
+            'service_request_id' => $serviceRequest->id,
+        ]);
 
         $serviceRequest->fixer_id = $candidate->id;
         $serviceRequest->status = 'pending';
@@ -293,7 +335,15 @@ class FixerRequestController extends Controller
 
         $this->notifyFixerAssigned($serviceRequest, $candidate);
 
+        $candidate->forceFill(['last_assigned_at' => now()])->save();
+
         return $candidate;
+    }
+
+    protected function estimateDistanceKm(Fixer $fixer, ServiceRequest $serviceRequest): float
+    {
+        // TODO: integrate actual geo distance once coordinates are available.
+        return (float) ($serviceRequest->distance_km ?? 0);
     }
 
     protected function notifyCustomerDeclined(ServiceRequest $serviceRequest, Fixer $fixer): void
@@ -332,17 +382,15 @@ class FixerRequestController extends Controller
         } catch (\Throwable $e) {
             // ignore
         }
-    }
 
-    protected function notifyCustomerNoReplacement(ServiceRequest $serviceRequest, Fixer $fixer): void
-    {
         try {
             Notification::create([
                 'user_id' => $serviceRequest->customer_id,
                 'recipient_type' => 'customer',
-                'title' => 'Booking cancelled',
+                'title' => 'Fixer found',
                 'message' => sprintf(
-                    'Fixer declined the request and no other fixer is currently available for your %s booking.',
+                    '%s is reviewing your %s booking now.',
+                    optional($fixer->user)->name ?? 'A fixer',
                     optional($serviceRequest->service)->name ?? 'service'
                 ),
                 'read' => false,

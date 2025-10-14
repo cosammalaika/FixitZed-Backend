@@ -16,12 +16,16 @@ class ServiceRequest extends Model
         'scheduled_at',
         'status',
         'location',
+        'location_lat',
+        'location_lng',
         'fixer_snoozed_until',
     ];
 
     protected $casts = [
         'scheduled_at' => 'datetime',
         'fixer_snoozed_until' => 'datetime',
+        'location_lat' => 'float',
+        'location_lng' => 'float',
     ];
 
     public function customer()

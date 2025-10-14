@@ -7,14 +7,16 @@ use App\Models\Coupon;
 use App\Models\Earning;
 use App\Models\Payment;
 use App\Models\ServiceRequest;
-use App\Models\Setting;
-use App\Support\Loyalty;
+use App\Services\PriorityPointService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
+    public function __construct(private PriorityPointService $priorityPoints)
+    {
+    }
     public function show(ServiceRequest $serviceRequest, Request $request)
     {
         abort_if($serviceRequest->customer_id !== $request->user()->id, 403, 'Forbidden');
@@ -60,10 +62,6 @@ class PaymentController extends Controller
             $coupon = null;
             $discount = 0.0;
             $finalAmount = $validated['amount'];
-            $loyaltyValue = 0.0;
-            $loyaltyPointsUsed = 0;
-            $loyaltyPointsEarned = 0;
-
             $couponCode = trim((string) ($validated['coupon_code'] ?? ''));
             if ($couponCode !== '') {
                 $coupon = Coupon::where('code', $couponCode)->lockForUpdate()->first();
@@ -83,23 +81,6 @@ class PaymentController extends Controller
                 $discount = max(0, round($originalAmount - $finalAmount, 2));
             }
 
-            $requestedPoints = (int) ($request->input('loyalty_points') ?? 0);
-            if ($requestedPoints > 0 && Schema::hasColumn('payments', 'loyalty_points_used')) {
-                $available = (int) $user->loyalty_points;
-                $maxNeeded = Loyalty::pointsForValue($finalAmount);
-                $pointsToUse = min($requestedPoints, $available, $maxNeeded);
-                if ($pointsToUse > 0) {
-                    $loyaltyPointsUsed = Loyalty::applyRedemption($user, $pointsToUse);
-                    if ($loyaltyPointsUsed > 0) {
-                        $loyaltyValue = Loyalty::maxRedeemableValue($loyaltyPointsUsed);
-                        $finalAmount = max(0, round($finalAmount - $loyaltyValue, 2));
-                        $discount += $loyaltyValue;
-                    }
-                }
-            }
-
-            $loyaltyPointsEarned = Loyalty::earnForAmount($finalAmount);
-
             $attributes = [
                 'amount' => $finalAmount,
                 'status' => $isPaid ? 'paid' : $status,
@@ -115,10 +96,6 @@ class PaymentController extends Controller
 
             if (Schema::hasColumn('payments', 'coupon_id')) {
                 $attributes['coupon_id'] = $coupon?->id;
-            }
-
-            if (Schema::hasColumn('payments', 'loyalty_points_used')) {
-                $attributes['loyalty_points_used'] = $loyaltyPointsUsed;
             }
 
             if (array_key_exists('payment_method', $validated)) {
@@ -153,10 +130,6 @@ class PaymentController extends Controller
                 $coupon->increment('used_count');
             }
 
-            if ($loyaltyPointsEarned > 0) {
-                Loyalty::award($user, $loyaltyPointsEarned);
-            }
-
             if ($isPaid && ! $wasPaid) {
                 $serviceRequest->status = 'completed';
                 $serviceRequest->save();
@@ -168,18 +141,18 @@ class PaymentController extends Controller
                     $earning->service_count = ($earning->service_count ?? 0) + 1;
                     $earning->save();
 
-                    $points = (int) Setting::get('loyalty.fixer_completion_points', 10);
-                    if ($points > 0 && $fixer->user) {
-                        Loyalty::award($fixer->user, $points);
-                    }
+                    $this->priorityPoints->onCompletion($fixer, [
+                        'service_request_id' => $serviceRequest->id,
+                        'amount' => $finalAmount,
+                    ]);
+
+                    $fixer->forceFill(['last_completed_at' => now()])->save();
                 }
             }
 
             $freshPayment = $payment->fresh(['coupon']);
 
             $responseData = $freshPayment ? $freshPayment->toArray() : [];
-            $responseData['loyalty_points_balance'] = $user->loyalty_points;
-            $responseData['loyalty_points_earned'] = $loyaltyPointsEarned;
 
             return response()->json(['success' => true, 'data' => $responseData]);
         });

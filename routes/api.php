@@ -64,6 +64,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('requests', [ServiceRequestController::class, 'store']);
     Route::get('requests/{serviceRequest}', [ServiceRequestController::class, 'show']);
     Route::patch('requests/{serviceRequest}', [ServiceRequestController::class, 'update']);
+    Route::post('requests/{serviceRequest}/cancel', [ServiceRequestController::class, 'cancel']);
 
     // Locations (for current user)
     Route::get('locations', [LocationController::class, 'index']);

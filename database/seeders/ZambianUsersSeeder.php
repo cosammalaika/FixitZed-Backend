@@ -23,6 +23,11 @@ class ZambianUsersSeeder extends Seeder
             'Zulu','Moyo','Sakala','Lungu','Chileshe','Kunda','Chirwa','Kalunga','Mwansa','Siwale',
         ];
 
+        $towns = LocationOption::query()->pluck('name')->all();
+        if (empty($towns)) {
+            $towns = ['Lusaka','Ndola','Kitwe','Livingstone','Kabwe','Chipata','Chingola','Mansa'];
+        }
+
         $regionalAdmin = User::updateOrCreate([
             'email' => 'admin.zm@example.com',
         ], [

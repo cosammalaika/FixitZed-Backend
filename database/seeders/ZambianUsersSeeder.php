@@ -24,7 +24,7 @@ class ZambianUsersSeeder extends Seeder
             'address' => $town,
             'password' => Hash::make('password'),
         ]);
-        $regionalAdmin->assignRole('Admin');
+        $regionalAdmin->assignRole('Customer');
 
         $regionalSupport = User::updateOrCreate([
             'email' => 'support.zm@example.com',
@@ -37,6 +37,6 @@ class ZambianUsersSeeder extends Seeder
             'address' => $town,
             'password' => Hash::make('password'),
         ]);
-        $regionalSupport->assignRole('Support');
+        $regionalSupport->assignRole('Customer');
     }
 }

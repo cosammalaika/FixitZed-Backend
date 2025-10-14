@@ -1,6 +1,71 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
-@include('includes.adminHeader')
+<meta charset="utf-8" />
+@php
+    $pageHeading = trim($__env->yieldContent('page-title'));
+    $explicitTitle = trim($__env->yieldContent('title'));
+    $resolvedTitle =
+        $explicitTitle !== ''
+            ? $explicitTitle
+            : ($pageHeading !== ''
+                ? $pageHeading . ' | ' . config('app.name')
+                : config('app.name'));
+@endphp
+<title>{{ $resolvedTitle }}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta content="Premium Multipurpose Admin & Dashboard Template" name="description" />
+<meta content="Themesbrand" name="author" />
+<meta name="csrf-token" content="{{ csrf_token() }}" />
+<!-- App favicon -->
+@if (file_exists(public_path('assets/images/favicon.ico')))
+    <link rel="icon" type="image/x-icon" href="{{ asset('assets/images/favicon.ico') }}">
+    <link rel="shortcut icon" type="image/x-icon" href="{{ asset('assets/images/favicon.ico') }}">
+@endif
+<!-- plugin css -->
+<link href="{{ asset('assets/libs/admin-resources/jquery.vectormap/jquery-jvectormap-1.2.2.css') }}" rel="stylesheet"
+    type="text/css" />
+
+<!-- preloader css -->
+<link rel="stylesheet" href="{{ asset('assets/css/preloader.min.css') }}" type="text/css" />
+
+<!-- choices css -->
+<link href="{{ asset('assets/libs/choices.js/public/assets/styles/choices.min.css') }}" rel="stylesheet"
+    type="text/css" />
+
+<!-- color picker css -->
+<link rel="stylesheet" href="{{ asset('assets/libs/@simonwep/pickr/themes/classic.min.css') }}" />
+<link rel="stylesheet" href="{{ asset('assets/libs/@simonwep/pickr/themes/monolith.min.css') }}" />
+<!-- 'monolith' theme -->
+<link rel="stylesheet" href="{{ asset('assets/libs/@simonwep/pickr/themes/nano.min.css') }}" />
+
+<!-- datepicker css -->
+<link rel="stylesheet" href="assets/libs/flatpickr/flatpickr.min.css">
+
+<!-- preloader css -->
+<link rel="stylesheet" href="assets/css/preloader.min.css" type="text/css" />
+
+<!-- Bootstrap Css -->
+<link href="{{ asset('assets/css/bootstrap.min.css') }}" id="bootstrap-style" rel="stylesheet" type="text/css" />
+<!-- Icons Css -->
+<link href="{{ asset('assets/css/icons.min.css') }}" rel="stylesheet" type="text/css" />
+<!-- App Css-->
+<link href="{{ asset('assets/css/app.min.css') }}" id="app-style" rel="stylesheet" type="text/css" />
+<!-- Custom overrides -->
+<link href="{{ asset('assets/css/custom.css') }}" rel="stylesheet" type="text/css" />
+<link href="{{ asset('assets/libs/datatables.net-bs4/css/dataTables.bootstrap4.min.css') }}" rel="stylesheet"
+    type="text/css" />
+<link href="{{ asset('assets/libs/datatables.net-buttons-bs4/css/buttons.bootstrap4.min.css') }}" rel="stylesheet"
+    type="text/css" />
+
+<!-- Responsive datatable examples -->
+<link href="{{ asset('assets/libs/datatables.net-responsive-bs4/css/responsive.bootstrap4.min.css') }}"
+    rel="stylesheet" type="text/css" />
+
+{{-- Livewire styles --}}
+@livewireStyles
+
+{{-- Livewire scripts --}}
+@livewireScripts
 
 <body>
 
@@ -96,7 +161,8 @@
                                                 <div class="testi-contain text-white">
                                                     <i class="bx bxs-quote-alt-left text-white display-6"></i>
 
-                                                    <h4 class="mt-4 fw-medium lh-base text-white">“As a registered fixer
+                                                    <h4 class="mt-4 fw-medium lh-base text-white">“As a registered
+                                                        fixer
                                                         on FixIt
                                                         Zed, I’ve received more bookings in two months than I used to
                                                         get in a year.
@@ -189,7 +255,7 @@
 
 <script>
     // Apply persisted theme early for auth pages
-    (function () {
+    (function() {
         try {
             var mode = localStorage.getItem('fixitzed-layout-mode');
             if (mode === 'dark' || mode === 'light') {
@@ -199,18 +265,20 @@
             }
         } catch (e) {}
     })();
-  </script>
+</script>
 <script src="{{ asset('assets/js/app.js') }}"></script>
 <script>
     // Persist theme toggle and re-apply after Livewire SPA navigation
-    document.addEventListener('click', function (e) {
+    document.addEventListener('click', function(e) {
         if (!e.target.closest('#mode-setting-btn')) return;
-        setTimeout(function () {
+        setTimeout(function() {
             var mode = document.body.getAttribute('data-layout-mode') === 'dark' ? 'dark' : 'light';
-            try { localStorage.setItem('fixitzed-layout-mode', mode); } catch (e) {}
+            try {
+                localStorage.setItem('fixitzed-layout-mode', mode);
+            } catch (e) {}
         }, 0);
     });
-    window.addEventListener('livewire:navigated', function () {
+    window.addEventListener('livewire:navigated', function() {
         var mode = localStorage.getItem('fixitzed-layout-mode');
         if (mode === 'dark' || mode === 'light') {
             document.body.setAttribute('data-layout-mode', mode);
@@ -218,11 +286,11 @@
             document.body.setAttribute('data-sidebar', mode);
         }
     });
-  </script>
+</script>
 
 <script>
     // Toggle password visibility for auth password input group
-    document.addEventListener('click', function (e) {
+    document.addEventListener('click', function(e) {
         const btn = e.target.closest('#password-addon');
         if (!btn) return;
         const group = btn.closest('.auth-pass-inputgroup');

@@ -22,10 +22,14 @@ class ServiceRequest extends Model
     ];
 
     protected $casts = [
+        'customer_id' => 'integer',
+        'fixer_id' => 'integer',
+        'service_id' => 'integer',
         'scheduled_at' => 'datetime',
         'fixer_snoozed_until' => 'datetime',
         'location_lat' => 'float',
         'location_lng' => 'float',
+        'customer_contact_visible' => 'boolean',
     ];
 
     public function customer()

@@ -21,6 +21,8 @@ class Report extends Model
     ];
 
     protected $casts = [
+        'user_id' => 'integer',
+        'target_user_id' => 'integer',
         'resolved_at' => 'datetime',
     ];
 
@@ -34,4 +36,3 @@ class Report extends Model
         return $this->belongsTo(User::class, 'target_user_id');
     }
 }
-

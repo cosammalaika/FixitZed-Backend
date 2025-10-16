@@ -16,6 +16,12 @@ class Location extends Model
         'longitude',
     ];
 
+    protected $casts = [
+        'user_id' => 'integer',
+        'latitude' => 'float',
+        'longitude' => 'float',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);

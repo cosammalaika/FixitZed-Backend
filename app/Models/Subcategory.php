@@ -15,6 +15,10 @@ class Subcategory extends Model
         'description',
     ];
 
+    protected $casts = [
+        'category_id' => 'integer',
+    ];
+
     public function category()
     {
         return $this->belongsTo(Category::class);

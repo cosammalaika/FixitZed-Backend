@@ -16,6 +16,8 @@ class ServiceRequestDecline extends Model
     ];
 
     protected $casts = [
+        'service_request_id' => 'integer',
+        'fixer_id' => 'integer',
         'declined_at' => 'datetime',
     ];
 

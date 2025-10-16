@@ -34,6 +34,9 @@ class Service extends Model
     }
 
     protected $casts = [
+        'subcategory_id' => 'integer',
+        'price' => 'float',
+        'duration_minutes' => 'integer',
         'is_active' => 'boolean',
     ];
 

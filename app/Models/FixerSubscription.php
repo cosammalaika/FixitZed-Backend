@@ -29,6 +29,12 @@ class FixerSubscription extends Model
     ];
 
     protected $casts = [
+        'fixer_id' => 'integer',
+        'subscription_plan_id' => 'integer',
+        'coins_awarded' => 'integer',
+        'amount_paid_cents' => 'integer',
+        'loyalty_points_used' => 'integer',
+        'loyalty_points_awarded' => 'integer',
         'starts_at' => 'datetime',
         'expires_at' => 'datetime',
         'approved_at' => 'datetime',

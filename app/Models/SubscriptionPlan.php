@@ -14,6 +14,9 @@ class SubscriptionPlan extends Model
     ];
 
     protected $casts = [
+        'price_cents' => 'integer',
+        'coins' => 'integer',
+        'valid_days' => 'integer',
         'is_active' => 'boolean',
     ];
 
@@ -22,4 +25,3 @@ class SubscriptionPlan extends Model
         return $this->hasMany(FixerSubscription::class);
     }
 }
-

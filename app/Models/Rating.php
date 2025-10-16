@@ -18,6 +18,13 @@ class Rating extends Model
         'comment',
     ];
 
+    protected $casts = [
+        'rater_id' => 'integer',
+        'rated_user_id' => 'integer',
+        'service_request_id' => 'integer',
+        'rating' => 'float',
+    ];
+
     public function rater()
     {
         return $this->belongsTo(User::class, 'rater_id');

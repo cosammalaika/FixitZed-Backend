@@ -14,6 +14,8 @@ class FixerWallet extends Model
     ];
 
     protected $casts = [
+        'fixer_id' => 'integer',
+        'coin_balance' => 'integer',
         'last_subscription_expires_at' => 'datetime',
     ];
 
@@ -22,4 +24,3 @@ class FixerWallet extends Model
         return $this->belongsTo(Fixer::class);
     }
 }
-

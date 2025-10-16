@@ -19,7 +19,9 @@ class Fixer extends Model
     ];
 
     protected $casts = [
+        'user_id' => 'integer',
         'priority_points' => 'integer',
+        'rating_avg' => 'float',
         'last_offered_at' => 'datetime',
         'last_assigned_at' => 'datetime',
         'last_completed_at' => 'datetime',

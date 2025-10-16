@@ -20,6 +20,7 @@ class Notification extends Model
     ];
 
     protected $casts = [
+        'user_id' => 'integer',
         'read' => 'boolean',
     ];
 

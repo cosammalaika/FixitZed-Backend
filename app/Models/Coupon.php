@@ -21,9 +21,13 @@ class Coupon extends Model
         'used_count',
     ];
 
-    protected $dates = [
-        'valid_from',
-        'valid_to',
+    protected $casts = [
+        'discount_percent' => 'float',
+        'discount_amount' => 'float',
+        'usage_limit' => 'integer',
+        'used_count' => 'integer',
+        'valid_from' => 'datetime',
+        'valid_to' => 'datetime',
     ];
 
     /**

@@ -14,6 +14,8 @@ class WalletLedger extends Model
     ];
 
     protected $casts = [
+        'fixer_id' => 'integer',
+        'delta' => 'integer',
         'meta' => 'array',
     ];
 
@@ -22,4 +24,3 @@ class WalletLedger extends Model
         return $this->belongsTo(Fixer::class);
     }
 }
-

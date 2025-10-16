@@ -23,10 +23,13 @@ class Payment extends Model
     ];
 
     protected $casts = [
-        'paid_at' => 'datetime',
-        'original_amount' => 'decimal:2',
-        'discount_amount' => 'decimal:2',
+        'service_request_id' => 'integer',
+        'amount' => 'float',
+        'original_amount' => 'float',
+        'discount_amount' => 'float',
+        'coupon_id' => 'integer',
         'loyalty_points_used' => 'integer',
+        'paid_at' => 'datetime',
     ];
 
     public function serviceRequest()

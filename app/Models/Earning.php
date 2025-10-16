@@ -15,6 +15,12 @@ class Earning extends Model
         'amount',
     ];
 
+    protected $casts = [
+        'fixer_id' => 'integer',
+        'service_count' => 'integer',
+        'amount' => 'float',
+    ];
+
     public function fixer()
     {
         return $this->belongsTo(Fixer::class);

@@ -16,6 +16,12 @@ class Review extends Model
         'comment',
     ];
 
+    protected $casts = [
+        'user_id' => 'integer',
+        'service_id' => 'integer',
+        'rating' => 'float',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);

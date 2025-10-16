@@ -18,6 +18,9 @@ class Order extends Model
     ];
 
     protected $casts = [
+        'user_id' => 'integer',
+        'fixer_id' => 'integer',
+        'service_id' => 'integer',
         'scheduled_at' => 'datetime',
     ];
 

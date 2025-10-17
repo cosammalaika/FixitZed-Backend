@@ -45,10 +45,10 @@ class NotifyCustomerNoFixerJob implements ShouldQueue
         try {
             Notification::create([
                 'user_id' => $serviceRequest->customer_id,
-                'recipient_type' => 'customer',
+                'recipient_type' => 'Individual',
                 'title' => 'Still finding a fixer',
                 'message' => sprintf(
-                    'No fixer is available yet for your %s booking (#%d). You can cancel the request or wait a little longer.',
+                    'No fixer is available yet for your %s request (#%d). You can cancel the request or wait a little longer.',
                     optional($serviceRequest->service)->name ?? 'service',
                     $serviceRequest->id
                 ),

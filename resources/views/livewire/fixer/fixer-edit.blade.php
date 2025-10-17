@@ -2,11 +2,6 @@
     <div class="row justify-content-center">
         <div class="card p-4 shadow-sm w-100">
             @if (session()->has('success'))
-                <div class="alert alert-success mb-4">
-                    {{ session('success') }}
-                </div>
-            @endif
-
             <form wire:submit.prevent="submit" class="space-y-4">
                 <div class="row g-4">
                     <div class="col-md-6">

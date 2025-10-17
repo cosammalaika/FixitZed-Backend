@@ -1,12 +1,6 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="card-body">
-            @if (session()->has('success'))
-                <div class="alert alert-success mb-4">
-                    {{ session('success') }}
-                </div>
-            @endif
-
             <form wire:submit.prevent="update">
                 <div class="row">
                     <div class="col-md-6 mb-3">

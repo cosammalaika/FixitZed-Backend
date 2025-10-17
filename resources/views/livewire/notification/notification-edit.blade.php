@@ -1,8 +1,5 @@
 <div class="container mt-4">
-    @if (session()->has('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
+    
     <form wire:submit.prevent="submit">
         <div class="mb-3">
             <label>Title</label>

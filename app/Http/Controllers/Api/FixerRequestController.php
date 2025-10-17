@@ -351,8 +351,8 @@ class FixerRequestController extends Controller
         try {
             Notification::create([
                 'user_id' => $serviceRequest->customer_id,
-                'recipient_type' => 'customer',
-                'title' => 'Fixer declined your booking',
+                'recipient_type' => 'Individual',
+                'title' => 'Fixer declined your request',
                 'message' => sprintf(
                     '%s declined your %s request. We are finding another available fixer.',
                     optional($fixer->user)->name ?? 'A fixer',
@@ -370,8 +370,8 @@ class FixerRequestController extends Controller
         try {
             Notification::create([
                 'user_id' => $fixer->user_id,
-                'recipient_type' => 'fixer',
-                'title' => 'New booking available',
+                'recipient_type' => 'Individual',
+                'title' => 'New request available',
                 'message' => sprintf(
                     'A customer needs %s on %s.',
                     optional($serviceRequest->service)->name ?? 'a service',
@@ -386,10 +386,10 @@ class FixerRequestController extends Controller
         try {
             Notification::create([
                 'user_id' => $serviceRequest->customer_id,
-                'recipient_type' => 'customer',
+                'recipient_type' => 'Individual',
                 'title' => 'Fixer found',
                 'message' => sprintf(
-                    '%s is reviewing your %s booking now.',
+                    '%s is reviewing your %s request now.',
                     optional($fixer->user)->name ?? 'A fixer',
                     optional($serviceRequest->service)->name ?? 'service'
                 ),

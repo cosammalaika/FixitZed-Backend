@@ -3,7 +3,7 @@
     <form wire:submit.prevent="submit">
         {{-- Recipient Type --}}
         <div class="mb-3">
-            <select wire:model="recipient_type" class="form-control" required>
+            <select wire:model="recipient_type" class="form-control" required data-notification-recipient>
                 <option value="">-- Select Recipient Type --</option>
                 <option value="Customer">All Customers</option>
                 <option value="Fixer">All Fixers</option>
@@ -17,21 +17,32 @@
             @enderror
         </div>
 
+        @php
+            $showIndividualSelector = is_string($recipient_type) && strcasecmp($recipient_type, 'Individual') === 0;
+        @endphp
+
         {{-- User Selection (only if recipient_type is Individual) --}}
-        @if ($recipient_type === 'Individual')
-            <div class="mb-3">
-                <label for="userId" class="form-label">Select User</label>
-                <select wire:model="user_id" id="userId" class="form-control">
-                    <option value="">-- Select User --</option>
-                    @foreach ($users as $user)
-                        <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</option>
-                    @endforeach
-                </select>
-                @error('user_id')
-                    <span class="text-danger">{{ $message }}</span>
-                @enderror
-            </div>
-        @endif
+        <div class="mb-3" id="notificationIndividualUser" @unless($showIndividualSelector) style="display: none;" @endunless>
+            <label for="userId" class="form-label">Select User</label>
+            <select wire:model="user_id" id="userId" class="form-control" @unless($showIndividualSelector) disabled @endunless>
+                <option value="">-- Select User --</option>
+                @foreach ($users as $user)
+                    @php
+                        $display = $user->display_name ?? '';
+                        $email = $user->email ?? '';
+                    @endphp
+                    <option value="{{ $user->id }}">
+                        {{ $display ?: $email }}
+                        @if ($email && $display && strcasecmp($display, $email) !== 0)
+                            ({{ $email }})
+                        @endif
+                    </option>
+                @endforeach
+            </select>
+            @error('user_id')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </div>
 
         {{-- Title --}}
         <div class="mb-3">
@@ -57,3 +68,39 @@
         <button type="submit" class="btn btn-primary">Send Notification</button>
     </form>
 </div>
+
+@once
+    <script>
+        document.addEventListener('livewire:initialized', () => {
+            const toggleIndividualSelector = () => {
+                const typeSelect = document.querySelector('[data-notification-recipient]');
+                const container = document.getElementById('notificationIndividualUser');
+                if (!typeSelect || !container) {
+                    return;
+                }
+
+                const value = (typeSelect.value || '').trim().toLowerCase();
+                const shouldShow = value === 'individual';
+
+                container.style.display = shouldShow ? '' : 'none';
+
+                const userSelect = container.querySelector('select');
+                if (userSelect) {
+                    userSelect.disabled = !shouldShow;
+                }
+            };
+
+            toggleIndividualSelector();
+
+            document.addEventListener('change', (event) => {
+                if (event.target && event.target.matches('[data-notification-recipient]')) {
+                    toggleIndividualSelector();
+                }
+            });
+
+            Livewire.hook('message.processed', () => {
+                toggleIndividualSelector();
+            });
+        });
+    </script>
+@endonce

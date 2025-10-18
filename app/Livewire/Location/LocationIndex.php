@@ -14,11 +14,12 @@ class LocationIndex extends Component
     }
     public function delete($id)
     {
-        $locations = Location::find($id);
+        $location = Location::findOrFail($id);
+        $location->delete();
 
-        $locations->delete();
-        session()->flash('success', "Location deleted successfully.");
-        return view('livewire.location.location-index', compact("locations"));
-
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => 'Location deleted successfully.',
+        ]);
     }
 }

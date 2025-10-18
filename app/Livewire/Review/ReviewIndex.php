@@ -14,11 +14,19 @@ class ReviewIndex extends Component
     }
     public function delete($id)
     {
-        $reviews = Review::find($id);
+        $review = Review::find($id);
 
-        $reviews->delete();
-        session()->flash('success', "Review deleted successfully.");
-        return view('livewire.review.review-index', compact("reviews"));
-
+        if ($review) {
+            $review->delete();
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'success',
+                'message' => 'Review deleted successfully.',
+            ]);
+        } else {
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'error',
+                'message' => 'Review not found.',
+            ]);
+        }
     }
 }

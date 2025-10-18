@@ -74,8 +74,11 @@ class NotificationCreate extends Component
 
         log_user_action('created notification', "Notification ID: {$notification->id}, Title: {$this->title}");
 
-        session()->flash('success', 'Notification created successfully!');
-        return redirect()->route('notification.index');
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => 'Notification created successfully!',
+            'redirect' => route('notification.index'),
+        ]);
     }
 
     public function render()

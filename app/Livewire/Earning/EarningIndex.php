@@ -23,11 +23,15 @@ class EarningIndex extends Component
 
             log_user_action('deleted earning', "Deleted earning ID: {$earning->id}");
 
-            session()->flash('success', "Earning deleted successfully.");
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'success',
+                'message' => 'Earning deleted successfully.',
+            ]);
         } else {
-            session()->flash('success', "Earning not found.");
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'error',
+                'message' => 'Earning not found.',
+            ]);
         }
-
-        return redirect()->route('earning.index');
     }
 }

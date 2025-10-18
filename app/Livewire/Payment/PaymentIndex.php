@@ -23,13 +23,15 @@ class PaymentIndex extends Component
 
             log_user_action('deleted payment', "Payment ID: {$id}");
 
-            session()->flash('success', "Payment deleted successfully.");
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'success',
+                'message' => 'Payment deleted successfully.',
+            ]);
         } else {
-            session()->flash('error', "Payment not found.");
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'error',
+                'message' => 'Payment not found.',
+            ]);
         }
-
-        return view('livewire.payment.payment-index', [
-            'payments' => Payment::with('serviceRequest.service')->latest()->get()
-        ]);
     }
 }

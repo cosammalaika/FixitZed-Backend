@@ -106,7 +106,10 @@ class SubscriptionIndex extends Component
         try {
             $subscription = FixerSubscription::with(['plan', 'fixer.user'])->findOrFail($this->selectedId);
             $walletService->approveSubscriptionAndCredit($subscription);
-            session()->flash('status', 'Subscription approved and coins credited.');
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'success',
+                'message' => 'Subscription approved and coins credited.',
+            ]);
             $this->resetSelection();
             $this->dispatch('subscriptionApproved');
             $this->showApproveModal = false;
@@ -244,7 +247,10 @@ class SubscriptionIndex extends Component
             $walletService->approveSubscriptionAndCredit($subscription);
         }
 
-        session()->flash('status', 'Subscription updated successfully.');
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => 'Subscription updated successfully.',
+        ]);
         $this->cancelEditing();
         $this->dispatch('subscriptionApproved');
     }
@@ -281,7 +287,10 @@ class SubscriptionIndex extends Component
         try {
             $subscription = FixerSubscription::findOrFail($this->deleteId);
             $subscription->delete();
-            session()->flash('status', 'Subscription deleted.');
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'success',
+                'message' => 'Subscription deleted.',
+            ]);
         } catch (\Throwable $e) {
             Log::error('Failed to delete subscription', [
                 'subscription_id' => $this->deleteId,

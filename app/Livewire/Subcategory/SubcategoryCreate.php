@@ -39,8 +39,11 @@ class SubcategoryCreate extends Component
 
         log_user_action('created subcategory', "Subcategory ID: {$subcategory->id}, Name: {$subcategory->name}");
 
-        session()->flash('success', 'Subcategory created successfully.');
-        return redirect()->route('subcategory.index');
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => 'Subcategory created successfully.',
+            'redirect' => route('subcategory.index'),
+        ]);
     }
 
 }

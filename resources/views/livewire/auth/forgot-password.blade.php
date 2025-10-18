@@ -18,7 +18,10 @@ new #[Layout('components.layouts.auth')] class extends Component {
 
         Password::sendResetLink($this->only('email'));
 
-        session()->flash('status', __('A reset link will be sent if the account exists.'));
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => __('A reset link will be sent if the account exists.'),
+        ]);
     }
 }; ?>
 

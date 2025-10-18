@@ -28,10 +28,16 @@ class NotificationIndex extends Component
 
             log_user_action('deleted notification', "Notification ID: {$notification->id}");
 
-            session()->flash('success', "Notification deleted successfully.");
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'success',
+                'message' => 'Notification deleted successfully.',
+            ]);
             $this->loadNotifications();
         } else {
-            session()->flash('error', "Notification not found.");
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'error',
+                'message' => 'Notification not found.',
+            ]);
         }
     }
     public function render()

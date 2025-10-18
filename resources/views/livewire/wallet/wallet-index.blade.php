@@ -9,30 +9,6 @@
             <h4 class="card-title mb-0">Fixer Wallets</h4>
           </div>
           <div class="card-body">
-            @if (session('success'))
-              <div id="success-alert" class="alert alert-success alert-top-border alert-dismissible fade show" role="alert">
-                <i class="mdi mdi-check-all me-3 align-middle text-success"></i><strong>Success</strong> -
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-              </div>
-              <script>
-                setTimeout(() => {
-                  const alert = document.getElementById('success-alert');
-                  if (alert) {
-                    let bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-                    bsAlert.close();
-                  }
-                }, 4000);
-              </script>
-            @endif
-            @if (session('error'))
-              <div class="alert alert-danger alert-top-border alert-dismissible fade show" role="alert">
-                <i class="mdi mdi-alert-circle me-3 align-middle text-danger"></i><strong>Error</strong> -
-                {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-              </div>
-            @endif
-
             @if (!empty($missing) && $missing)
               <div class="alert alert-warning">
                 <strong>Wallets table not found.</strong>

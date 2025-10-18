@@ -21,12 +21,16 @@ class SubcategoryIndex extends Component
         if ($subcategory) {
             $subcategory->delete();
             log_user_action('deleted subcategory', "Subcategory ID: {$id}, Name: {$subcategory->name}");
-            session()->flash('success', "Subcategory deleted successfully.");
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'success',
+                'message' => 'Subcategory deleted successfully.',
+            ]);
         } else {
-            session()->flash('error', "Subcategory not found.");
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'error',
+                'message' => 'Subcategory not found.',
+            ]);
         }
-
-        return redirect()->route('subcategory.index');
     }
 
 }

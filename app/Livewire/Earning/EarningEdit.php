@@ -36,8 +36,11 @@ class EarningEdit extends Component
 
         log_user_action('updated earning', "Updated earning ID: {$this->earning->id}");
 
-        session()->flash('success', 'Earning updated successfully!');
-        return redirect()->route('earning.index');
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => 'Earning updated successfully!',
+            'redirect' => route('earning.index'),
+        ]);
     }
 
     public function render()

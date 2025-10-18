@@ -21,9 +21,12 @@ class LocationOptionIndex extends Component
         $opt = LocationOption::find($id);
         if ($opt) {
             $opt->delete();
-            session()->flash('success', 'Location deleted successfully.');
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'success',
+                'message' => 'Location deleted successfully.',
+                'redirect' => route('location-options.index'),
+            ]);
         }
-        return redirect()->route('location-options.index');
     }
 
     public function toggle($id)
@@ -32,8 +35,11 @@ class LocationOptionIndex extends Component
         if ($opt) {
             $opt->is_active = !$opt->is_active;
             $opt->save();
-            session()->flash('success', 'Location status updated.');
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'success',
+                'message' => 'Location status updated.',
+                'redirect' => route('location-options.index'),
+            ]);
         }
-        return redirect()->route('location-options.index');
     }
 }

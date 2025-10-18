@@ -16,7 +16,10 @@ class UserIndex extends Component
     {
         // Prevent deleting currently logged-in user
         if ($id == auth()->id()) {
-            session()->flash('success', "You cannot delete your own account.");
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'warning',
+                'message' => 'You cannot delete your own account.',
+            ]);
             return;
         }
 
@@ -26,9 +29,15 @@ class UserIndex extends Component
             $user->delete();
             log_user_action('deleted user', description: "Deleted user ID: {$user->id}, Email: {$user->email}");
 
-            session()->flash('success', "User deleted successfully.");
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'success',
+                'message' => 'User deleted successfully.',
+            ]);
         } else {
-            session()->flash('success', "User not found.");
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'error',
+                'message' => 'User not found.',
+            ]);
         }
     }
 

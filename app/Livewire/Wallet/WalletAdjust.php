@@ -57,7 +57,10 @@ class WalletAdjust extends Component
                 ]);
             });
         } catch (\Throwable $e) {
-            session()->flash('error', 'Failed to adjust wallet: ' . $e->getMessage());
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'error',
+                'message' => 'Failed to adjust wallet: ' . $e->getMessage(),
+            ]);
             return;
         }
 
@@ -79,9 +82,11 @@ class WalletAdjust extends Component
             ]);
         }
 
-        session()->flash('success', 'Wallet adjusted successfully.');
-        // Force refresh of the list so new balance is visible
-        return redirect()->route('wallet.index');
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => 'Wallet adjusted successfully.',
+            'redirect' => route('wallet.index'),
+        ]);
     }
 
     public function render()

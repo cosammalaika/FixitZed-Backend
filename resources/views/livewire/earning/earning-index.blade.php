@@ -9,30 +9,10 @@
                          <h4 class="card-title mb-0">Earnings List</h4>
 
                      </div>
-                     @if (session('success'))
-                         <div id="success-alert"
-                             class="alert alert-success alert-top-border alert-dismissible fade show" role="alert">
-                             <i class="mdi mdi-check-all me-3 align-middle text-success"></i><strong>Success</strong> -
-                             {{ session('success') }}
-                             <button type="button" class="btn-close" data-bs-dismiss="alert"
-                                 aria-label="Close"></button>
-                         </div>
-
-                         <script>
-                             setTimeout(() => {
-                                 const alert = document.getElementById('success-alert');
-                                 if (alert) {
-                                     let bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-                                     bsAlert.close();
-                                 }
-                             }, 4000);
-                         </script>
-                     @endif
 
 
 
-
-                     <div class="card-body">
+                    <div class="card-body">
                          <table id="datatable-buttons" class="table table-bordered dt-responsive nowrap w-100">
                              <thead>
                                  <tr>

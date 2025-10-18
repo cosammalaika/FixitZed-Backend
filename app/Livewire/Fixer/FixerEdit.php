@@ -83,9 +83,11 @@ class FixerEdit extends Component
         }
 
         log_user_action('updated fixer', "Updated Fixer ID: {$fixer->id}");
-
-        session()->flash('success', 'Fixer updated successfully.');
-        return to_route('fixer.index');
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => 'Fixer updated successfully.',
+            'redirect' => route('fixer.index'),
+        ]);
     }
 
     public function render()

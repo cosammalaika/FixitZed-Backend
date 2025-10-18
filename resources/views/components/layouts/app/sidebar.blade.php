@@ -36,6 +36,7 @@
     <div class="rightbar-overlay"></div>
 
     <!-- JAVASCRIPT -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{{ asset('assets/js/pages/form-advanced.init.js') }}"></script>
     <script src="{{ asset('assets/libs/choices.js/public/assets/scripts/choices.min.js') }}"></script>
     <script src="{{ asset('assets/libs/jquery/jquery.min.js') }}"></script>
@@ -91,6 +92,59 @@
     </script>
 
     <script src="{{ asset('assets/js/app.js') }}"></script>
+
+    <script>
+        (function () {
+            const flash = {
+                success: @json(session('success')),
+                error: @json(session('error')),
+                warning: @json(session('warning')),
+            };
+
+            const titles = {
+                success: 'Success',
+                error: 'Error',
+                warning: 'Notice',
+            };
+
+            function showAlert(type, message, options = {}) {
+                if (!message) return Promise.resolve();
+                return Swal.fire({
+                    icon: type,
+                    title: titles[type] ?? 'Notice',
+                    text: message,
+                    confirmButtonColor: '#F1592A',
+                    confirmButtonText: 'OK',
+                    ...options,
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                if (flash.success) showAlert('success', flash.success);
+                if (flash.error) showAlert('error', flash.error);
+                if (flash.warning) showAlert('warning', flash.warning);
+            });
+
+            window.addEventListener('flash-message', function (event) {
+                const detail = event.detail || {};
+                const type = detail.type || 'info';
+                const message = detail.message;
+                const redirect = detail.redirect;
+                const swalOptions = {};
+                if (detail.timer) {
+                    swalOptions.timer = detail.timer;
+                    swalOptions.timerProgressBar = true;
+                    swalOptions.showConfirmButton = false;
+                }
+
+                showAlert(type, message, swalOptions).then(() => {
+                    if (redirect) {
+                        window.location.assign(redirect);
+                    }
+                });
+            });
+        })();
+    </script>
 
     <script>
         // Persist theme on toggle and re-apply after Livewire navigation

@@ -33,7 +33,10 @@ class PaymentMethodIndex extends Component
             'integration_note' => $data['integration_note'] ?? null,
         ]);
         $this->reset(['name', 'code', 'sort_order', 'requires_integration', 'integration_note']);
-        session()->flash('success', 'Payment method added');
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => 'Payment method added',
+        ]);
     }
 
     public function toggle($id)

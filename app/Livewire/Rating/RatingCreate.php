@@ -46,8 +46,11 @@ class RatingCreate extends Component
 
         log_user_action('created rating', "Rating ID: {$rating->id}, Rating: {$this->rating}, Role: {$this->role}");
 
-        session()->flash('success', 'Rating submitted successfully.');
-        return redirect()->route('rating.index');
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => 'Rating submitted successfully.',
+            'redirect' => route('rating.index'),
+        ]);
     }
 
     public function render()

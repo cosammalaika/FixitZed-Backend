@@ -42,8 +42,10 @@ class LocationOptionEdit extends Component
             'is_active' => (bool) $this->is_active,
         ]);
 
-        session()->flash('success', 'Location updated successfully.');
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => 'Location updated successfully.',
+        ]);
         $this->dispatch('location-updated');
     }
 }
-

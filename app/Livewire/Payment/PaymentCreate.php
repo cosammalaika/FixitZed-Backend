@@ -65,7 +65,10 @@ class PaymentCreate extends Component
             }
         }
 
-        session()->flash('success', 'Payment created successfully.');
-        return redirect()->route('payment.index');
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => 'Payment created successfully.',
+            'redirect' => route('payment.index'),
+        ]);
     }
 }

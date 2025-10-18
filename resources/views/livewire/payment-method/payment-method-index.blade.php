@@ -7,23 +7,6 @@
                         <h4 class="card-title mb-0">Payment Methods</h4>
                     </div>
                     <div class="card-body">
-                        @if (session('success'))
-                            <div id="payment-method-success"
-                                class="alert alert-success alert-dismissible fade show" role="alert">
-                                <strong>Success:</strong> {{ session('success') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                            <script>
-                                setTimeout(() => {
-                                    const alert = document.getElementById('payment-method-success');
-                                    if (alert) {
-                                        const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-                                        bsAlert.close();
-                                    }
-                                }, 3500);
-                            </script>
-                        @endif
-
                         <form wire:submit.prevent="add" class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label">Name</label>

@@ -37,7 +37,10 @@ class CategoryEdit extends Component
 
         log_user_action('updated category', "Updated category ID: {$this->category->id}, New Name: {$this->name}");
 
-        session()->flash('success', 'Category updated successfully.');
-        return redirect()->route('category.index');
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => 'Category updated successfully.',
+            'redirect' => route('category.index'),
+        ]);
     }
 }

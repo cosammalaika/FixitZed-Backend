@@ -24,13 +24,16 @@ class RoleIndex extends Component
 
             log_user_action('deleted role', "Role: {$name}");
 
-            session()->flash('success', "Role deleted successfully.");
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'success',
+                'message' => 'Role deleted successfully.',
+            ]);
         } else {
-            session()->flash('error', "Role not found.");
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'error',
+                'message' => 'Role not found.',
+            ]);
         }
-
-        $roles = Role::with("permissions")->get();
-        return view('livewire.role.role-index', compact("roles"));
     }
 
 }

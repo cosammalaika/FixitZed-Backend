@@ -30,9 +30,11 @@ class LocationOptionCreate extends Component
             'is_active' => (bool) $this->is_active,
         ]);
 
-        session()->flash('success', 'Location created successfully.');
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => 'Location created successfully.',
+        ]);
         $this->reset(['name', 'latitude', 'longitude', 'is_active']);
         $this->dispatch('location-created');
     }
 }
-

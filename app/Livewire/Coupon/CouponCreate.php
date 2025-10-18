@@ -35,8 +35,11 @@ class CouponCreate extends Component
 
         log_user_action('created coupon', "Created coupon ID: {$coupon->id}, Code: {$coupon->code}");
 
-        session()->flash('success', 'Coupon created successfully!');
-        return redirect()->route('coupon.index');
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => 'Coupon created successfully!',
+            'redirect' => route('coupon.index'),
+        ]);
     }
     public function render()
     {

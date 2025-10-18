@@ -75,7 +75,10 @@ class ServiceRequestEdit extends Component
                 ->first();
 
             if (!$payment) {
-                session()->flash('error', 'Cannot mark as completed. Payment has not been made.');
+                $this->dispatchBrowserEvent('flash-message', [
+                    'type' => 'error',
+                    'message' => 'Cannot mark as completed. Payment has not been made.',
+                ]);
                 return;
             }
         }
@@ -91,8 +94,11 @@ class ServiceRequestEdit extends Component
 
         log_user_action('updated service request', "ServiceRequest ID: {$this->serviceRequestId}");
 
-        session()->flash('success', 'Service request updated successfully.');
-        return redirect()->route('serviceRequest.index');
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => 'Service request updated successfully.',
+            'redirect' => route('serviceRequest.index'),
+        ]);
     }
 
 }

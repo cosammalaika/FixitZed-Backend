@@ -53,8 +53,11 @@ class ServiceEdit extends Component
 
         log_user_action('updated service', "From '{$oldName}' to '{$this->name}', ID: {$service->id}");
 
-        session()->flash('success', 'Service updated successfully.');
-        return to_route("services.index")->with("success", "Service updated successfully");
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => 'Service updated successfully.',
+            'redirect' => route('services.index'),
+        ]);
     }
 
 

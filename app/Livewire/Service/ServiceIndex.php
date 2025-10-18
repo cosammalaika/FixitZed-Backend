@@ -22,13 +22,16 @@ class ServiceIndex extends Component
 
             log_user_action('deleted service', "Service: {$name}, ID: {$id}");
 
-            session()->flash('success', "Service deleted successfully.");
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'success',
+                'message' => 'Service deleted successfully.',
+            ]);
         } else {
-            session()->flash('error', "Service not found.");
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'error',
+                'message' => 'Service not found.',
+            ]);
         }
-
-        $services = Service::get();
-        return view('livewire.service.service-index', compact("services"));
     }
 
 }

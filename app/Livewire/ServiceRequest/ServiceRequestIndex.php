@@ -28,11 +28,15 @@ class ServiceRequestIndex extends Component
         if ($serviceRequest) {
             $serviceRequest->delete();
             log_user_action('deleted service request', "ServiceRequest ID: {$id}");
-            session()->flash('success', 'Service Request deleted successfully.');
-            $this->dispatch('flash-message-added');
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'success',
+                'message' => 'Service Request deleted successfully.',
+            ]);
         } else {
-            session()->flash('error', 'Service Request not found.');
-            $this->dispatch('flash-message-added');
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'error',
+                'message' => 'Service Request not found.',
+            ]);
         }
 
         $this->fetchServiceRequests();

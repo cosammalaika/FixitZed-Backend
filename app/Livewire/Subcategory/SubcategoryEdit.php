@@ -44,8 +44,11 @@ class SubcategoryEdit extends Component
 
         log_user_action('updated subcategory', "Subcategory ID: {$this->subcategory->id}, Name: {$this->subcategory->name}");
 
-        session()->flash('success', 'Subcategory updated successfully.');
-        return redirect()->route('subcategory.index');
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => 'Subcategory updated successfully.',
+            'redirect' => route('subcategory.index'),
+        ]);
     }
 
 }

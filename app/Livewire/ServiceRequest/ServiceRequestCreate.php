@@ -100,8 +100,10 @@ class ServiceRequestCreate extends Component
 
         log_user_action('created service request', "ServiceRequest ID: {$request->id}");
 
-        session()->flash('success', 'Service request created successfully.');
-
-        return redirect()->route('serviceRequest.index');
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => 'Service request created successfully.',
+            'redirect' => route('serviceRequest.index'),
+        ]);
     }
 }

@@ -27,8 +27,11 @@ class EarningCreate extends Component
 
         log_user_action('created earning', "Created earning ID: {$earning->id} for fixer ID: {$this->fixer_id}");
 
-        session()->flash('success', 'Earning created successfully!');
-        return redirect()->route('earning.index');
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => 'Earning created successfully!',
+            'redirect' => route('earning.index'),
+        ]);
     }
 
     public function render()

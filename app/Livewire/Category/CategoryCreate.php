@@ -29,8 +29,10 @@ class CategoryCreate extends Component
 
         log_user_action('created category', "Created category ID: {$category->id}, Name: {$category->name}");
 
-        session()->flash('success', 'Category created successfully.');
-        return redirect()->route('category.index');
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => 'Category created successfully.',
+            'redirect' => route('category.index'),
+        ]);
     }
 }
-

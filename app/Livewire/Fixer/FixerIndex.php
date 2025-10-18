@@ -29,7 +29,6 @@ class FixerIndex extends Component
 
             log_user_action('deleted fixer', "Deleted Fixer ID: {$fixer->id}");
 
-            // Revert user type back to Customer if they are no longer a fixer
             if ($user) {
                 $user->removeRole('Fixer');
                 if (! $user->hasRole('Customer')) {
@@ -37,9 +36,15 @@ class FixerIndex extends Component
                 }
             }
 
-            session()->flash('success', "Fixer deleted successfully.");
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'success',
+                'message' => 'Fixer deleted successfully.',
+            ]);
+        } else {
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'error',
+                'message' => 'Fixer not found.',
+            ]);
         }
-
-        return redirect()->route('fixer.index');
     }
 }

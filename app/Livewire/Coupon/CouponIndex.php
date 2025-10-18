@@ -21,11 +21,15 @@ class CouponIndex extends Component
 
             log_user_action('deleted coupon', "Deleted coupon ID: {$coupon->id}, Code: {$coupon->code}");
 
-            session()->flash('success', "Coupon deleted successfully.");
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'success',
+                'message' => 'Coupon deleted successfully.',
+            ]);
         } else {
-            session()->flash('success', "Coupon not found.");
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'error',
+                'message' => 'Coupon not found.',
+            ]);
         }
-
-        return redirect()->route('coupon.index');
     }
 }

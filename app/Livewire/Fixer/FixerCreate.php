@@ -64,8 +64,11 @@ class FixerCreate extends Component
 
         log_user_action('created fixer', "Fixer ID: {$fixer->id}, User ID: {$this->user_id}");
 
-        session()->flash('success', 'Fixer created successfully.');
-        return to_route('fixer.index')->with('success', 'Fixer created successfully.');
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => 'Fixer created successfully.',
+            'redirect' => route('fixer.index'),
+        ]);
     }
 
     public function render()

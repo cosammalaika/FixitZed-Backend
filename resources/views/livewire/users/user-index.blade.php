@@ -24,14 +24,6 @@
                         @endif
                     </div>
 
-                    @if (session('success'))
-                        <div class="alert alert-success alert-top-border alert-dismissible fade show" role="alert">
-                            <i class="mdi mdi-check-all me-3 align-middle text-success"></i><strong>Success</strong> -
-                            {{ session('success') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    @endif
-
                     @if ($canCreateUser)
                         <div class="modal fade" id="createRoleModal" tabindex="-1"
                             aria-labelledby="createRoleModalLabel" aria-hidden="true">

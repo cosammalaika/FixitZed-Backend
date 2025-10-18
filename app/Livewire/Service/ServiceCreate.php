@@ -38,8 +38,11 @@ class ServiceCreate extends Component
 
         log_user_action('created service', "Service: {$service->name}, ID: {$service->id}");
 
-        session()->flash('success', 'Service created successfully.');
-        return to_route("services.index")->with("success", "Service created successfully");
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => 'Service created successfully.',
+            'redirect' => route('services.index'),
+        ]);
     }
 
 

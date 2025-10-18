@@ -61,7 +61,10 @@ class PaymentEdit extends Component
             }
         }
 
-        session()->flash('success', 'Payment updated successfully.');
-        return redirect()->route('payment.index');
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => 'Payment updated successfully.',
+            'redirect' => route('payment.index'),
+        ]);
     }
 }

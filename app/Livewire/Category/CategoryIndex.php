@@ -21,12 +21,16 @@ class CategoryIndex extends Component
 
             log_user_action('deleted category', "Deleted category ID: {$id}, Name: {$category->name}");
 
-            session()->flash('success', "Category deleted successfully.");
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'success',
+                'message' => 'Category deleted successfully.',
+            ]);
         } else {
-            session()->flash('success', "Category not found.");
+            $this->dispatchBrowserEvent('flash-message', [
+                'type' => 'error',
+                'message' => 'Category not found.',
+            ]);
         }
-
-        return redirect()->route('category.index');
     }
 
 }

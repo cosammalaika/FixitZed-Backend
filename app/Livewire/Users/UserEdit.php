@@ -164,8 +164,4 @@ class UserEdit extends Component
             $this->district = '';
         }
     }
-
-*** End Patch
-*** End Patch
-{"error":"Patch must end with *** End Patch"}}:
 }

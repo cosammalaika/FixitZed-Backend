@@ -25,6 +25,8 @@ use App\Http\Controllers\Api\EarningController;
 // Guest routes (no authentication required)
 Route::post('login', [AuthController::class, 'login']);
 Route::post('register', [AuthController::class, 'register']);
+Route::post('password/forgot', [AuthController::class, 'forgotPassword']);
+Route::post('password/reset', [AuthController::class, 'resetPassword']);
 
 // Public data (read-only)
 Route::get('categories', [CategoryController::class, 'index']);

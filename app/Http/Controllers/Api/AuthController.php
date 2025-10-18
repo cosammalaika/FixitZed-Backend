@@ -5,10 +5,14 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Notifications\ResetPasswordOtp;
+use Carbon\Carbon;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rules\Password as PasswordRule;
@@ -190,6 +194,110 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Logged out',
+        ], 200);
+    }
+
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'identifier' => ['required_without:email', 'string'],
+            'email' => ['nullable', 'email'],
+        ]);
+
+        $identifier = $validated['identifier'] ?? $validated['email'] ?? '';
+        $user = $identifier !== '' ? $this->findUserByIdentifier($identifier) : null;
+
+        if (! $user) {
+            return response()->json([
+                'success' => true,
+                'message' => 'If we find a matching account, a reset code will be emailed shortly.',
+            ], 200);
+        }
+
+        if (empty($user->email)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This account does not have an email address on file. Please contact support to reset your password.',
+            ], 422);
+        }
+
+        $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $user->email],
+            [
+                'token' => Hash::make($otp),
+                'created_at' => now(),
+            ]
+        );
+
+        try {
+            $user->notify(new ResetPasswordOtp($otp));
+        } catch (\Throwable $e) {
+            Log::warning('Failed to send password reset code', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'If we find a matching account, a reset code will be emailed shortly.',
+        ], 200);
+    }
+
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'identifier' => ['required_without:email', 'string'],
+            'email' => ['nullable', 'email'],
+            'token' => ['required', 'string'],
+            'password' => ['required', PasswordRule::defaults(), 'confirmed'],
+            'password_confirmation' => ['required', 'string'],
+        ]);
+
+        $identifier = $validated['identifier'] ?? $validated['email'] ?? '';
+        $user = $identifier !== '' ? $this->findUserByIdentifier($identifier) : null;
+
+        if (! $user || empty($user->email)) {
+            throw ValidationException::withMessages([
+                'identifier' => ['We could not find an account that matches that information.'],
+            ]);
+        }
+
+        $record = DB::table('password_reset_tokens')
+            ->where('email', $user->email)
+            ->first();
+
+        if (! $record) {
+            throw ValidationException::withMessages([
+                'token' => ['The reset code is invalid or has already been used.'],
+            ]);
+        }
+
+        $createdAt = $record->created_at ? Carbon::parse($record->created_at) : null;
+        if (! $createdAt || $createdAt->addMinutes(15)->isPast()) {
+            DB::table('password_reset_tokens')->where('email', $user->email)->delete();
+
+            throw ValidationException::withMessages([
+                'token' => ['The reset code has expired. Please request a new one.'],
+            ]);
+        }
+
+        if (! Hash::check($validated['token'], $record->token)) {
+            throw ValidationException::withMessages([
+                'token' => ['The reset code is incorrect. Please try again.'],
+            ]);
+        }
+
+        $user->password = Hash::make($validated['password']);
+        $user->save();
+
+        DB::table('password_reset_tokens')->where('email', $user->email)->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password updated successfully. You can now sign in with your new password.',
         ], 200);
     }
 

@@ -7,6 +7,8 @@ use Livewire\Component;
 
 class CouponIndex extends Component
 {
+    protected $listeners = ['deleteCoupon' => 'delete'];
+
     public function render()
     {
         $coupons = Coupon::get();

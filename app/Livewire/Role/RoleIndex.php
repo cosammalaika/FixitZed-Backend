@@ -7,6 +7,8 @@ use Spatie\Permission\Models\Role;
 
 class RoleIndex extends Component
 {
+    protected $listeners = ['deleteRole' => 'delete'];
+
     public function render()
     {
         $roles = Role::with("permissions")->get();

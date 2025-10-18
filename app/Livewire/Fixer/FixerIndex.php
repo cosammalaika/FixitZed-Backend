@@ -7,6 +7,8 @@ use Livewire\Component;
 
 class FixerIndex extends Component
 {
+    protected $listeners = ['deleteFixer' => 'delete'];
+
     public function render()
     {
         $fixers = Fixer::whereHas('user', function ($query) {

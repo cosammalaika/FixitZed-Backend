@@ -87,9 +87,12 @@
                                                          Edit
                                                      </a>
                                                      </a>
-                                                     <a class="dropdown-item" wire:click="delete({{ $service->id }})"
-                                                         wire:confirm="Are you Sure you want to delete role"
-                                                         variant="primary">
+                                                     <a class="dropdown-item text-danger" href="#"
+                                                         data-confirm-event="deleteService"
+                                                         data-confirm-id="{{ $service->id }}"
+                                                         data-confirm-title="Delete service?"
+                                                         data-confirm-message="This service will be removed permanently."
+                                                         data-confirm-button="Yes, delete it">
                                                          Delete
                                                      </a>
                                                      {{-- @can('show.services') --}}

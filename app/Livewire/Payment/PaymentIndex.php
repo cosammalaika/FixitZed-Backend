@@ -7,6 +7,8 @@ use Livewire\Component;
 
 class PaymentIndex extends Component
 {
+    protected $listeners = ['deletePayment' => 'delete'];
+
     public function render()
     {
         $payments = Payment::get();

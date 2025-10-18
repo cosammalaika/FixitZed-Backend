@@ -48,12 +48,11 @@
                             <thead>
                                 <tr>
                                     <th scope="col">#</th>
-                                    <th scope="col">First Name</th>
-                                    <th scope="col">Last Name</th>
+                                    <th scope="col">Name</th>
                                     <th scope="col">Username</th>
                                     <th scope="col">Email</th>
                                     <th scope="col">Contact</th>
-                                    <th scope="col">Address</th>
+                                    <th scope="col">Province / Area</th>
                                     <th scope="col">Roles</th>
                                     <th scope="col">Status</th>
                                     @if ($hasUserActions)
@@ -67,12 +66,16 @@
                                 @foreach ($users as $user)
                                     <tr>
                                         <td>{{ $user->id }}</td>
-                                        <td>{{ $user->first_name }}</td>
-                                        <td>{{ $user->last_name }}</td>
+                                        <td>{{ trim($user->first_name . ' ' . $user->last_name) }}</td>
                                         <td>{{ $user->username }}</td>
                                         <td>{{ $user->email }}</td>
                                         <td>{{ $user->contact_number }}</td>
-                                        <td>{{ $user->address }}</td>
+                                        <td>
+                                            @php
+                                                $computedAddress = trim(($user->province ?? '') . ', ' . ($user->district ?? ''));
+                                            @endphp
+                                            {{ $computedAddress !== ',' ? trim($computedAddress, ' ,') : ($user->address ?? '-') }}
+                                        </td>
                                         <td>
                                             <div class="d-flex gap-2">
                                                 @if ($user->roles)

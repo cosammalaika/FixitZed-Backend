@@ -91,10 +91,12 @@
                                                         </a>
                                                     </li>
                                                     <li>
-                                                        <a class="dropdown-item" href="javascript:void(0);"
-                                                            wire:click="delete({{ $note->id }})"
-                                                            wire:confirm="Are you sure you want to delete this notification?"
-                                                            variant="primary">
+                                                        <a class="dropdown-item text-danger" href="javascript:void(0);"
+                                                            data-confirm-event="deleteNotification"
+                                                            data-confirm-id="{{ $note->id }}"
+                                                            data-confirm-title="Delete notification?"
+                                                            data-confirm-message="This notification will be removed permanently."
+                                                            data-confirm-button="Yes, delete it">
                                                             Delete
                                                         </a>
                                                     </li>

@@ -7,6 +7,8 @@ use Livewire\Component;
 
 class EarningIndex extends Component
 {
+    protected $listeners = ['deleteEarning' => 'delete'];
+
     public function render()
     {
         return view('livewire.earning.earning-index', [

@@ -7,6 +7,8 @@ use Livewire\Component;
 
 class PaymentMethodIndex extends Component
 {
+    protected $listeners = ['deletePaymentMethod' => 'delete'];
+
     public $name = '';
     public $code = '';
     public $sort_order = 0;

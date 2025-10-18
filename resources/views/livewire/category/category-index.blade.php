@@ -73,11 +73,14 @@
                                                          Edit
                                                      </a>
                                                      </a>
-                                                     <a class="dropdown-item" wire:click="delete({{ $category->id }})"
-                                                         wire:confirm="Are you Sure you want to delete role"
-                                                         variant="primary">
-                                                         Delete
-                                                     </a>
+                                                    <a class="dropdown-item text-danger" href="#"
+                                                        data-confirm-event="deleteCategory"
+                                                        data-confirm-id="{{ $category->id }}"
+                                                        data-confirm-title="Delete category?"
+                                                        data-confirm-message="This category will be removed permanently."
+                                                        data-confirm-button="Yes, delete it">
+                                                        Delete
+                                                    </a>
                                                      {{-- @can('show.categorys') --}}
                                                      {{-- <li><a class="dropdown-item"
                                                  href="{{ route('categorys.show', $category->id) }}">Show</a></li> --}}

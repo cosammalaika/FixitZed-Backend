@@ -7,6 +7,8 @@ use Livewire\Component;
 
 class SubcategoryIndex extends Component
 {
+    protected $listeners = ['deleteSubcategory' => 'delete'];
+
     public function render()
     {
         $subcategories = Subcategory::get();

@@ -85,8 +85,11 @@
                                             <td>{{ $i->sort_order }}</td>
                                             <td>
                                                 <button type="button" class="btn btn-sm btn-danger"
-                                                    wire:click="delete({{ $i->id }})"
-                                                    wire:confirm="Delete this payment method?">
+                                                    data-confirm-event="deletePaymentMethod"
+                                                    data-confirm-id="{{ $i->id }}"
+                                                    data-confirm-title="Delete payment method?"
+                                                    data-confirm-message="This payment method will be removed permanently."
+                                                    data-confirm-button="Yes, delete it">
                                                     Delete
                                                 </button>
                                             </td>

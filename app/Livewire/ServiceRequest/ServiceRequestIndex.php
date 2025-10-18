@@ -7,6 +7,8 @@ use Livewire\Component;
 
 class ServiceRequestIndex extends Component
 {
+    protected $listeners = ['deleteServiceRequest' => 'delete'];
+
     public $serviceRequests;
 
     public function mount()

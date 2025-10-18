@@ -8,6 +8,8 @@ use Livewire\Component;
 
 class LocationOptionIndex extends Component
 {
+    protected $listeners = ['deleteLocationConfirmed' => 'delete'];
+
     public function render()
     {
         $options = Schema::hasTable('location_options')

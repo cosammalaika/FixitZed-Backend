@@ -8,6 +8,7 @@ use Livewire\Component;
 class NotificationIndex extends Component
 {
     public $notifications;
+    protected $listeners = ['deleteNotification' => 'delete'];
 
     public function mount()
     {

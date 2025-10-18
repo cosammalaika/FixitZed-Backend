@@ -32,8 +32,33 @@
                             placeholder="Contact Number" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label" for="default-input">Address</label>
-                        <input class="form-control" type="text" wire:model="address" placeholder="address" required>
+                        <label class="form-label" for="province">Province</label>
+                        <select class="form-control" id="province" wire:model="province" required>
+                            <option value="">-- Select Province --</option>
+                            @foreach ($provinceOptions as $option)
+                                <option value="{{ $option }}">{{ $option }}</option>
+                            @endforeach
+                        </select>
+                        @error('province')
+                            <span class="text-danger small">{{ $message }}</span>
+                        @enderror
+                    </div>
+                </div>
+                <div class="row mt-6">
+                    <div class="col-md-6">
+                        <label class="form-label" for="district">Area / District</label>
+                        <select class="form-control" id="district" wire:model="district" required @disabled(empty($districtOptions))>
+                            <option value="">-- Select Area --</option>
+                            @foreach ($districtOptions as $option)
+                                <option value="{{ $option }}">{{ $option }}</option>
+                            @endforeach
+                        </select>
+                        @if (empty($districtOptions) && $province)
+                            <span class="text-muted small">No districts found for the selected province. Please try again later.</span>
+                        @endif
+                        @error('district')
+                            <span class="text-danger small">{{ $message }}</span>
+                        @enderror
                     </div>
                 </div>
                 <div class="row mt-6">

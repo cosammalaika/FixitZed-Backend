@@ -95,10 +95,12 @@
                                                             Edit
                                                         </a>
                                                         </a>
-                                                        <a class="dropdown-item"
-                                                            wire:click="delete({{ $payment->id }})"
-                                                            wire:confirm="Are you Sure you want to delete role"
-                                                            variant="primary">
+                                                        <a class="dropdown-item text-danger" href="#"
+                                                            data-confirm-event="deletePayment"
+                                                            data-confirm-id="{{ $payment->id }}"
+                                                            data-confirm-title="Delete payment?"
+                                                            data-confirm-message="This payment record will be removed permanently."
+                                                            data-confirm-button="Yes, delete it">
                                                             Delete
                                                         </a>
                                                         {{-- @can('show.payments') --}}

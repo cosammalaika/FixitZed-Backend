@@ -29,6 +29,8 @@ class User extends Authenticatable
         'contact_number',
         'status',
         'address',
+        'province',
+        'district',
         'profile_photo_path',
         'nrc_front_path',
         'nrc_back_path',

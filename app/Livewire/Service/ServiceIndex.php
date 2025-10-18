@@ -7,6 +7,8 @@ use Livewire\Component;
 
 class ServiceIndex extends Component
 {
+    protected $listeners = ['deleteService' => 'delete'];
+
     public function render()
     {
         $services = Service::get();

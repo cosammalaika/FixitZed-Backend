@@ -3,8 +3,7 @@
 namespace App\Livewire\Users;
 
 use App\Models\User;
-use App\Models\LocationOption;
-use Illuminate\Support\Facades\Schema;
+use App\Support\ProvinceDistrict;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -13,11 +12,16 @@ use Spatie\Permission\Models\Role;
 class UserCreate extends Component
 {
     use WithFileUploads;
-    public $first_name, $last_name, $email, $password, $confirm_password, $username, $contact_number, $status = 'Active', $address;
+    public $first_name, $last_name, $email, $password, $confirm_password, $username, $contact_number, $status = 'Active';
     public $allRoles, $roles = [];
     public bool $canAssignRoles = false;
-    public $location_option_id;
-    public $locationOptions = [];
+    public $province = '';
+    public $district = '';
+    public array $provinceOptions = [];
+    public array $districtOptions = [];
+
+    /** @var array<string, array<int, string>> */
+    protected array $provinceDistricts = [];
 
     // Uploads
     public $photo; // profile image
@@ -35,16 +39,32 @@ class UserCreate extends Component
             $this->roles = ['Customer'];
             $this->allRoles = Role::where('name', 'Customer')->get();
         }
-        if (Schema::hasTable('location_options')) {
-            $this->locationOptions = LocationOption::where('is_active', true)->orderBy('name')->get();
-        } else {
-            $this->locationOptions = collect();
+        $this->loadProvinceData();
+    }
+
+    protected function loadProvinceData(): void
+    {
+        $map = ProvinceDistrict::map();
+        $this->provinceDistricts = $map;
+        $this->provinceOptions = array_keys($map);
+        $this->districtOptions = [];
+    }
+
+    public function updatedProvince($value): void
+    {
+        $value = (string) $value;
+        $this->province = $value;
+        $this->districtOptions = $this->provinceDistricts[$value] ?? [];
+        if (! in_array($this->district, $this->districtOptions, true)) {
+            $this->district = '';
         }
     }
 
     public function render()
     {
-        return view('livewire.users.user-create');
+        return view('livewire.users.user-create', [
+            'provinceMap' => $this->provinceDistricts,
+        ]);
     }
 
     public function submit()
@@ -61,7 +81,8 @@ class UserCreate extends Component
             'email' => 'required|email|unique:users,email',
             'contact_number' => 'required|string|max:20',
             'status' => 'required|in:Active,Inactive',
-            'location_option_id' => 'required|exists:location_options,id',
+            'province' => 'required|string',
+            'district' => 'required|string',
             'roles' => 'nullable',
             'password' => 'required|same:confirm_password|min:6',
             // files (increase limits to handle phone camera sizes)
@@ -71,7 +92,7 @@ class UserCreate extends Component
             'documents.*' => 'nullable|file|max:20480|mimes:pdf,jpg,jpeg,png,webp'
         ]);
 
-        $selectedLocation = LocationOption::find($this->location_option_id);
+        $address = trim($this->province . ', ' . $this->district);
 
         $user = User::create([
             'first_name' => $this->first_name,
@@ -80,7 +101,9 @@ class UserCreate extends Component
             'email' => $this->email,
             'contact_number' => $this->contact_number,
             'status' => $this->status,
-            'address' => $selectedLocation?->name,
+            'province' => $this->province,
+            'district' => $this->district,
+            'address' => $address,
             'password' => Hash::make($this->password),
         ]);
 
@@ -116,6 +139,10 @@ class UserCreate extends Component
         log_user_action('created user', "Created user ID: {$user->id}, Email: {$user->email}");
 
 
-        return to_route("users.index")->with("success", "User created successfully");
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => 'User created successfully.',
+            'redirect' => route('users.index'),
+        ]);
     }
 }

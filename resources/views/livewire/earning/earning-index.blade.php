@@ -53,9 +53,12 @@
                                                          data-bs-target="#editRoleModal{{ $earning->id }}">
                                                          Edit
                                                      </a> --}}
-                                                     <a class="dropdown-item" wire:click="delete({{ $earning->id }})"
-                                                         wire:confirm="Are you Sure you want to delete role"
-                                                         variant="primary">
+                                                     <a class="dropdown-item text-danger" href="#"
+                                                         data-confirm-event="deleteEarning"
+                                                         data-confirm-id="{{ $earning->id }}"
+                                                         data-confirm-title="Delete earning?"
+                                                         data-confirm-message="This earning record will be removed permanently."
+                                                         data-confirm-button="Yes, delete it">
                                                          Delete
                                                      </a>
                                                      {{-- @can('show.earnings') --}}

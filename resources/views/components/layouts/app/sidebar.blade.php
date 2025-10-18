@@ -166,6 +166,56 @@
     </script>
 
     <script>
+        document.addEventListener('click', function (event) {
+            const trigger = event.target.closest('[data-confirm-event]');
+            if (!trigger) {
+                return;
+            }
+
+            event.preventDefault();
+
+            const eventName = trigger.getAttribute('data-confirm-event');
+            if (!eventName) {
+                return;
+            }
+
+            const title = trigger.getAttribute('data-confirm-title') || 'Are you sure?';
+            const message = trigger.getAttribute('data-confirm-message') || 'This action cannot be undone.';
+            const icon = trigger.getAttribute('data-confirm-icon') || 'warning';
+
+            let payload = {};
+            const rawPayload = trigger.getAttribute('data-confirm-payload');
+            if (rawPayload) {
+                try {
+                    payload = JSON.parse(rawPayload);
+                } catch (e) {
+                    console.warn('Unable to parse data-confirm-payload', e);
+                }
+            }
+
+            const id = trigger.getAttribute('data-confirm-id');
+            if (id !== null) {
+                payload.id = payload.id ?? (isNaN(id) ? id : Number(id));
+            }
+
+            Swal.fire({
+                title,
+                text: message,
+                icon,
+                showCancelButton: true,
+                confirmButtonColor: '#F1592A',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: trigger.getAttribute('data-confirm-button') || 'Yes, proceed',
+                cancelButtonText: trigger.getAttribute('data-cancel-button') || 'Cancel',
+            }).then(result => {
+                if (result.isConfirmed) {
+                    Livewire.dispatch(eventName, payload);
+                }
+            });
+        });
+    </script>
+
+    <script>
         (function () {
             const permissions = new Set(@json(auth()->user()?->getAllPermissions()->pluck('name') ?? []));
 

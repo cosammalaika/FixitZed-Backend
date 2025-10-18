@@ -66,8 +66,12 @@
                                                     <a class="dropdown-item" wire:click="toggle({{ $opt->id }})">
                                                         {{ $opt->is_active ? 'Deactivate' : 'Activate' }}
                                                     </a>
-                                                    <a class="dropdown-item" wire:click="delete({{ $opt->id }})"
-                                                        wire:confirm="Are you sure you want to delete this location?">
+                                                    <a class="dropdown-item text-danger" href="#"
+                                                        data-confirm-event="deleteLocationConfirmed"
+                                                        data-confirm-id="{{ $opt->id }}"
+                                                        data-confirm-title="Delete location?"
+                                                        data-confirm-message="This location will be removed permanently."
+                                                        data-confirm-button="Yes, delete it">
                                                         Delete
                                                     </a>
                                                 </ul>

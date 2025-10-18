@@ -85,9 +85,12 @@
                                                          Edit
                                                      </a>
                                                      </a>
-                                                     <a class="dropdown-item" wire:click="delete({{ $coupon->id }})"
-                                                         wire:confirm="Are you Sure you want to delete role"
-                                                         variant="primary">
+                                                     <a class="dropdown-item text-danger" href="#"
+                                                         data-confirm-event="deleteCoupon"
+                                                         data-confirm-id="{{ $coupon->id }}"
+                                                         data-confirm-title="Delete coupon?"
+                                                         data-confirm-message="This coupon will be removed permanently."
+                                                         data-confirm-button="Yes, delete it">
                                                          Delete
                                                      </a>
                                                      {{-- @can('show.coupons') --}}

@@ -4,7 +4,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\District;
+use App\Models\Province;
 use App\Models\User;
+use App\Support\ProvinceDistrict;
 use App\Notifications\ResetPasswordOtp;
 use Carbon\Carbon;
 use Illuminate\Auth\Events\Registered;
@@ -13,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rules\Password as PasswordRule;
@@ -32,6 +36,12 @@ class AuthController extends Controller
             'email'           => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
             'contact_number'  => ['required', 'string', 'max:20'],
             'address'         => ['nullable', 'string', 'max:1000'],
+            'province_id'     => ['nullable', 'integer', Rule::exists('provinces', 'id')],
+            'province_slug'   => ['nullable', 'string', 'max:255'],
+            'province'        => ['nullable', 'string', 'max:255'],
+            'district_id'     => ['nullable', 'integer', Rule::exists('districts', 'id')],
+            'district_slug'   => ['nullable', 'string', 'max:255'],
+            'district'        => ['nullable', 'string', 'max:255'],
             'user_type'       => ['nullable', Rule::in(['Customer', 'Fixer', 'Admin', 'Support'])],
             'status'          => ['nullable', Rule::in(['Active', 'Inactive'])],
             'password'        => ['required', PasswordRule::defaults()],
@@ -48,13 +58,31 @@ class AuthController extends Controller
             fallbackEmail: $validated['email']
         );
 
+        $province = $this->resolveProvince($request);
+        if (! $province) {
+            throw ValidationException::withMessages([
+                'province' => ['Please select a valid province.'],
+            ]);
+        }
+
+        $district = $this->resolveDistrict($request, $province);
+        if (! $district) {
+            throw ValidationException::withMessages([
+                'district' => ['Please select a valid district for the selected province.'],
+            ]);
+        }
+
+        $address = $this->composeAddress($province->name, $district->name, $validated['address'] ?? null);
+
         $user = User::create([
             'first_name'     => $firstName,
             'last_name'      => $lastName,
             'username'       => $username,
             'email'          => $validated['email'],
             'contact_number' => $validated['contact_number'],
-            'address'        => $validated['address'] ?? null,
+            'province'       => $province->name,
+            'district'       => $district->name,
+            'address'        => $address,
             'status'         => $validated['status'] ?? 'Active',
             'password'       => Hash::make($validated['password']),
         ]);
@@ -143,13 +171,20 @@ class AuthController extends Controller
         }
 
         $validated = $request->validate([
-            'first_name' => ['nullable', 'string', 'max:255'],
-            'firstName'  => ['nullable', 'string', 'max:255'], // tolerated
-            'last_name'  => ['nullable', 'string', 'max:255'],
-            'lastName'   => ['nullable', 'string', 'max:255'],
-            'name'       => ['nullable', 'string', 'max:255'],
-            'full_name'  => ['nullable', 'string', 'max:255'],
-            'email'      => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'first_name'    => ['nullable', 'string', 'max:255'],
+            'firstName'     => ['nullable', 'string', 'max:255'], // tolerated
+            'last_name'     => ['nullable', 'string', 'max:255'],
+            'lastName'      => ['nullable', 'string', 'max:255'],
+            'name'          => ['nullable', 'string', 'max:255'],
+            'full_name'     => ['nullable', 'string', 'max:255'],
+            'email'         => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'address'       => ['nullable', 'string', 'max:1000'],
+            'province_id'   => ['nullable', 'integer', Rule::exists('provinces', 'id')],
+            'province_slug' => ['nullable', 'string', 'max:255'],
+            'province'      => ['nullable', 'string', 'max:255'],
+            'district_id'   => ['nullable', 'integer', Rule::exists('districts', 'id')],
+            'district_slug' => ['nullable', 'string', 'max:255'],
+            'district'      => ['nullable', 'string', 'max:255'],
         ]);
 
         // Apply updates only for provided fields
@@ -174,6 +209,28 @@ class AuthController extends Controller
             [$fn, $ln] = $this->splitName($input['name']);
             if (!empty($fn) && empty($user->first_name)) $user->first_name = $fn;
             if ($ln !== null && empty($user->last_name)) $user->last_name = $ln;
+        }
+
+        if ($this->hasProvinceInput($request)) {
+            $province = $this->resolveProvince($request);
+            if (! $province) {
+                throw ValidationException::withMessages([
+                    'province' => ['Please select a valid province.'],
+                ]);
+            }
+
+            $district = $this->resolveDistrict($request, $province);
+            if (! $district) {
+                throw ValidationException::withMessages([
+                    'district' => ['Please select a valid district for the selected province.'],
+                ]);
+            }
+
+            $user->province = $province->name;
+            $user->district = $district->name;
+            $user->address = $this->composeAddress($province->name, $district->name, $validated['address'] ?? null);
+        } elseif (array_key_exists('address', $validated) && ($user->province || $user->district)) {
+            $user->address = $this->composeAddress($user->province, $user->district, $validated['address']);
         }
 
         $user->save();
@@ -334,6 +391,195 @@ class AuthController extends Controller
                       );
             }
         })->first();
+    }
+
+    private function hasProvinceInput(Request $request): bool
+    {
+        return $request->filled('province_id')
+            || $request->filled('province_slug')
+            || $request->filled('province')
+            || $request->filled('district_id')
+            || $request->filled('district_slug')
+            || $request->filled('district');
+    }
+
+    private function resolveProvince(Request $request): ?Province
+    {
+        $id = $request->input('province_id');
+        if ($id !== null) {
+            $province = Province::find($id);
+            if ($province) {
+                return $province;
+            }
+        }
+
+        $slug = trim((string) $request->input('province_slug', ''));
+        if ($slug !== '') {
+            $province = Province::where('slug', Str::slug($slug))->first();
+            if ($province) {
+                return $province;
+            }
+        }
+
+        $name = trim((string) $request->input('province', ''));
+        if ($name !== '') {
+            $province = Province::whereRaw('LOWER(name) = ?', [Str::lower($name)])->first();
+            if ($province) {
+                return $province;
+            }
+
+            return $this->ensureProvinceFromConfig($name);
+        }
+
+        return null;
+    }
+
+    private function resolveDistrict(Request $request, Province $province): ?District
+    {
+        $id = $request->input('district_id');
+        if ($id !== null) {
+            $district = District::where('province_id', $province->id)
+                ->where('id', $id)
+                ->first();
+            if ($district) {
+                return $district;
+            }
+        }
+
+        $slug = trim((string) $request->input('district_slug', ''));
+        if ($slug !== '') {
+            $district = District::where('province_id', $province->id)
+                ->where('slug', Str::slug($slug))
+                ->first();
+            if ($district) {
+                return $district;
+            }
+        }
+
+        $name = trim((string) $request->input('district', ''));
+        if ($name !== '') {
+            $district = District::where('province_id', $province->id)
+                ->whereRaw('LOWER(name) = ?', [Str::lower($name)])
+                ->first();
+            if ($district) {
+                return $district;
+            }
+
+            return $this->ensureDistrictFromConfig($province, $name);
+        }
+
+        return null;
+    }
+
+    private function ensureProvinceFromConfig(string $candidate): ?Province
+    {
+        $map = config('provinces.map', []);
+        if (! is_array($map)) {
+            return null;
+        }
+
+        foreach ($map as $provinceName => $districts) {
+            if (! is_string($provinceName)) {
+                continue;
+            }
+
+            if (Str::lower($provinceName) === Str::lower($candidate)) {
+                $province = Province::firstOrCreate(
+                    ['slug' => Str::slug($provinceName)],
+                    ['name' => $provinceName]
+                );
+
+                foreach ((array) $districts as $districtName) {
+                    if (! is_string($districtName)) {
+                        continue;
+                    }
+                    $districtName = trim($districtName);
+                    if ($districtName === '') {
+                        continue;
+                    }
+                    District::firstOrCreate(
+                        [
+                            'province_id' => $province->id,
+                            'slug' => Str::slug($districtName),
+                        ],
+                        ['name' => $districtName]
+                    );
+                }
+
+                ProvinceDistrict::refresh();
+
+                return $province->fresh();
+            }
+        }
+
+        return null;
+    }
+
+    private function ensureDistrictFromConfig(Province $province, string $candidate): ?District
+    {
+        $map = config('provinces.map', []);
+        if (! is_array($map)) {
+            return null;
+        }
+
+        foreach ($map as $provinceName => $districts) {
+            if (! is_string($provinceName)) {
+                continue;
+            }
+            if (Str::lower($provinceName) !== Str::lower($province->name)) {
+                continue;
+            }
+
+            foreach ((array) $districts as $districtName) {
+                if (! is_string($districtName)) {
+                    continue;
+                }
+
+                if (Str::lower($districtName) === Str::lower($candidate)) {
+                    $district = District::firstOrCreate(
+                        [
+                            'province_id' => $province->id,
+                            'slug' => Str::slug($districtName),
+                        ],
+                        ['name' => $districtName]
+                    );
+
+                    ProvinceDistrict::refresh();
+
+                    return $district;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function composeAddress(?string $provinceName, ?string $districtName, ?string $extra = null): ?string
+    {
+        $parts = [];
+        if ($provinceName !== null && trim($provinceName) !== '') {
+            $parts[] = trim($provinceName);
+        }
+        if ($districtName !== null && trim($districtName) !== '') {
+            $parts[] = trim($districtName);
+        }
+
+        $location = implode(', ', $parts);
+        $extra = $extra !== null ? trim($extra) : null;
+
+        if ($location === '' && ($extra === null || $extra === '')) {
+            return null;
+        }
+
+        if ($location === '') {
+            return $extra;
+        }
+
+        if ($extra !== null && $extra !== '') {
+            return $location . ' - ' . $extra;
+        }
+
+        return $location;
     }
 
     private function normalizePhone(?string $value): ?string

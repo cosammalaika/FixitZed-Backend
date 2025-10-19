@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PaymentMethodController;
 use App\Http\Controllers\Api\CurrencyController;
+use App\Http\Controllers\Api\ProvinceController;
 use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\FixerRequestController;
 use App\Http\Controllers\Api\LoyaltyController;
@@ -45,6 +46,7 @@ Route::get('coupons/{coupon}', [CouponController::class, 'show']);
 Route::post('coupons/validate', [CouponController::class, 'validateCode']);
 Route::get('payment-methods', [PaymentMethodController::class, 'index']);
 Route::get('currency', [CurrencyController::class, 'show']);
+Route::get('provinces', [ProvinceController::class, 'index']);
 // Location options for dropdown
 Route::get('location-options', [LocationOptionController::class, 'index']);
 

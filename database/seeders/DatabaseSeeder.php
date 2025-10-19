@@ -10,7 +10,10 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->call(PermissionSeeder::class);
+        $this->call([
+            PermissionSeeder::class,
+            ProvinceSeeder::class,
+        ]);
 
         $customer = User::firstOrCreate([
             'email' => 'cosammalaika@example.com',
@@ -20,6 +23,9 @@ class DatabaseSeeder extends Seeder
             'username' => 'AngelOnIt',
             'contact_number' => '0970000000',
             'status' => 'Active',
+            'province' => 'Lusaka',
+            'district' => 'Lusaka CBD',
+            'address' => 'Lusaka, Lusaka CBD',
             'password' => Hash::make('password'),
         ]);
         $customer->assignRole('Customer');
@@ -32,6 +38,9 @@ class DatabaseSeeder extends Seeder
             'username' => 'admin',
             'contact_number' => '0970000000',
             'status' => 'Active',
+            'province' => 'Lusaka',
+            'district' => 'Lusaka CBD',
+            'address' => 'Lusaka, Lusaka CBD',
             'password' => Hash::make('password'),
         ]);
         $adminUser->assignRole('Super Admin');
@@ -44,6 +53,9 @@ class DatabaseSeeder extends Seeder
             'username' => 'support',
             'contact_number' => '0960000000',
             'status' => 'Active',
+            'province' => 'Lusaka',
+            'district' => 'Lusaka CBD',
+            'address' => 'Lusaka, Lusaka CBD',
             'password' => Hash::make('password'),
         ]);
         $supportUser->assignRole('Support');

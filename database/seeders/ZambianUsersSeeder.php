@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\LocationOption;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -11,8 +10,6 @@ class ZambianUsersSeeder extends Seeder
 {
     public function run(): void
     {
-        $town = LocationOption::query()->value('name') ?? 'Lusaka, Zambia';
-
         $regionalAdmin = User::updateOrCreate([
             'email' => 'admin.zm@example.com',
         ], [
@@ -21,7 +18,9 @@ class ZambianUsersSeeder extends Seeder
             'username' => 'admin_zm',
             'contact_number' => '0970000001',
             'status' => 'Active',
-            'address' => $town,
+            'province' => 'Lusaka',
+            'district' => 'Lusaka CBD',
+            'address' => 'Lusaka, Lusaka CBD',
             'password' => Hash::make('password'),
         ]);
         $regionalAdmin->assignRole('Customer');
@@ -34,7 +33,9 @@ class ZambianUsersSeeder extends Seeder
             'username' => 'support_zm',
             'contact_number' => '0960000001',
             'status' => 'Active',
-            'address' => $town,
+            'province' => 'Lusaka',
+            'district' => 'Lusaka CBD',
+            'address' => 'Lusaka, Lusaka CBD',
             'password' => Hash::make('password'),
         ]);
         $regionalSupport->assignRole('Customer');

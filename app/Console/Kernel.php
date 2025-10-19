@@ -25,6 +25,10 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('priority:dormancy-guard')
             ->dailyAt('03:00');
+
+        $schedule->command('fixitzed:sync-provinces')
+            ->dailyAt('04:00')
+            ->withoutOverlapping();
     }
 
     /**

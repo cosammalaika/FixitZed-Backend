@@ -51,7 +51,9 @@ class UserEdit extends Component
 
     public function render()
     {
-        return view('livewire.users.user-edit');
+        return view('livewire.users.user-edit', [
+            'provinceMap' => $this->provinceDistricts,
+        ]);
     }
 
     public function submit()

@@ -30,9 +30,101 @@
                     <div class="col-md-6">
                         <label class="form-label" for="default-input">Username</label>
                         <input class="form-control" type="text" wire:model="username" placeholder="Username" required>
-                    </div>
+</div>
 
-                </div>
+</div>
+
+@push('scripts')
+    @once
+        <script>
+            document.addEventListener('livewire:load', () => {
+                const componentId = @json($this->id);
+                const endpoint = @json(url('/api/provinces'));
+                let provinceCache = @json($provinceMap ?? []);
+
+                const findProvinceKey = (province) => {
+                    if (!province) return null;
+                    const normalized = province.trim().toLowerCase();
+                    return Object.keys(provinceCache).find(
+                        (key) => key.trim().toLowerCase() === normalized
+                    ) || null;
+                };
+
+                const getDistricts = async (province) => {
+                    const key = findProvinceKey(province);
+                    if (key) {
+                        return provinceCache[key] ?? [];
+                    }
+
+                    try {
+                        const response = await fetch(endpoint, {
+                            headers: {Accept: 'application/json'},
+                        });
+                        if (!response.ok) return [];
+
+                        const payload = await response.json();
+                        if (!payload || !Array.isArray(payload.data)) return [];
+
+                        payload.data.forEach((entry) => {
+                            if (!entry || typeof entry.name !== 'string') return;
+                            const name = entry.name.trim();
+                            if (!name) return;
+                            const districts = Array.isArray(entry.districts)
+                                ? entry.districts
+                                    .map((district) => district?.name ?? district)
+                                    .filter((value) => typeof value === 'string' && value.trim() !== '')
+                                : [];
+                            if (districts.length) {
+                                provinceCache[name] = districts;
+                            }
+                        });
+
+                        const refreshedKey = findProvinceKey(province);
+                        return refreshedKey ? (provinceCache[refreshedKey] ?? []) : [];
+                    } catch (error) {
+                        console.error('Failed to fetch provinces', error);
+                        return [];
+                    }
+                };
+
+                const handleProvinceChange = async () => {
+                    const provinceSelect = document.getElementById('province');
+                    const districtSelect = document.getElementById('district');
+                    if (!provinceSelect || !districtSelect || !componentId) return;
+
+                    const province = provinceSelect.value;
+                    const districts = await getDistricts(province);
+                    const component = Livewire.find(componentId);
+                    if (!component) return;
+
+                    component.set('districtOptions', districts);
+                    if (!districts.includes(districtSelect.value)) {
+                        component.set('district', '');
+                    }
+                };
+
+                const bindHandlers = () => {
+                    const provinceSelect = document.getElementById('province');
+                    if (!provinceSelect) return;
+                    provinceSelect.removeEventListener('change', handleProvinceChange);
+                    provinceSelect.addEventListener('change', handleProvinceChange);
+                };
+
+                Livewire.hook('message.processed', (message, component) => {
+                    if (component.id === componentId) {
+                        bindHandlers();
+                    }
+                });
+
+                bindHandlers();
+                const initialProvince = document.getElementById('province')?.value;
+                if (initialProvince) {
+                    handleProvinceChange();
+                }
+            });
+        </script>
+    @endonce
+@endpush
                 <div class="row mt-6">
                     <div class="col-md-6">
                         <label class="form-label" for="contact_number">Contact Number</label>

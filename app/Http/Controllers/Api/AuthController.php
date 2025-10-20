@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\District;
+use App\Models\LoginAudit;
+use App\Models\UserTrustedDevice;
 use App\Models\Province;
 use App\Models\User;
 use App\Support\ProvinceDistrict;
@@ -16,7 +18,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rules\Password as PasswordRule;
@@ -95,13 +99,20 @@ class AuthController extends Controller
         $user->syncRoles($roles);
 
         event(new Registered($user)); // WHY: triggers any listeners (e.g., verification)
+        $user->sendEmailVerificationNotification();
 
         $token = $user->createToken('mobile')->plainTextToken;
+
+        $this->recordLoginAudit($user, 'register', 'success', [
+            'identifier' => $user->email,
+            'roles' => $roles,
+        ]);
 
         return response()->json([
             'success' => true,
             'token'   => $token,
             'user'    => $user,
+            'requires_verification' => true,
         ], 201);
     }
 
@@ -116,22 +127,62 @@ class AuthController extends Controller
             'password'   => ['required', 'string'],
         ]);
 
-        $identifier = $validated['identifier'] ?? $validated['email'];
+        $identifier = $validated['identifier'] ?? $validated['email'] ?? '';
+
+        $this->ensureIsNotRateLimited($identifier);
+
         $user = $identifier ? $this->findUserByIdentifier($identifier) : null;
 
         if (! $user || ! Hash::check($validated['password'], $user->password)) {
+            $this->recordLoginAudit($user, 'login', 'failed', [
+                'identifier' => $identifier,
+            ]);
+            RateLimiter::hit($this->throttleKey($identifier));
             throw ValidationException::withMessages([
                 'identifier' => ['The provided credentials are incorrect.'],
                 'email'      => ['The provided credentials are incorrect.'],
             ]);
         }
 
+        RateLimiter::clear($this->throttleKey($identifier));
+
+        $trustedDevice = $this->findTrustedDevice($user, $request->input('device_token'));
+
+        if ($user->mfa_enabled && ! $trustedDevice) {
+            $challenge = $this->createMfaChallenge($user, [
+                'remember_device' => $request->boolean('remember_device'),
+                'device_name' => $request->input('device_name'),
+                'identifier' => $identifier,
+            ]);
+
+            $this->recordLoginAudit($user, 'login', 'mfa_challenge', [
+                'identifier' => $identifier,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'mfa_required' => true,
+                'mfa_token' => $challenge['token'],
+                'requires_verification' => ! $user->hasVerifiedEmail(),
+            ], 202);
+        }
+
+        if ($trustedDevice) {
+            $this->touchTrustedDevice($trustedDevice);
+        }
+
         $token = $user->createToken('mobile')->plainTextToken;
+
+        $this->recordLoginAudit($user, 'login', 'success', [
+            'identifier' => $identifier,
+            'used_trusted_device' => (bool) $trustedDevice,
+        ]);
 
         return response()->json([
             'success' => true,
             'token'   => $token,
             'user'    => $user,
+            'requires_verification' => ! $user->hasVerifiedEmail(),
         ], 200);
     }
 
@@ -141,6 +192,7 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'user'    => $user,
+            'requires_verification' => ! $user->hasVerifiedEmail(),
         ], 200);
     }
 
@@ -241,12 +293,34 @@ class AuthController extends Controller
         ], 200);
     }
 
+    public function resendVerification(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        if ($user->hasVerifiedEmail()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Email is already verified.',
+            ]);
+        }
+
+        $user->sendEmailVerificationNotification();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Verification link sent.',
+        ]);
+    }
+
     public function logout(Request $request): JsonResponse
     {
         $token = $request->user()->currentAccessToken(); 
         if ($token) {
             $token->delete();
         }
+
+        $this->recordLoginAudit($request->user(), 'logout', 'success');
 
         return response()->json([
             'success' => true,
@@ -265,6 +339,9 @@ class AuthController extends Controller
         $user = $identifier !== '' ? $this->findUserByIdentifier($identifier) : null;
 
         if (! $user) {
+            $this->recordLoginAudit(null, 'password.forgot', 'failed', [
+                'identifier' => $identifier,
+            ]);
             return response()->json([
                 'success' => true,
                 'message' => 'If we find a matching account, a reset code will be emailed shortly.',
@@ -272,6 +349,10 @@ class AuthController extends Controller
         }
 
         if (empty($user->email)) {
+            $this->recordLoginAudit($user, 'password.forgot', 'failed', [
+                'identifier' => $identifier,
+                'reason' => 'missing_email',
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'This account does not have an email address on file. Please contact support to reset your password.',
@@ -297,6 +378,10 @@ class AuthController extends Controller
             ]);
         }
 
+        $this->recordLoginAudit($user, 'password.forgot', 'success', [
+            'identifier' => $identifier,
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'If we find a matching account, a reset code will be emailed shortly.',
@@ -317,6 +402,10 @@ class AuthController extends Controller
         $user = $identifier !== '' ? $this->findUserByIdentifier($identifier) : null;
 
         if (! $user || empty($user->email)) {
+            $this->recordLoginAudit($user, 'password.reset', 'failed', [
+                'identifier' => $identifier,
+                'reason' => 'user_not_found',
+            ]);
             throw ValidationException::withMessages([
                 'identifier' => ['We could not find an account that matches that information.'],
             ]);
@@ -327,6 +416,10 @@ class AuthController extends Controller
             ->first();
 
         if (! $record) {
+            $this->recordLoginAudit($user, 'password.reset', 'failed', [
+                'identifier' => $identifier,
+                'reason' => 'token_missing',
+            ]);
             throw ValidationException::withMessages([
                 'token' => ['The reset code is invalid or has already been used.'],
             ]);
@@ -336,12 +429,21 @@ class AuthController extends Controller
         if (! $createdAt || $createdAt->addMinutes(15)->isPast()) {
             DB::table('password_reset_tokens')->where('email', $user->email)->delete();
 
+            $this->recordLoginAudit($user, 'password.reset', 'failed', [
+                'identifier' => $identifier,
+                'reason' => 'token_expired',
+            ]);
+
             throw ValidationException::withMessages([
                 'token' => ['The reset code has expired. Please request a new one.'],
             ]);
         }
 
         if (! Hash::check($validated['token'], $record->token)) {
+            $this->recordLoginAudit($user, 'password.reset', 'failed', [
+                'identifier' => $identifier,
+                'reason' => 'token_mismatch',
+            ]);
             throw ValidationException::withMessages([
                 'token' => ['The reset code is incorrect. Please try again.'],
             ]);
@@ -351,6 +453,10 @@ class AuthController extends Controller
         $user->save();
 
         DB::table('password_reset_tokens')->where('email', $user->email)->delete();
+
+        $this->recordLoginAudit($user, 'password.reset', 'success', [
+            'identifier' => $identifier,
+        ]);
 
         return response()->json([
             'success' => true,
@@ -614,6 +720,91 @@ class AuthController extends Controller
         }
 
         return $username;
+    }
+
+    protected function recordLoginAudit(?User $user, string $event, string $status, array $metadata = []): void
+    {
+        try {
+            LoginAudit::create([
+                'user_id' => $user?->id,
+                'event' => $event,
+                'status' => $status,
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+                'metadata' => $metadata,
+            ]);
+        } catch (\Throwable $e) {
+            Log::debug('Failed to record login audit', [
+                'event' => $event,
+                'status' => $status,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    protected function ensureIsNotRateLimited(string $identifier): void
+    {
+        if ($identifier === '') {
+            return;
+        }
+
+        if (! RateLimiter::tooManyAttempts($this->throttleKey($identifier), 5)) {
+            return;
+        }
+
+        $seconds = RateLimiter::availableIn($this->throttleKey($identifier));
+
+        throw ValidationException::withMessages([
+            'identifier' => [sprintf('Too many attempts. Please try again in %d seconds.', $seconds)],
+        ])->status(429);
+    }
+
+    protected function throttleKey(string $identifier): string
+    {
+        return Str::lower($identifier) . '|' . request()->ip();
+    }
+
+    protected function findTrustedDevice(User $user, ?string $deviceToken): ?UserTrustedDevice
+    {
+        if (empty($deviceToken)) {
+            return null;
+        }
+
+        $hash = hash('sha256', $deviceToken);
+        return $user->trustedDevices()
+            ->where('device_key', $hash)
+            ->first();
+    }
+
+    protected function touchTrustedDevice(?UserTrustedDevice $device): void
+    {
+        if (! $device) {
+            return;
+        }
+
+        $device->forceFill([
+            'last_ip' => request()->ip(),
+            'last_used_at' => now(),
+        ])->save();
+    }
+
+    protected function createMfaChallenge(User $user, array $context = []): array
+    {
+        $token = (string) Str::uuid();
+
+        Cache::put($this->mfaCacheKey($token), [
+            'user_id' => $user->id,
+            'remember_device' => (bool) ($context['remember_device'] ?? false),
+            'device_name' => $context['device_name'] ?? null,
+            'identifier' => $context['identifier'] ?? null,
+        ], now()->addMinutes(5));
+
+        return ['token' => $token];
+    }
+
+    protected function mfaCacheKey(string $token): string
+    {
+        return 'mfa:challenge:' . $token;
     }
 
     /**

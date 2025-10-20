@@ -4,17 +4,22 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Support\ApiCache;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
     public function index(Request $request)
     {
-        $categories = Category::query()->latest()->get();
-        return response()->json([
-            'success' => true,
-            'data' => $categories,
-        ]);
+        $cacheKey = 'categories:index';
+
+        return ApiCache::remember(['catalog', 'categories'], $cacheKey, function () {
+            $categories = Category::query()->latest()->get();
+            return response()->json([
+                'success' => true,
+                'data' => $categories,
+            ]);
+        });
     }
 
     public function show(Category $category)
@@ -34,4 +39,3 @@ class CategoryController extends Controller
         ]);
     }
 }
-

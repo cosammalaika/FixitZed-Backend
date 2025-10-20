@@ -2,9 +2,14 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
+use App\Models\Category;
+use App\Models\Fixer;
+use App\Models\Service;
+use App\Models\Subcategory;
+use App\Support\ApiCache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -51,5 +56,23 @@ class AppServiceProvider extends ServiceProvider
 
             return false;
         });
+
+        if (ApiCache::enabled()) {
+            Category::saved(fn () => ApiCache::flush(['catalog', 'categories']));
+            Category::deleted(fn () => ApiCache::flush(['catalog', 'categories']));
+
+            Subcategory::saved(fn () => ApiCache::flush(['catalog', 'subcategories']));
+            Subcategory::deleted(fn () => ApiCache::flush(['catalog', 'subcategories']));
+
+            Service::saved(fn () => ApiCache::flush(['catalog', 'services']));
+            Service::deleted(fn () => ApiCache::flush(['catalog', 'services']));
+
+            Fixer::saved(function (Fixer $fixer) {
+                ApiCache::flush(['fixers', 'fixers:top', 'user:' . $fixer->user_id]);
+            });
+            Fixer::deleted(function (Fixer $fixer) {
+                ApiCache::flush(['fixers', 'fixers:top', 'user:' . $fixer->user_id]);
+            });
+        }
     }
 }

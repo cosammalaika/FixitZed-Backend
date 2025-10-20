@@ -161,7 +161,7 @@
     @once
         <script>
             document.addEventListener('livewire:load', () => {
-                const componentId = @json($this->id);
+                const componentId = @json($this->id());
                 const endpoint = @json(url('/api/provinces'));
                 let provinceCache = @json($provinceMap ?? []);
 

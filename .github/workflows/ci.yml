@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  php:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, dom, pdo_mysql
+          coverage: none
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+      - name: Run PHPUnit
+        run: php artisan test --no-interaction --stop-on-failure
+      - name: PHPStan
+        run: |
+          if [ -x vendor/bin/phpstan ]; then
+            vendor/bin/phpstan analyse
+          else
+            echo "PHPStan config not found, skipping";
+          fi
+
+  flutter_fixer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Flutter CI (Fixer)
+        run: |
+          if [ -d ../Fixitzed-Fixer-App ]; then
+            cd ../Fixitzed-Fixer-App
+            flutter pub get
+            flutter analyze
+            flutter test
+          else
+            echo "Fixitzed-Fixer-App directory not found, skipping";
+          fi
+
+  flutter_customer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Flutter CI (Customer)
+        run: |
+          if [ -d ../fixitzed_app ]; then
+            cd ../fixitzed_app
+            flutter pub get
+            flutter analyze
+            flutter test
+          else
+            echo "fixitzed_app directory not found, skipping";
+          fi

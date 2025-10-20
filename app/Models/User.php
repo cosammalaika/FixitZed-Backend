@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -10,8 +10,9 @@ use Illuminate\Support\Str;
 use Spatie\Permission\Traits\HasRoles;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Hash;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasRoles, HasApiTokens;
@@ -37,6 +38,11 @@ class User extends Authenticatable
         'documents',
         'loyalty_points',
         'password',
+        'mfa_secret',
+        'mfa_temp_secret',
+        'mfa_enabled',
+        'mfa_backup_codes',
+        'mfa_last_confirmed_at',
     ];
 
 
@@ -67,6 +73,9 @@ class User extends Authenticatable
             'password' => 'hashed',
             'documents' => 'array',
             'loyalty_points' => 'integer',
+            'mfa_enabled' => 'boolean',
+            'mfa_backup_codes' => 'array',
+            'mfa_last_confirmed_at' => 'datetime',
         ];
     }
 
@@ -121,6 +130,48 @@ class User extends Authenticatable
     public function notifications()
     {
         return $this->hasMany(Notification::class);
+    }
+
+    public function trustedDevices()
+    {
+        return $this->hasMany(UserTrustedDevice::class);
+    }
+
+    public function consumeBackupCode(string $code): bool
+    {
+        $codes = is_array($this->mfa_backup_codes) ? $this->mfa_backup_codes : [];
+        $remaining = [];
+        $used = false;
+
+        foreach ($codes as $stored) {
+            if (! $used && Hash::check($code, $stored)) {
+                $used = true;
+                continue;
+            }
+            $remaining[] = $stored;
+        }
+
+        if ($used) {
+            $this->mfa_backup_codes = $remaining;
+            $this->save();
+        }
+
+        return $used;
+    }
+
+    public function issueTrustedDevice(?string $deviceName = null): string
+    {
+        $token = Str::random(64);
+        $hash = hash('sha256', $token);
+
+        $this->trustedDevices()->create([
+            'device_key' => $hash,
+            'device_name' => $deviceName ?: 'Device ' . now()->format('Y-m-d H:i'),
+            'last_ip' => request()->ip(),
+            'last_used_at' => now(),
+        ]);
+
+        return $token;
     }
 
     public function getPrimaryRoleAttribute(): ?string

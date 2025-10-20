@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Service;
+use App\Support\ApiCache;
 use Illuminate\Http\Request;
 
 class ServiceController extends Controller
@@ -19,11 +20,15 @@ class ServiceController extends Controller
                 $q->where('category_id', $request->integer('category_id'));
             });
         }
-        $services = $query->latest()->get();
-        return response()->json([
-            'success' => true,
-            'data' => $services,
-        ]);
+        $key = 'services:index:' . md5($request->getQueryString() ?? 'all');
+
+        return ApiCache::remember(['catalog', 'services'], $key, function () use ($query) {
+            $services = $query->latest()->get();
+            return response()->json([
+                'success' => true,
+                'data' => $services,
+            ]);
+        });
     }
 
     public function show(Service $service)
@@ -35,4 +40,3 @@ class ServiceController extends Controller
         ]);
     }
 }
-

@@ -22,12 +22,18 @@ use App\Http\Controllers\Api\FixerRequestController;
 use App\Http\Controllers\Api\LoyaltyController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\EarningController;
+use App\Http\Controllers\Api\EmailVerificationController;
+use App\Http\Controllers\Api\MfaController;
 
 // Guest routes (no authentication required)
-Route::post('login', [AuthController::class, 'login']);
-Route::post('register', [AuthController::class, 'register']);
-Route::post('password/forgot', [AuthController::class, 'forgotPassword']);
-Route::post('password/reset', [AuthController::class, 'resetPassword']);
+Route::post('login', [AuthController::class, 'login'])->middleware('throttle:10,1');
+Route::post('register', [AuthController::class, 'register'])->middleware('throttle:6,1');
+Route::post('password/forgot', [AuthController::class, 'forgotPassword'])->middleware('throttle:5,1');
+Route::post('password/reset', [AuthController::class, 'resetPassword'])->middleware('throttle:5,1');
+Route::get('email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+    ->middleware(['signed'])
+    ->name('verification.verify');
+Route::post('login/mfa', [MfaController::class, 'complete'])->middleware('throttle:10,1');
 
 // Public data (read-only)
 Route::get('categories', [CategoryController::class, 'index']);
@@ -55,9 +61,19 @@ Route::get('subscription/plans', [SubscriptionController::class, 'plans']);
 
 // Authenticated routes
 Route::middleware('auth:sanctum')->group(function () {
+    Route::post('email/verification-notification', [AuthController::class, 'resendVerification'])
+        ->middleware('throttle:6,1')
+        ->name('verification.send');
     Route::get('me', [AuthController::class, 'me']);
-    Route::patch('me', [AuthController::class, 'updateMe']);
     Route::post('logout', [AuthController::class, 'logout']);
+});
+
+Route::middleware(['auth:sanctum', 'verified'])->group(function () {
+    Route::patch('me', [AuthController::class, 'updateMe']);
+
+    Route::post('mfa/setup', [MfaController::class, 'setup']);
+    Route::post('mfa/enable', [MfaController::class, 'enable']);
+    Route::post('mfa/disable', [MfaController::class, 'disable']);
 
     // Account security
     Route::post('password', [AuthController::class, 'changePassword']);

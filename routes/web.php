@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Audit\LoginAuditIndex;
 use App\Livewire\Category\{CategoryCreate, CategoryEdit, CategoryIndex, CategoryShow};
 use App\Livewire\Coupon\{CouponCreate, CouponEdit, CouponIndex, CouponShow};
 use App\Livewire\Dashboard;
@@ -43,6 +44,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('logs', UserLogIndex::class)
         ->name('logs.index')
+        ->middleware('permission:view.logs');
+
+    Route::get('security/login-audits', LoginAuditIndex::class)
+        ->name('audit.login')
         ->middleware('permission:view.logs');
 
     Route::get('settings/general', GeneralSettings::class)

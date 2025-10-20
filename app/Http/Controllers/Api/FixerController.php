@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Fixer;
 use App\Models\User;
+use App\Support\ApiCache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\Request;
@@ -35,12 +36,16 @@ class FixerController extends Controller
             });
         }
 
-        $fixers = $q->latest()->paginate(20);
+        $cacheKey = 'fixers:index:' . md5($request->getQueryString() ?? 'page=1');
 
-        return response()->json([
-            'success' => true,
-            'data' => $fixers,
-        ]);
+        return ApiCache::remember(['fixers'], $cacheKey, function () use ($q) {
+            $fixers = $q->latest()->paginate(20);
+
+            return response()->json([
+                'success' => true,
+                'data' => $fixers,
+            ]);
+        });
     }
 
     public function show(Fixer $fixer)
@@ -55,80 +60,83 @@ class FixerController extends Controller
     public function top(Request $request)
     {
         $limit = (int) $request->query('limit', 10);
+        $cacheKey = 'fixers:top:' . $limit;
 
-        $users = User::role('Fixer')
-            ->with(['fixer.services'])
-            ->withAvg([
-                'receivedRatings as average_rating' => function ($query) {
-                    $query->where('role', 'customer');
-                }
-            ], 'rating')
-            ->withCount([
-                'receivedRatings as ratings_count' => function ($query) {
-                    $query->where('role', 'customer');
-                }
-            ])
-            ->orderByDesc('average_rating')
-            ->take($limit)
-            ->get();
+        return ApiCache::remember(['fixers', 'fixers:top'], $cacheKey, function () use ($limit) {
+            $users = User::role('Fixer')
+                ->with(['fixer.services'])
+                ->withAvg([
+                    'receivedRatings as average_rating' => function ($query) {
+                        $query->where('role', 'customer');
+                    }
+                ], 'rating')
+                ->withCount([
+                    'receivedRatings as ratings_count' => function ($query) {
+                        $query->where('role', 'customer');
+                    }
+                ])
+                ->orderByDesc('average_rating')
+                ->take($limit)
+                ->get();
 
-        $data = $users->map(function (User $u) {
-            $name = trim(($u->first_name ?? '') . ' ' . ($u->last_name ?? ''));
-            $fixer = $u->fixer;
-            $avg = $u->average_rating ? round((float) $u->average_rating, 1) : null;
-            $ratingsCount = (int) ($u->ratings_count ?? 0);
+            $data = $users->map(function (User $u) {
+                $name = trim(($u->first_name ?? '') . ' ' . ($u->last_name ?? ''));
+                $fixer = $u->fixer;
+                $avg = $u->average_rating ? round((float) $u->average_rating, 1) : null;
+                $ratingsCount = (int) ($u->ratings_count ?? 0);
 
-            $services = $fixer?->services
-                ? $fixer->services->map(function ($service) {
-                    return [
-                        'id' => $service->id,
-                        'name' => $service->name,
-                        'price' => $service->price,
-                    ];
-                })->values()
-                : collect();
+                $services = $fixer?->services
+                    ? $fixer->services->map(function ($service) {
+                        return [
+                            'id' => $service->id,
+                            'name' => $service->name,
+                            'price' => $service->price,
+                        ];
+                    })->values()
+                    : collect();
 
-            return [
-                'id' => $fixer?->id ?? $u->id,
-                'user_id' => $u->id,
-                'name' => $name !== '' ? $name : ($u->username ?? 'Fixer'),
-                'full_name' => $name,
-                'username' => $u->username,
-                'avatar' => $u->avatar_url,
-                'image_url' => $u->avatar_url,
-                'photo' => $u->avatar_url,
-                'bio' => $fixer?->bio,
-                'status' => $fixer?->status,
-                'average_rating' => $avg,
-                'avg_rating' => $avg,
-                'rating' => $avg,
-                'ratings_count' => $ratingsCount,
-                'services' => $services,
-                'user' => [
-                    'id' => $u->id,
-                    'first_name' => $u->first_name,
-                    'last_name' => $u->last_name,
+                return [
+                    'id' => $fixer?->id ?? $u->id,
+                    'user_id' => $u->id,
                     'name' => $name !== '' ? $name : ($u->username ?? 'Fixer'),
+                    'full_name' => $name,
                     'username' => $u->username,
-                    'email' => $u->email,
-                    'contact_number' => $u->contact_number,
-                    'avatar_url' => $u->avatar_url,
+                    'avatar' => $u->avatar_url,
+                    'image_url' => $u->avatar_url,
+                    'photo' => $u->avatar_url,
+                    'bio' => $fixer?->bio,
+                    'status' => $fixer?->status,
                     'average_rating' => $avg,
+                    'avg_rating' => $avg,
+                    'rating' => $avg,
                     'ratings_count' => $ratingsCount,
-                ],
-                'fixer_profile' => $fixer ? [
-                    'id' => $fixer->id,
-                    'bio' => $fixer->bio,
-                    'status' => $fixer->status,
                     'services' => $services,
-                ] : null,
-            ];
-        });
+                    'user' => [
+                        'id' => $u->id,
+                        'first_name' => $u->first_name,
+                        'last_name' => $u->last_name,
+                        'name' => $name !== '' ? $name : ($u->username ?? 'Fixer'),
+                        'username' => $u->username,
+                        'email' => $u->email,
+                        'contact_number' => $u->contact_number,
+                        'avatar_url' => $u->avatar_url,
+                        'average_rating' => $avg,
+                        'ratings_count' => $ratingsCount,
+                    ],
+                    'fixer_profile' => $fixer ? [
+                        'id' => $fixer->id,
+                        'bio' => $fixer->bio,
+                        'status' => $fixer->status,
+                        'services' => $services,
+                    ] : null,
+                ];
+            });
 
-        return response()->json([
-            'success' => true,
-            'data' => $data,
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => $data,
+            ]);
+        });
     }
 
     public function current(Request $request)
@@ -143,10 +151,14 @@ class FixerController extends Controller
             ]);
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => $this->formatFixer($fixer),
-        ]);
+        $cacheKey = 'fixers:current:' . $user->id;
+
+        return ApiCache::remember(['fixers', 'user:' . $user->id], $cacheKey, function () use ($fixer) {
+            return response()->json([
+                'success' => true,
+                'data' => $this->formatFixer($fixer),
+            ]);
+        });
     }
 
     public function update(Request $request)
@@ -189,6 +201,8 @@ class FixerController extends Controller
             }
 
             $fixer->load(['services', 'user']);
+
+            ApiCache::flush(['fixers', 'fixers:top', 'user:' . $user->id]);
 
             return response()->json([
                 'success' => true,

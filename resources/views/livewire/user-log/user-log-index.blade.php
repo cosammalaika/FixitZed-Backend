@@ -33,13 +33,13 @@
                                         <td>{{ \Str::limit($log->user_agent, 30) }}</td>
                                         <td>{{ $log->created_at->diffForHumans() }}</td>
                                     </tr>
-                                  
+
                                 @endforeach
 
                             </tbody>
 
                         </table>
-                        {{ $logs->links() }}
+                        {{-- {{ $logs->links() }} --}}
                     </div>
                 </div>
 

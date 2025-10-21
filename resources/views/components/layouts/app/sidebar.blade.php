@@ -126,7 +126,8 @@
             });
 
             window.addEventListener('flash-message', function (event) {
-                const detail = event.detail || {};
+                const rawDetail = event.detail ?? {};
+                const detail = Array.isArray(rawDetail) ? (rawDetail[0] ?? {}) : rawDetail;
                 const type = detail.type || 'info';
                 const message = detail.message;
                 const redirect = detail.redirect;

@@ -10,6 +10,9 @@ use App\Support\ApiCache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Component as LivewireComponent;
+use Livewire\Features\SupportEvents\Event as LivewireEvent;
+use function Livewire\store;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,6 +29,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (! LivewireComponent::hasMacro('dispatchBrowserEvent')) {
+            LivewireComponent::macro('dispatchBrowserEvent', function (string $event, $data = []) {
+                $payload = is_array($data) ? $data : [$data];
+
+                store($this)->push('dispatched', new LivewireEvent($event, $payload));
+
+                return $this;
+            });
+        }
+
         Schema::defaultStringLength(191);
 
         Gate::define('manage-subscriptions', function ($user) {

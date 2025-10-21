@@ -16,6 +16,16 @@ class District extends Model
         'slug',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'id' => 'integer',
+            'province_id' => 'integer',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
+        ];
+    }
+
     public function province(): BelongsTo
     {
         return $this->belongsTo(Province::class);

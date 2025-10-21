@@ -7,17 +7,18 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
+use Spatie\Permission\Models\Role;
 
 new #[Layout('components.layouts.auth')] class extends Component {
-    public string $first_name = '',
-        $last_name = '',
-        $username = '',
-        $email = '',
-        $contact_number = '',
-    public string $status = 'Active',
-        $address = '',
-        $password = '',
-        $password_confirmation = '';
+    public string $first_name = '';
+    public string $last_name = '';
+    public string $username = '';
+    public string $email = '';
+    public string $contact_number = '';
+    public string $status = 'Active';
+    public string $address = '';
+    public string $password = '';
+    public string $password_confirmation = '';
 
     public function register(): void
     {
@@ -35,6 +36,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
         $validated['password'] = Hash::make($validated['password']);
 
         $user = User::create($validated);
+        Role::findOrCreate('Customer');
         $user->assignRole('Customer');
 
         event(new Registered($user));

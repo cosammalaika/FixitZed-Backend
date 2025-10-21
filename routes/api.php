@@ -66,9 +66,16 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('verification.send');
     Route::get('me', [AuthController::class, 'me']);
     Route::post('logout', [AuthController::class, 'logout']);
+
+    // Service Requests for the authenticated user (email verification not required)
+    Route::get('requests', [ServiceRequestController::class, 'index']);
+    Route::post('requests', [ServiceRequestController::class, 'store']);
+    Route::get('requests/{serviceRequest}', [ServiceRequestController::class, 'show']);
+    Route::patch('requests/{serviceRequest}', [ServiceRequestController::class, 'update']);
+    Route::post('requests/{serviceRequest}/cancel', [ServiceRequestController::class, 'cancel']);
 });
 
-Route::middleware(['auth:sanctum', 'verified'])->group(function () {
+Route::middleware('auth:sanctum')->group(function () {
     Route::patch('me', [AuthController::class, 'updateMe']);
 
     Route::post('mfa/setup', [MfaController::class, 'setup']);
@@ -78,13 +85,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     // Account security
     Route::post('password', [AuthController::class, 'changePassword']);
     Route::patch('me/password', [AuthController::class, 'changePassword']);
-
-    // Service Requests for the authenticated user
-    Route::get('requests', [ServiceRequestController::class, 'index']);
-    Route::post('requests', [ServiceRequestController::class, 'store']);
-    Route::get('requests/{serviceRequest}', [ServiceRequestController::class, 'show']);
-    Route::patch('requests/{serviceRequest}', [ServiceRequestController::class, 'update']);
-    Route::post('requests/{serviceRequest}/cancel', [ServiceRequestController::class, 'cancel']);
 
     // Locations (for current user)
     Route::get('locations', [LocationController::class, 'index']);

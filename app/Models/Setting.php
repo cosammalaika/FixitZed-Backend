@@ -11,6 +11,16 @@ class Setting extends Model
 
     protected $fillable = ['key', 'value'];
 
+    protected function casts(): array
+    {
+        return [
+            'id' => 'integer',
+            'value' => 'string',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
+        ];
+    }
+
     public static function get(string $key, mixed $default = null): mixed
     {
         $cached = cache()->rememberForever("setting:{$key}", function () use ($key) {

@@ -26,7 +26,7 @@ use App\Livewire\Settings\GeneralSettings;
 use App\Http\Controllers\Auth\LockController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
-Route::middleware(['auth', 'verified', 'permission:view.dashboard'])
+Route::middleware(['auth'])
     ->get('/dashboard', Dashboard::class)
     ->name('dashboard');
 

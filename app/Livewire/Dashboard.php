@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Fixer;
 use App\Models\ServiceRequest;
 use App\Models\User;
+use Spatie\Permission\Models\Role;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Livewire\Component;
@@ -24,6 +25,8 @@ class Dashboard extends Component
     ];
     public array $topActiveUsers = [];
     public array $topRequestedServices = [];
+    protected bool $customerRoleExists = false;
+    protected bool $fixerRoleExists = false;
 
     public function mount()
     {
@@ -42,25 +45,35 @@ class Dashboard extends Component
             ->where('created_at', '>=', Carbon::now()->subWeek())
             ->count();
 
-        $this->recentCustomers = User::role('Customer')
-            ->where('status', 'Active')
-            ->latest()
-            ->take(5)
-            ->get();
+        $customerRoleExists = Role::where('name', 'Customer')->exists();
+        $fixerRoleExists = Role::where('name', 'Fixer')->exists();
+
+        $this->recentCustomers = $customerRoleExists
+            ? User::role('Customer')
+                ->where('status', 'Active')
+                ->latest()
+                ->take(5)
+                ->get()
+            : collect();
 
         $this->recentRequests = ServiceRequest::latest()
             ->take(5)
             ->get();
 
-        $this->topRatedFixers = User::role('Fixer')
-            ->withAvg([
-                'receivedRatings as average_rating' => function ($query) {
-                    $query->where('role', 'customer');
-                }
-            ], 'rating')
-            ->orderByDesc('average_rating')
-            ->take(10)
-            ->get();
+        $this->topRatedFixers = $fixerRoleExists
+            ? User::role('Fixer')
+                ->withAvg([
+                    'receivedRatings as average_rating' => function ($query) {
+                        $query->where('role', 'customer');
+                    }
+                ], 'rating')
+                ->orderByDesc('average_rating')
+                ->take(10)
+                ->get()
+            : collect();
+
+        $this->customerRoleExists = $customerRoleExists;
+        $this->fixerRoleExists = $fixerRoleExists;
 
         $this->newUsersSeries = $this->buildNewUsersSeries();
         $this->transactionOverview = $this->buildTransactionOverview();
@@ -79,11 +92,13 @@ class Dashboard extends Component
         $endOfRange = Carbon::now()->endOfMonth();
         $startOfRange = (clone $endOfRange)->subMonths(11)->startOfMonth();
 
-        $customerCounts = User::role('Customer')
-            ->whereBetween('created_at', [$startOfRange, $endOfRange])
-            ->get()
-            ->groupBy(fn (User $user) => $user->created_at->format('Y-m'))
-            ->map->count();
+        $customerCounts = $this->customerRoleExists
+            ? User::role('Customer')
+                ->whereBetween('created_at', [$startOfRange, $endOfRange])
+                ->get()
+                ->groupBy(fn (User $user) => $user->created_at->format('Y-m'))
+                ->map->count()
+            : collect();
 
         $fixerCounts = Fixer::whereBetween('created_at', [$startOfRange, $endOfRange])
             ->get()

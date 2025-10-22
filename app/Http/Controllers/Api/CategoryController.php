@@ -11,13 +11,37 @@ class CategoryController extends Controller
 {
     public function index(Request $request)
     {
-        $cacheKey = 'categories:index';
+        $perPage = (int) $request->integer('per_page', 15);
+        $perPage = max(1, min($perPage, 100));
+        $page = max(1, $request->integer('page', 1));
 
-        return ApiCache::remember(['catalog', 'categories'], $cacheKey, function () {
-            $categories = Category::query()->latest()->get();
+        $cacheKey = 'categories:index:' . md5(http_build_query([
+            'page' => $page,
+            'per_page' => $perPage,
+        ]));
+
+        return ApiCache::remember(['catalog', 'categories'], $cacheKey, function () use ($perPage) {
+            $paginator = Category::query()
+                ->latest()
+                ->paginate($perPage);
+
             return response()->json([
                 'success' => true,
-                'data' => $categories,
+                'data' => $paginator->items(),
+                'meta' => [
+                    'current_page' => $paginator->currentPage(),
+                    'per_page' => $paginator->perPage(),
+                    'total' => $paginator->total(),
+                    'last_page' => $paginator->lastPage(),
+                    'from' => $paginator->firstItem(),
+                    'to' => $paginator->lastItem(),
+                ],
+                'links' => [
+                    'first' => $paginator->url(1),
+                    'last' => $paginator->url($paginator->lastPage()),
+                    'prev' => $paginator->previousPageUrl(),
+                    'next' => $paginator->nextPageUrl(),
+                ],
             ]);
         });
     }

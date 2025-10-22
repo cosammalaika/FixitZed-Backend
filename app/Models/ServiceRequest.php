@@ -18,6 +18,7 @@ class ServiceRequest extends Model
         'location',
         'location_lat',
         'location_lng',
+        'customer_note',
         'fixer_snoozed_until',
     ];
 

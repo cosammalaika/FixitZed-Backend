@@ -59,7 +59,15 @@ class FixerRequestController extends Controller
         }
 
         $q = ServiceRequest::with(['service', 'customer'])
-            ->where('fixer_id', $fixer->id)
+            ->where(function ($query) use ($fixer) {
+                $query->where('fixer_id', $fixer->id)
+                      ->orWhere(function ($inner) use ($fixer) {
+                          $inner->whereNull('fixer_id')
+                                ->whereHas('service.fixers', function ($svc) use ($fixer) {
+                                    $svc->where('fixers.id', $fixer->id);
+                                });
+                      });
+            })
             ->latest();
         if ($status) {
             $q->where('status', $status);

@@ -34,6 +34,7 @@ class ServiceRequestController extends Controller
             'location' => ['required', 'string', 'max:255'],
             'location_lat' => ['nullable', 'numeric', 'between:-90,90'],
             'location_lng' => ['nullable', 'numeric', 'between:-180,180'],
+            'customer_note' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $sr = ServiceRequest::create([
@@ -43,6 +44,7 @@ class ServiceRequestController extends Controller
             'location' => $validated['location'],
             'location_lat' => $validated['location_lat'] ?? null,
             'location_lng' => $validated['location_lng'] ?? null,
+            'customer_note' => $validated['customer_note'] ?? null,
             'status' => 'pending',
         ]);
 
@@ -73,6 +75,7 @@ class ServiceRequestController extends Controller
             ],
             'scheduled_at' => ['sometimes', 'date'],
             'location' => ['sometimes', 'string', 'max:255'],
+            'customer_note' => ['sometimes', 'nullable', 'string', 'max:1000'],
         ]);
 
         $serviceRequest->update($validated);

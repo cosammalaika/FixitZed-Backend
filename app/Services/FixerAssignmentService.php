@@ -58,7 +58,13 @@ class FixerAssignmentService
                 }
 
                 $distance = $data['distance'];
-                return $distance !== null && $distance <= $radiusKm;
+
+                if ($distance === null) {
+                    // No stored fixer location—still allow the fixer to receive the request.
+                    return true;
+                }
+
+                return $distance <= $radiusKm;
             })
             ->sort(function (array $a, array $b) {
                 $distanceA = $a['distance'] ?? INF;

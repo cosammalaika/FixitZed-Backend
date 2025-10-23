@@ -7,13 +7,19 @@ use App\Models\User;
 use App\Models\Fixer;
 use App\Models\Service;
 use App\Models\Payment;
+use App\Support\ProvinceDistrict;
 use Livewire\Component;
 
 class ServiceRequestEdit extends Component
 {
     public $serviceRequestId;
-    public $customer_id, $fixer_id, $service_id, $scheduled_at, $status, $location;
+    public $customer_id, $fixer_id, $service_id, $scheduled_at, $status;
+    public $province = '';
+    public $district = '';
+    public array $provinceOptions = [];
+    public array $districtOptions = [];
     public $customers, $fixers, $services, $hasValidPayment = false;
+    public array $provinceDistricts = [];
 
 
     public function mount($id)
@@ -27,7 +33,7 @@ class ServiceRequestEdit extends Component
         $this->service_id = $serviceRequest->service_id;
         $this->scheduled_at = $serviceRequest->scheduled_at;
         $this->status = $serviceRequest->status;
-        $this->location = $serviceRequest->location;
+        $this->hydrateLocation($serviceRequest->location);
 
         $this->customers = User::all();
         $this->fixers = Fixer::all();
@@ -36,12 +42,43 @@ class ServiceRequestEdit extends Component
         $this->hasValidPayment = Payment::where('service_request_id', $id)
             ->whereIn('status', ['accepted', 'completed']) // adjust based on your logic
             ->exists();
+
+        $this->loadProvinceData();
     }
 
+    protected function loadProvinceData(): void
+    {
+        $map = ProvinceDistrict::map();
+        $this->provinceDistricts = $map;
+        $this->provinceOptions = array_keys($map);
+        $this->districtOptions = $map[$this->province] ?? [];
+        if (! in_array($this->district, $this->districtOptions, true)) {
+            $this->district = '';
+        }
+    }
+
+    protected function hydrateLocation(?string $location): void
+    {
+        if (! $location) {
+            $this->province = '';
+            $this->district = '';
+            return;
+        }
+
+        $parts = array_map(
+            static fn ($segment) => trim($segment),
+            explode(',', $location, 2)
+        );
+
+        $this->province = $parts[0] ?? '';
+        $this->district = $parts[1] ?? '';
+    }
 
     public function render()
     {
-        return view('livewire.service-request.service-request-edit');
+        return view('livewire.service-request.service-request-edit', [
+            'provinceMap' => $this->provinceDistricts,
+        ]);
     }
 
     public function update()
@@ -52,7 +89,8 @@ class ServiceRequestEdit extends Component
             'service_id' => 'required|exists:services,id',
             'scheduled_at' => 'required|date',
             'status' => 'required|in:pending,accepted,completed,cancelled',
-            'location' => 'nullable|string',
+            'province' => 'required|string',
+            'district' => 'required|string',
         ]);
 
         // Ensure the selected fixer is approved and linked to the selected service
@@ -89,7 +127,7 @@ class ServiceRequestEdit extends Component
             'service_id' => $this->service_id,
             'scheduled_at' => $this->scheduled_at,
             'status' => $this->status,
-            'location' => $this->location,
+            'location' => trim($this->province . ', ' . $this->district),
         ]);
 
         log_user_action('updated service request', "ServiceRequest ID: {$this->serviceRequestId}");
@@ -99,6 +137,19 @@ class ServiceRequestEdit extends Component
             'message' => 'Service request updated successfully.',
             'redirect' => route('serviceRequest.index'),
         ]);
+    }
+
+    public function updatedProvince($value): void
+    {
+        $value = (string) $value;
+        $this->province = $value;
+        if (empty($this->provinceDistricts)) {
+            $this->loadProvinceData();
+        }
+        $this->districtOptions = $this->provinceDistricts[$value] ?? [];
+        if (! in_array($this->district, $this->districtOptions, true)) {
+            $this->district = '';
+        }
     }
 
 }

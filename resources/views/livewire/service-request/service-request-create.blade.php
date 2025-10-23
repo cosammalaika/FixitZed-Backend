@@ -26,18 +26,31 @@
                 </div>
                 <div class="row mt-3">
                     <div class="col-md-6">
-                        <label class="form-label" for="location_option_id">Location</label>
-                        <select wire:model="location_option_id" id="location_option_id" class="form-control" data-trigger>
-                            <option value="">-- Select Location --</option>
-                            @foreach ($locationOptions as $opt)
-                                <option value="{{ $opt->id }}">{{ $opt->name }}</option>
+                        <label class="form-label" for="province">Province</label>
+                        <select id="province" class="form-control" wire:model="province" required>
+                            <option value="">-- Select Province --</option>
+                            @foreach ($provinceOptions as $option)
+                                <option value="{{ $option }}">{{ $option }}</option>
                             @endforeach
                         </select>
-                        <small class="text-muted">Selecting a location will autofill the text field to the right.</small>
+                        @error('province')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Location (text)</label>
-                        <input wire:model.lazy="location" class="form-control" placeholder="Optional custom location"></input>
+                        <label class="form-label" for="district">District / Area</label>
+                        <select id="district" class="form-control" wire:model="district" required>
+                            <option value="">-- Select District --</option>
+                            @foreach ($districtOptions as $option)
+                                <option value="{{ $option }}">{{ $option }}</option>
+                            @endforeach
+                        </select>
+                        @if (empty($districtOptions) && $province)
+                            <small class="text-muted">No districts found for the selected province.</small>
+                        @endif
+                        @error('district')
+                            <small class="text-danger d-block">{{ $message }}</small>
+                        @enderror
                     </div>
                 </div>
                 <div class="row">
@@ -84,12 +97,13 @@
 
                 <button type="submit" class="btn btn-primary waves-effect waves-light">Create</button>
             </form>
-            <script>
-                (function () {
-                    function attachHandlers() {
-                        const serviceSel = document.getElementById('service_id');
-                        const fixerSel = document.getElementById('fixer_id');
-                        if (!serviceSel || !fixerSel) return;
+            @once
+                <script>
+                    (function () {
+                        function attachHandlers() {
+                            const serviceSel = document.getElementById('service_id');
+                            const fixerSel = document.getElementById('fixer_id');
+                            if (!serviceSel || !fixerSel) return;
 
                         if (!serviceSel.dataset.boundFixerLoader) {
                             serviceSel.addEventListener('change', function (e) {
@@ -142,6 +156,120 @@
                     });
                 })();
             </script>
+                <script>
+                    (function () {
+                        document.addEventListener('livewire:load', () => {
+                            const componentId = @json($this->id());
+                            const provinceCache = @json($provinceMap);
+
+                            const getDistricts = (province) => {
+                                if (!province) return [];
+                                const key = Object.keys(provinceCache).find(
+                                    (k) => k.trim().toLowerCase() === province.trim().toLowerCase()
+                                );
+                                return key ? provinceCache[key] ?? [] : [];
+                            };
+
+                            const handleProvinceChange = () => {
+                                const provinceSelect = document.getElementById('province');
+                                const districtSelect = document.getElementById('district');
+                                if (!provinceSelect || !districtSelect) return;
+
+                                const province = provinceSelect.value;
+                                const districts = getDistricts(province);
+                                const component = Livewire.find(componentId);
+                                if (!component) return;
+
+                                component.set('districtOptions', districts);
+                                if (!districts.includes(districtSelect.value)) {
+                                    component.set('district', '');
+                                }
+                            };
+
+                            const bindProvinceHandlers = () => {
+                                const provinceSelect = document.getElementById('province');
+                                if (!provinceSelect) return;
+                                provinceSelect.removeEventListener('change', handleProvinceChange);
+                                provinceSelect.addEventListener('change', handleProvinceChange);
+                            };
+
+                            if (window.Livewire && Livewire.hook) {
+                                Livewire.hook('message.processed', (message, component) => {
+                                    if (component.id === componentId) {
+                                        bindProvinceHandlers();
+                                    }
+                                });
+                            }
+
+                            bindProvinceHandlers();
+                            handleProvinceChange();
+                        });
+                    })();
+            </script>
+                <script>
+                    (function () {
+                        const provinceMap = @json($provinceMap);
+
+                        const resolveDistricts = (province) => {
+                            if (!province) {
+                                return [];
+                            }
+                            const key = Object.keys(provinceMap).find(
+                                (candidate) => candidate.trim().toLowerCase() === province.trim().toLowerCase()
+                            );
+                            return key ? provinceMap[key] ?? [] : [];
+                        };
+
+                        const renderDistricts = (provinceSelect, districtSelect) => {
+                            const province = provinceSelect.value;
+                            const districts = resolveDistricts(province);
+                            const previous = districtSelect.value;
+
+                            districtSelect.querySelectorAll('option[data-generated="true"]').forEach((option) => option.remove());
+
+                            districts.forEach((name) => {
+                                const option = document.createElement('option');
+                                option.value = name;
+                                option.textContent = name;
+                                option.dataset.generated = 'true';
+                                if (name === previous) {
+                                    option.selected = true;
+                                }
+                                districtSelect.appendChild(option);
+                            });
+
+                            if (!districts.includes(previous)) {
+                                districtSelect.value = '';
+                                districtSelect.dispatchEvent(new Event('change'));
+                            }
+                        };
+
+                        const enhance = () => {
+                            const provinceSelect = document.getElementById('province');
+                            const districtSelect = document.getElementById('district');
+                            if (!provinceSelect || !districtSelect) return;
+
+                            if (!districtSelect.dataset.enhanced) {
+                                const placeholder = districtSelect.querySelector('option[value=\"\"]');
+                                if (placeholder) {
+                                    placeholder.dataset.generated = 'true';
+                                }
+                                districtSelect.dataset.enhanced = 'true';
+                            }
+
+                            renderDistricts(provinceSelect, districtSelect);
+
+                            provinceSelect.removeEventListener('change', provinceSelect._districtHandler ?? (() => {}));
+                            provinceSelect._districtHandler = () => renderDistricts(provinceSelect, districtSelect);
+                            provinceSelect.addEventListener('change', provinceSelect._districtHandler);
+                        };
+
+                        document.addEventListener('DOMContentLoaded', enhance);
+                        document.addEventListener('livewire:load', enhance);
+                        document.addEventListener('livewire:update', enhance);
+                    })();
+                </script>
+            @endonce
         </div>
     </div>
 </div>

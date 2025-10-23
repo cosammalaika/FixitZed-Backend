@@ -21,7 +21,7 @@ class UserCreate extends Component
     public array $districtOptions = [];
 
     /** @var array<string, array<int, string>> */
-    protected array $provinceDistricts = [];
+    public array $provinceDistricts = [];
 
     // Uploads
     public $photo; // profile image
@@ -54,6 +54,9 @@ class UserCreate extends Component
     {
         $value = (string) $value;
         $this->province = $value;
+        if (empty($this->provinceDistricts)) {
+            $this->loadProvinceData();
+        }
         $this->districtOptions = $this->provinceDistricts[$value] ?? [];
         if (! in_array($this->district, $this->districtOptions, true)) {
             $this->district = '';

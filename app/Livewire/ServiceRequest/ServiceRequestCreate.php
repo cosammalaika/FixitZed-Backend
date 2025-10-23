@@ -6,18 +6,19 @@ use App\Models\ServiceRequest;
 use App\Models\User;
 use App\Models\Fixer;
 use App\Models\Service;
-use App\Models\LocationOption;
-use Illuminate\Support\Facades\Schema;
+use App\Support\ProvinceDistrict;
 use Livewire\Component;
-use Illuminate\Validation\ValidationException;
 
 class ServiceRequestCreate extends Component
 {
-    public $customer_id, $fixer_id, $service_id, $scheduled_at, $status = 'pending', $location;
-    public $location_option_id;
-    public $locationOptions = [];
+    public $customer_id, $fixer_id, $service_id, $scheduled_at, $status = 'pending';
+    public $province = '';
+    public $district = '';
+    public array $provinceOptions = [];
+    public array $districtOptions = [];
     public $customers, $services;
     public $filteredFixers = [];
+    public array $provinceDistricts = [];
 
     public function mount()
     {
@@ -28,11 +29,16 @@ class ServiceRequestCreate extends Component
         $this->services = Service::all();
         $this->filteredFixers = collect();
 
-        if (Schema::hasTable('location_options')) {
-            $this->locationOptions = LocationOption::where('is_active', true)->orderBy('name')->get();
-        }
+        $this->loadProvinceData();
     }
 
+    protected function loadProvinceData(): void
+    {
+        $map = ProvinceDistrict::map();
+        $this->provinceDistricts = $map;
+        $this->provinceOptions = array_keys($map);
+        $this->districtOptions = [];
+    }
 
     public function updatedServiceId($value)
     {
@@ -49,20 +55,25 @@ class ServiceRequestCreate extends Component
         $this->fixer_id = '';
     }
 
-    public function updatedLocationOptionId($value)
+    public function updatedProvince($value): void
     {
-        if ($value) {
-            $opt = LocationOption::where('id', $value)->where('is_active', true)->first();
-            if ($opt) {
-                $this->location = $opt->name;
-            }
+        $value = (string) $value;
+        $this->province = $value;
+        if (empty($this->provinceDistricts)) {
+            $this->loadProvinceData();
+        }
+        $this->districtOptions = $this->provinceDistricts[$value] ?? [];
+        if (! in_array($this->district, $this->districtOptions, true)) {
+            $this->district = '';
         }
     }
 
 
     public function render()
     {
-        return view('livewire.service-request.service-request-create');
+        return view('livewire.service-request.service-request-create', [
+            'provinceMap' => $this->provinceDistricts,
+        ]);
     }
 
     public function submit()
@@ -73,7 +84,8 @@ class ServiceRequestCreate extends Component
             'service_id' => 'required|exists:services,id',
             'scheduled_at' => 'required|date',
             'status' => 'required|in:pending,accepted,completed,cancelled',
-            'location' => 'nullable|string',
+            'province' => 'required|string',
+            'district' => 'required|string',
         ]);
 
         // Enforce that the selected fixer is approved AND linked to the selected service
@@ -95,7 +107,7 @@ class ServiceRequestCreate extends Component
             'service_id' => $this->service_id,
             'scheduled_at' => $this->scheduled_at,
             'status' => $this->status,
-            'location' => $this->location,
+            'location' => trim($this->province . ', ' . $this->district),
         ]);
 
         log_user_action('created service request', "ServiceRequest ID: {$request->id}");

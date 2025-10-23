@@ -18,7 +18,7 @@ class UserEdit extends Component
     public $district = '';
     public array $provinceOptions = [];
     public array $districtOptions = [];
-    protected array $provinceDistricts = [];
+    public array $provinceDistricts = [];
     public $allRoles, $roles = [];
     // Uploads (optional updates)
     public $photo; // profile image
@@ -161,6 +161,9 @@ class UserEdit extends Component
     {
         $value = (string) $value;
         $this->province = $value;
+        if (empty($this->provinceDistricts)) {
+            $this->loadProvinceData();
+        }
         $this->districtOptions = $this->provinceDistricts[$value] ?? [];
         if (! in_array($this->district, $this->districtOptions, true)) {
             $this->district = '';

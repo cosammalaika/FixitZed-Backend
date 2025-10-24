@@ -34,6 +34,7 @@ class FixerCreate extends Component
 
     public function submit()
     {
+        $this->status = strtolower(trim((string) $this->status));
         $this->validate();
 
         $fixer = Fixer::create([

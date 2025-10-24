@@ -47,6 +47,7 @@ class FixerEdit extends Component
 
     public function submit()
     {
+        $this->status = strtolower(trim((string) $this->status));
         $this->validate();
 
         $fixer = Fixer::findOrFail($this->fixerId);

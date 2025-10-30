@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\LoginAudit;
 use App\Models\User;
 use App\Support\MfaService;
+use App\Support\UserSessionManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -205,9 +206,10 @@ class MfaController extends Controller
             $deviceToken = $user->issueTrustedDevice($data['device_name'] ?? null);
         }
 
+        $revokedSessions = UserSessionManager::revokeActiveTokens($user);
         $token = $user->createToken('mobile')->plainTextToken;
 
-        LoginAudit::create([
+        $metadata = [
             'user_id' => $user->id,
             'event' => 'login.mfa',
             'status' => 'success',
@@ -217,7 +219,16 @@ class MfaController extends Controller
                 'identifier' => $payload['identifier'] ?? null,
                 'remember_device' => (bool) $payload['remember_device'],
             ],
-        ]);
+        ];
+
+        if ($revokedSessions > 0) {
+            $metadata['metadata']['revoked_sessions'] = $revokedSessions;
+        }
+        if (!empty($deviceToken)) {
+            $metadata['metadata']['trusted_device_token_issued'] = true;
+        }
+
+        LoginAudit::create($metadata);
 
         return response()->json([
             'success' => true,

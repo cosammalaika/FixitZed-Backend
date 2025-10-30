@@ -10,6 +10,7 @@ use App\Models\UserTrustedDevice;
 use App\Models\Province;
 use App\Models\User;
 use App\Support\ProvinceDistrict;
+use App\Support\UserSessionManager;
 use App\Notifications\ResetPasswordOtp;
 use Carbon\Carbon;
 use Illuminate\Auth\Events\Registered;
@@ -171,12 +172,19 @@ class AuthController extends Controller
             $this->touchTrustedDevice($trustedDevice);
         }
 
+        $revokedSessions = UserSessionManager::revokeActiveTokens($user);
         $token = $user->createToken('mobile')->plainTextToken;
 
-        $this->recordLoginAudit($user, 'login', 'success', [
+        $auditMetadata = [
             'identifier' => $identifier,
             'used_trusted_device' => (bool) $trustedDevice,
-        ]);
+        ];
+
+        if ($revokedSessions > 0) {
+            $auditMetadata['revoked_sessions'] = $revokedSessions;
+        }
+
+        $this->recordLoginAudit($user, 'login', 'success', $auditMetadata);
 
         return response()->json([
             'success' => true,

@@ -47,13 +47,27 @@
                 </div>
             </div>
 
+            @php
+                $resolveUrl = function (?string $path) {
+                    if (! $path) return null;
+                    if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                        return $path;
+                    }
+                    return route('files.show', ['path' => $path]);
+                };
+                $docs = is_array($user->documents) ? $user->documents : [];
+            @endphp
+
             <div class="row">
                 <div class="col-md-4 mb-4">
                     <label class="form-label">Profile Photo</label>
                     <div>
-                        @if ($user->profile_photo_path)
-                            <img src="{{ asset('storage/' . ltrim($user->profile_photo_path, '/')) }}"
-                                alt="Profile Photo" class="img-thumbnail" style="max-height: 140px;">
+                        @php $profileUrl = $resolveUrl($user->profile_photo_path); @endphp
+                        @if ($profileUrl)
+                            <a href="{{ $profileUrl }}" target="_blank">
+                                <img src="{{ $profileUrl }}"
+                                    alt="Profile Photo" class="img-thumbnail" style="max-height: 140px;">
+                            </a>
                         @else
                             <span class="text-muted">No photo</span>
                         @endif
@@ -63,9 +77,12 @@
                 <div class="col-md-4 mb-4">
                     <label class="form-label">NRC Front</label>
                     <div>
-                        @if ($user->nrc_front_path)
-                            <img src="{{ Storage::disk('public')->url($user->nrc_front_path) }}" alt="NRC Front"
-                                class="img-thumbnail" style="max-height: 140px;">
+                        @php $frontUrl = $resolveUrl($user->nrc_front_path); @endphp
+                        @if ($frontUrl)
+                            <a href="{{ $frontUrl }}" target="_blank">
+                                <img src="{{ $frontUrl }}" alt="NRC Front"
+                                    class="img-thumbnail" style="max-height: 140px;">
+                            </a>
                         @else
                             <span class="text-muted">No image</span>
                         @endif
@@ -74,9 +91,12 @@
                 <div class="col-md-4 mb-4">
                     <label class="form-label">NRC Back</label>
                     <div>
-                        @if ($user->nrc_back_path)
-                            <img src="{{ Storage::disk('public')->url($user->nrc_back_path) }}" alt="NRC Back"
-                                class="img-thumbnail" style="max-height: 140px;">
+                        @php $backUrl = $resolveUrl($user->nrc_back_path); @endphp
+                        @if ($backUrl)
+                            <a href="{{ $backUrl }}" target="_blank">
+                                <img src="{{ $backUrl }}" alt="NRC Back"
+                                    class="img-thumbnail" style="max-height: 140px;">
+                            </a>
                         @else
                             <span class="text-muted">No image</span>
                         @endif
@@ -87,12 +107,13 @@
             <div class="row">
                 <div class="col-md-12 mb-3">
                     <label class="form-label">Supporting Documents</label>
-                    @php $docs = is_array($user->documents) ? $user->documents : []; @endphp
                     @if (count($docs))
                         <ul class="mb-0">
                             @foreach ($docs as $path)
-                                <li><a href="{{ Storage::disk('public')->url($path) }}"
-                                        target="_blank">{{ basename($path) }}</a></li>
+                                @php $url = $resolveUrl($path); @endphp
+                                @if ($url)
+                                    <li><a href="{{ $url }}" target="_blank">{{ basename($path) }}</a></li>
+                                @endif
                             @endforeach
                         </ul>
                     @else

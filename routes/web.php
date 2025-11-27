@@ -1,11 +1,12 @@
 <?php
 
+use App\Http\Controllers\FileController;
 use App\Livewire\Audit\LoginAuditIndex;
 use App\Livewire\Category\{CategoryCreate, CategoryEdit, CategoryIndex, CategoryShow};
 use App\Livewire\Coupon\{CouponCreate, CouponEdit, CouponIndex, CouponShow};
 use App\Livewire\Dashboard;
 use App\Livewire\Earning\{EarningCreate, EarningEdit, EarningIndex, EarningShow};
-use App\Livewire\Fixer\{FixerCreate, FixerEdit, FixerIndex, FixerShow};
+use App\Livewire\Fixer\{ApplicationIndex, FixerCreate, FixerEdit, FixerIndex, FixerShow};
 use App\Livewire\Location\{LocationCreate, LocationEdit, LocationIndex, LocationShow};
 use App\Livewire\Notification\{NotificationCreate, NotificationEdit, NotificationIndex, NotificationShow};
 use App\Livewire\LocationOption\LocationOptionIndex;
@@ -32,6 +33,10 @@ Route::middleware(['auth'])
 
 Route::redirect('/', '/dashboard');
 Route::middleware(['auth'])->group(function () {
+    Route::get('files/{path}', [FileController::class, 'show'])
+        ->where('path', '.*')
+        ->name('files.show');
+
     Route::redirect('settings', 'settings/profile');
 
     Route::get('reportd', Reportd::class)
@@ -134,6 +139,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('fixer', FixerIndex::class)
         ->name('fixer.index')
+        ->middleware('permission:view.fixers');
+    Route::get('fixer/applications', ApplicationIndex::class)
+        ->name('fixer.applications')
         ->middleware('permission:view.fixers');
     Route::get('fixer/create', FixerCreate::class)
         ->name('fixer.create')

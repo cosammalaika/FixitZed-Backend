@@ -109,14 +109,27 @@
 
             function showAlert(type, message, options = {}) {
                 if (!message) return Promise.resolve();
-                return Swal.fire({
+                const base = {
                     icon: type,
                     title: titles[type] ?? 'Notice',
                     text: message,
                     confirmButtonColor: '#F1592A',
                     confirmButtonText: 'OK',
-                    ...options,
-                });
+                };
+
+                if (options.toast) {
+                    return Swal.fire({
+                        toast: true,
+                        position: options.position || 'top-end',
+                        icon: type,
+                        title: message,
+                        timer: options.timer || 4000,
+                        timerProgressBar: true,
+                        showConfirmButton: false,
+                    });
+                }
+
+                return Swal.fire({ ...base, ...options });
             }
 
             document.addEventListener('DOMContentLoaded', function () {
@@ -136,6 +149,10 @@
                     swalOptions.timer = detail.timer;
                     swalOptions.timerProgressBar = true;
                     swalOptions.showConfirmButton = false;
+                }
+                if (detail.toast) {
+                    swalOptions.toast = true;
+                    if (detail.position) swalOptions.position = detail.position;
                 }
 
                 showAlert(type, message, swalOptions).then(() => {

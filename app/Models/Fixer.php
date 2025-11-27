@@ -16,6 +16,7 @@ class Fixer extends Model
         'status',
         'rating_avg',
         'priority_points',
+        'accepted_terms_at',
     ];
 
     protected $casts = [
@@ -27,6 +28,7 @@ class Fixer extends Model
         'last_completed_at' => 'datetime',
         'last_idle_bonus_at' => 'datetime',
         'priority_low_since_at' => 'datetime',
+        'accepted_terms_at' => 'datetime',
     ];
 
     protected $attributes = [

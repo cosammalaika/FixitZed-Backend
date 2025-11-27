@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Fixer;
 use App\Models\User;
 use App\Support\ApiCache;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\Request;
@@ -223,11 +224,14 @@ class FixerController extends Controller
             'location' => ['nullable', 'string', 'max:255'],
             'service_ids' => ['required', 'array', 'min:1'],
             'service_ids.*' => ['integer', 'exists:services,id'],
-            'profile_photo' => ['nullable', 'file', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'profile_photo' => ['required', 'file', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
             'nrc_front' => [Rule::requiredIf(! $user->nrc_front_path), 'file', 'mimes:jpeg,png,jpg,webp,pdf', 'max:5120'],
             'nrc_back' => [Rule::requiredIf(! $user->nrc_back_path), 'file', 'mimes:jpeg,png,jpg,webp,pdf', 'max:5120'],
+            'work_photos' => ['required', 'array', 'size:3'],
+            'work_photos.*' => ['file', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
             'supporting_documents' => ['nullable', 'array', 'max:5'],
             'supporting_documents.*' => ['file', 'mimes:jpeg,png,jpg,webp,pdf', 'max:5120'],
+            'accepted_terms' => ['accepted'],
         ]);
 
         return DB::transaction(function () use ($user, $validated, $request) {
@@ -259,6 +263,14 @@ class FixerController extends Controller
                 }
             }
 
+            $workPhotos = (array) ($user->work_photos ?? []);
+            if ($request->hasFile('work_photos')) {
+                $workPhotos = [];
+                foreach ($request->file('work_photos') as $file) {
+                    $workPhotos[] = $file->store('fixers/work_photos', 'public');
+                }
+            }
+
             $locationProvided = ! empty($validated['location']);
             if ($locationProvided) {
                 $updates['address'] = $validated['location'];
@@ -269,6 +281,9 @@ class FixerController extends Controller
                 if (! empty($documents)) {
                     $user->documents = $documents;
                 }
+                if (! empty($workPhotos)) {
+                    $user->work_photos = $workPhotos;
+                }
                 $user->save();
             }
 
@@ -277,11 +292,13 @@ class FixerController extends Controller
                     'user_id' => $user->id,
                     'bio' => $validated['bio'],
                     'status' => 'pending',
+                    'accepted_terms_at' => now(),
                 ]);
             } else {
                 $fixer->update([
                     'bio' => $validated['bio'],
                     'status' => 'pending',
+                    'accepted_terms_at' => $fixer->accepted_terms_at ?? now(),
                 ]);
             }
 
@@ -306,6 +323,18 @@ class FixerController extends Controller
     {
         $fixer->loadMissing(['services', 'user']);
         $user = $fixer->user;
+        $resolve = static function (?string $path) {
+            if (! $path) {
+                return null;
+            }
+            if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                return $path;
+            }
+            return Storage::disk('public')->url($path);
+        };
+        $mapArray = static function (?array $items) use ($resolve) {
+            return collect($items ?? [])->filter()->map(fn ($p) => $resolve($p))->values()->all();
+        };
 
         return [
             'id' => $fixer->id,
@@ -315,6 +344,12 @@ class FixerController extends Controller
             'rating_avg' => $fixer->rating_avg,
             'priority_points' => (int) ($fixer->priority_points ?? 0),
             'priorityPoints' => (int) ($fixer->priority_points ?? 0),
+            'accepted_terms_at' => $fixer->accepted_terms_at,
+            'profile_photo_url' => $resolve($user?->profile_photo_path),
+            'nrc_front_url' => $resolve($user?->nrc_front_path),
+            'nrc_back_url' => $resolve($user?->nrc_back_path),
+            'work_photos' => $mapArray($user?->work_photos),
+            'supporting_documents' => $mapArray($user?->documents),
             'services' => $fixer->services->map(function ($service) {
                 return [
                     'id' => $service->id,
@@ -328,6 +363,10 @@ class FixerController extends Controller
                 'last_name' => $user->last_name,
                 'email' => $user->email,
                 'profile_photo_url' => $user->profile_photo_url,
+                'nrc_front_path' => $user->nrc_front_path,
+                'nrc_back_path' => $user->nrc_back_path,
+                'work_photos' => $user->work_photos,
+                'documents' => $user->documents,
             ],
         ];
     }

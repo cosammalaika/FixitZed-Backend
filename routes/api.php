@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\ServiceRequestController;
 use App\Http\Controllers\Api\FixerController;
@@ -66,6 +67,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('verification.send');
     Route::get('me', [AuthController::class, 'me']);
     Route::post('logout', [AuthController::class, 'logout']);
+    Route::post('device-tokens', [DeviceTokenController::class, 'store']);
 
     // Service Requests for the authenticated user (email verification not required)
     Route::get('requests', [ServiceRequestController::class, 'index']);

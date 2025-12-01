@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'fcm' => [
+        'project_id' => env('FCM_PROJECT_ID', 'fixitzed-app-37b67'),
+        'credentials' => env('FCM_CREDENTIALS'), // absolute path to service account JSON
+    ],
+
 ];

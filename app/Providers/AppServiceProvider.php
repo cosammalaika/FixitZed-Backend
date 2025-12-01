@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Models\Category;
 use App\Models\Fixer;
+use App\Models\Notification;
 use App\Models\Service;
 use App\Models\Subcategory;
+use App\Services\FcmService;
 use App\Support\ApiCache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
@@ -69,6 +71,26 @@ class AppServiceProvider extends ServiceProvider
 
             return false;
         });
+
+        try {
+            $fcm = $this->app->make(FcmService::class);
+            if ($fcm->enabled()) {
+                Notification::created(function (Notification $notification) use ($fcm) {
+                    if ($notification->recipient_type === 'Individual' && $notification->user_id) {
+                        $title = $notification->title ?? 'Notification';
+                        $body = $notification->message ?? '';
+                        $fcm->sendToUser(
+                            $notification->user,
+                            $title,
+                            $body,
+                            ['notification_id' => (string) $notification->id],
+                        );
+                    }
+                });
+            }
+        } catch (\Throwable $e) {
+            // If FCM is not configured, skip silently.
+        }
 
         if (ApiCache::enabled()) {
             Category::saved(fn () => ApiCache::flush(['catalog', 'categories']));

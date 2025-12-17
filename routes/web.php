@@ -11,6 +11,7 @@ use App\Livewire\Location\{LocationCreate, LocationEdit, LocationIndex, Location
 use App\Livewire\Notification\{NotificationCreate, NotificationEdit, NotificationIndex, NotificationShow};
 use App\Livewire\LocationOption\LocationOptionIndex;
 use App\Livewire\Reportd;
+use App\Livewire\Issues;
 use App\Livewire\Payment\{PaymentCreate, PaymentEdit, PaymentIndex, PaymentShow};
 use App\Livewire\PaymentMethod\PaymentMethodIndex;
 use App\Livewire\Rating\{RatingCreate, RatingEdit, RatingIndex, RatingShow};
@@ -41,6 +42,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('reportd', Reportd::class)
         ->name('reportd.index')
+        ->middleware('permission:view.reports');
+
+    Route::get('issues', Issues::class)
+        ->name('issues.index')
         ->middleware('permission:view.reports');
 
     Route::get('lock', [LockController::class, 'activate'])->name('lock.activate');

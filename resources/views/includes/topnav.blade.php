@@ -182,6 +182,11 @@
                                 <span data-key="t-reports">Reports</span>
                             </a>
                         </li>
+                        <li class="nav-item" data-permission="view.reports">
+                            <a class="nav-link" href="{{ route('issues.index') }}">
+                                <span data-key="t-issues">Issues</span>
+                            </a>
+                        </li>
                     @endcan
                 </ul>
             </div>

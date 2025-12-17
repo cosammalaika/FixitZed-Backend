@@ -32,6 +32,7 @@ class AdminPushController extends Controller
             'tokens' => ['sometimes', 'array'],
             'tokens.*' => ['string'],
             'data' => ['sometimes', 'array'],
+            'app' => ['nullable', 'string', 'in:customer,fixer'],
         ]);
 
         $userIds = $validated['user_ids'] ?? [];
@@ -48,7 +49,13 @@ class AdminPushController extends Controller
         if (! empty($userIds)) {
             $users = User::whereIn('id', $userIds)->get();
             foreach ($users as $user) {
-                $this->fcm->sendToUser($user, $validated['title'], $validated['body'], $data);
+                $this->fcm->sendToUser(
+                    $user,
+                    $validated['title'],
+                    $validated['body'],
+                    $data,
+                    $validated['app'] ?? null,
+                );
             }
         }
 

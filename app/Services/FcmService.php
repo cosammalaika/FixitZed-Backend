@@ -43,9 +43,12 @@ class FcmService
     /**
     * Send a push to all device tokens for a user.
     */
-    public function sendToUser(User $user, string $title, string $body, array $data = []): void
+    public function sendToUser(User $user, string $title, string $body, array $data = [], ?string $app = null): void
     {
-        $tokens = DeviceToken::where('user_id', $user->id)->pluck('token')->all();
+        $tokens = DeviceToken::where('user_id', $user->id)
+            ->when($app, fn ($q) => $q->where('app', $app))
+            ->pluck('token')
+            ->all();
         $this->sendToTokens($tokens, $title, $body, $data);
     }
 

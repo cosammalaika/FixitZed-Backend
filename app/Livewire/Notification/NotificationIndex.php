@@ -3,6 +3,7 @@
 namespace App\Livewire\Notification;
 
 use App\Models\Notification;
+use App\Services\NotificationPruner;
 use Livewire\Component;
 
 class NotificationIndex extends Component
@@ -40,6 +41,17 @@ class NotificationIndex extends Component
                 'message' => 'Notification not found.',
             ]);
         }
+    }
+
+    public function pruneOldNotifications(NotificationPruner $pruner): void
+    {
+        abort_unless(auth()->user()?->can('edit.notifications'), 403);
+        $deleted = $pruner->prune();
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => "Pruned {$deleted} old notifications.",
+        ]);
+        $this->loadNotifications();
     }
     public function render()
     {

@@ -12,7 +12,9 @@ class UserLogIndex extends Component
 
     public function render()
     {
-        $logs = UserLog::with('user')->latest()->paginate(25);
+        $perPage = (int) setting('admin.per_page', 20);
+        $perPage = max(5, min($perPage, 200));
+        $logs = UserLog::with('user')->latest()->paginate($perPage);
         return view('livewire.user-log.user-log-index', compact('logs'));
     }
 }

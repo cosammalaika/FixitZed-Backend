@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Fixer;
+use App\Models\Setting;
 use App\Models\ServiceRequest;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
@@ -30,19 +31,25 @@ class Dashboard extends Component
 
     public function mount()
     {
+        $weekWindowDays = $this->settingInt('dashboard.week_window_days', 7, 1, 60);
+        $recentCustomersLimit = $this->settingInt('dashboard.recent_customers_limit', 5, 1, 50);
+        $recentRequestsLimit = $this->settingInt('dashboard.recent_requests_limit', 5, 1, 50);
+        $topRatedFixersLimit = $this->settingInt('dashboard.top_rated_fixers_limit', 10, 1, 100);
+
         $this->totalUsers = User::where('status', 'Active')->count();
         $this->totalFixers = Fixer::where('status', 'approved')->count();
         $this->activeRequests = ServiceRequest::where('status', 'accepted')->count();
         $this->serviceCompleted = ServiceRequest::where('status', 'completed')->count();
 
-        $this->newUsersThisWeek = User::where('created_at', '>=', Carbon::now()->subWeek())->count();
-        $this->newFixerThisWeek = Fixer::where('created_at', '>=', Carbon::now()->subWeek())->count();
+        $weekStart = Carbon::now()->subDays($weekWindowDays - 1);
+        $this->newUsersThisWeek = User::where('created_at', '>=', $weekStart)->count();
+        $this->newFixerThisWeek = Fixer::where('created_at', '>=', $weekStart)->count();
         $this->newActiveRequests = ServiceRequest::where('status', 'accepted')
-            ->where('created_at', '>=', Carbon::now()->subWeek())
+            ->where('created_at', '>=', $weekStart)
             ->count();
 
         $this->newServiceCompleted = ServiceRequest::where('status', 'completed')
-            ->where('created_at', '>=', Carbon::now()->subWeek())
+            ->where('created_at', '>=', $weekStart)
             ->count();
 
         $customerRoleExists = Role::where('name', 'Customer')->exists();
@@ -52,12 +59,12 @@ class Dashboard extends Component
             ? User::role('Customer')
                 ->where('status', 'Active')
                 ->latest()
-                ->take(5)
+                ->take($recentCustomersLimit)
                 ->get()
             : collect();
 
         $this->recentRequests = ServiceRequest::latest()
-            ->take(5)
+            ->take($recentRequestsLimit)
             ->get();
 
         $this->topRatedFixers = $fixerRoleExists
@@ -68,7 +75,7 @@ class Dashboard extends Component
                     }
                 ], 'rating')
                 ->orderByDesc('average_rating')
-                ->take(10)
+                ->take($topRatedFixersLimit)
                 ->get()
             : collect();
 
@@ -90,7 +97,8 @@ class Dashboard extends Component
     protected function buildNewUsersSeries(): array
     {
         $endOfRange = Carbon::now()->endOfMonth();
-        $startOfRange = (clone $endOfRange)->subMonths(11)->startOfMonth();
+        $monthsWindow = $this->settingInt('dashboard.months_window', 12, 1, 36);
+        $startOfRange = (clone $endOfRange)->subMonths($monthsWindow - 1)->startOfMonth();
 
         $customerCounts = $this->customerRoleExists
             ? User::role('Customer')
@@ -168,12 +176,13 @@ class Dashboard extends Component
 
     protected function buildTopActiveUsers(): array
     {
+        $limit = $this->settingInt('dashboard.top_active_users_limit', 10, 1, 100);
         return ServiceRequest::selectRaw('fixer_id, COUNT(*) as total')
             ->whereNotNull('fixer_id')
             ->groupBy('fixer_id')
             ->orderByDesc('total')
             ->with('fixer.user')
-            ->take(10)
+            ->take($limit)
             ->get()
             ->map(function ($request) {
                 $user = $request->fixer?->user;
@@ -189,12 +198,13 @@ class Dashboard extends Component
 
     protected function buildTopRequestedServices(): array
     {
+        $limit = $this->settingInt('dashboard.top_requested_services_limit', 6, 1, 100);
         $services = ServiceRequest::selectRaw('service_id, COUNT(*) as total')
             ->whereNotNull('service_id')
             ->groupBy('service_id')
             ->orderByDesc('total')
             ->with('service')
-            ->take(6)
+            ->take($limit)
             ->get();
 
         $totalRequests = max($services->sum('total'), 1);
@@ -213,7 +223,8 @@ class Dashboard extends Component
     protected function buildSparklineData(): array
     {
         $end = Carbon::now()->endOfDay();
-        $start = (clone $end)->subDays(6)->startOfDay();
+        $sparklineDays = $this->settingInt('dashboard.sparkline_days', 7, 1, 60);
+        $start = (clone $end)->subDays($sparklineDays - 1)->startOfDay();
 
         return [
             'users' => $this->buildDailySeriesFor(User::class, $start, $end, function ($query) {
@@ -252,6 +263,12 @@ class Dashboard extends Component
         }
 
         return $series;
+    }
+
+    private function settingInt(string $key, int $default, int $min, int $max): int
+    {
+        $value = (int) Setting::get($key, $default);
+        return max($min, min($value, $max));
     }
 
 }

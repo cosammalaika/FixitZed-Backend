@@ -3,6 +3,7 @@
 namespace App\Livewire\Notification;
 
 use App\Models\Notification;
+use App\Models\Setting;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -15,6 +16,8 @@ class NotificationBell extends Component
     {
         $user = Auth::user();
         $audiences = $this->audiencesForUser($user);
+        $limit = (int) Setting::get('notifications.bell_preview_limit', 5);
+        $limit = max(1, min($limit, 20));
 
         $this->notifications = Notification::where(function ($query) use ($user, $audiences) {
             $query->where(function ($q) use ($user) {
@@ -28,7 +31,7 @@ class NotificationBell extends Component
             });
         })
             ->latest()
-            ->take(2)
+            ->take($limit)
             ->get();
 
 

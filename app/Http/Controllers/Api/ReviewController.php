@@ -3,18 +3,22 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\ResolvesPerPage;
 use App\Models\Review;
 use App\Models\Service;
 use Illuminate\Http\Request;
 
 class ReviewController extends Controller
 {
+    use ResolvesPerPage;
+
     public function index(Service $service)
     {
+        $perPage = $this->resolvePerPage(request());
         $reviews = Review::with('user')
             ->where('service_id', $service->id)
             ->latest()
-            ->paginate(20);
+            ->paginate($perPage);
 
         return response()->json(['success' => true, 'data' => $reviews]);
     }
@@ -36,4 +40,3 @@ class ReviewController extends Controller
         return response()->json(['success' => true, 'data' => $review->load('user')], 201);
     }
 }
-

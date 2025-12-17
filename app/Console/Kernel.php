@@ -13,9 +13,9 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         // Prune old notifications daily
-        $schedule->command('model:prune', [
-            '--model' => [\App\Models\Notification::class],
-        ])->dailyAt('01:00');
+        $schedule->command('notifications:prune')
+            ->dailyAt('02:00')
+            ->withoutOverlapping();
 
         $schedule->command('priority:weekly-recovery')
             ->weeklyOn(1, '02:00');

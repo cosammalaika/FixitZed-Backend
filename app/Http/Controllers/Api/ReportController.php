@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\ResolvesPerPage;
 use App\Models\Report;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -11,6 +12,8 @@ use Illuminate\Support\Facades\Schema;
 
 class ReportController extends Controller
 {
+    use ResolvesPerPage;
+
     public function store(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -36,7 +39,8 @@ class ReportController extends Controller
     public function index(Request $request): JsonResponse
     {
         abort_if(!$this->isAdmin($request->user()), 403);
-        $reports = Report::with(['reporter', 'target'])->orderByDesc('id')->paginate(50);
+        $perPage = $this->resolvePerPage($request);
+        $reports = Report::with(['reporter', 'target'])->orderByDesc('id')->paginate($perPage);
         return response()->json(['success' => true, 'data' => $reports]);
     }
 
@@ -55,7 +59,8 @@ class ReportController extends Controller
         ]);
 
         if (!empty($data['action']) && $report->target_user_id) {
-            $this->applyAction($report->target_user_id, $data['action'], $data['days'] ?? null);
+            $defaultDays = (int) Setting::get('admin.reports.default_action_duration_days', 7);
+            $this->applyAction($report->target_user_id, $data['action'], $data['days'] ?? $defaultDays);
             $report->status = $report->status === 'open' ? 'action_taken' : $report->status;
             if (in_array($data['action'], ['suspend', 'ban'], true)) {
                 $report->resolved_at = now();
@@ -102,7 +107,8 @@ class ReportController extends Controller
                 $user->save();
             }
         } elseif ($action === 'suspend') {
-            $until = now()->addDays(max(1, (int)($days ?? 7)));
+            $defaultDays = (int) setting('admin.reports.default_action_duration_days', 7);
+            $until = now()->addDays(max(1, (int) ($days ?? $defaultDays)));
             if (Schema::hasColumn('users', 'suspended_until')) {
                 $user->suspended_until = $until;
                 $user->save();
@@ -113,4 +119,3 @@ class ReportController extends Controller
         }
     }
 }
-

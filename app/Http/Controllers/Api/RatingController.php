@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\ResolvesPerPage;
 use App\Models\Rating;
 use App\Models\ServiceRequest;
 use App\Models\User;
@@ -11,6 +12,8 @@ use Illuminate\Validation\Rule;
 
 class RatingController extends Controller
 {
+    use ResolvesPerPage;
+
     public function store(ServiceRequest $serviceRequest, Request $request)
     {
         // Only allow the customer who created the service request to rate the fixer
@@ -38,11 +41,11 @@ class RatingController extends Controller
 
     public function listForUser(User $user)
     {
+        $perPage = $this->resolvePerPage(request());
         $ratings = Rating::with(['rater', 'serviceRequest'])
             ->where('rated_user_id', $user->id)
             ->latest()
-            ->paginate(20);
+            ->paginate($perPage);
         return response()->json(['success' => true, 'data' => $ratings]);
     }
 }
-

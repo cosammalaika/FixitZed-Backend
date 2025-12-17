@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\ResolvesPerPage;
 use App\Models\Notification;
 use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
+    use ResolvesPerPage;
+
     public function index(Request $request)
     {
         $user = $request->user();
@@ -37,7 +40,7 @@ class NotificationController extends Controller
             ]);
         }
 
-        $perPage = (int) $request->query('per_page', 20);
+        $perPage = $this->resolvePerPage($request, 'notifications.per_page_default');
         $paginated = $baseQuery->paginate($perPage);
         return response()->json([
             'success' => true,

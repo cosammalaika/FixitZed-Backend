@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Fixer;
 use App\Models\Payment;
+use App\Models\Setting;
 use App\Models\ServiceRequest;
 use App\Models\User;
 use Carbon\Carbon;
@@ -218,6 +219,7 @@ class Reportd extends Component
 
     protected function buildRevenueSplit(): array
     {
+        $limit = $this->settingInt('reports.revenue_split_limit', 5, 1, 50);
         $baseQuery = Payment::where('payments.status', 'paid')
             ->join('service_requests', 'payments.service_request_id', '=', 'service_requests.id')
             ->join('fixers', 'service_requests.fixer_id', '=', 'fixers.id')
@@ -227,7 +229,7 @@ class Reportd extends Component
 
         $topRows = (clone $baseQuery)
             ->orderByDesc('total')
-            ->take(5)
+            ->take($limit)
             ->get();
 
         $labels = [];
@@ -258,6 +260,7 @@ class Reportd extends Component
 
     protected function buildTopFixers(): array
     {
+        $limit = $this->settingInt('reports.top_fixers_limit', 10, 1, 100);
         return Payment::where('payments.status', 'paid')
             ->join('service_requests', 'payments.service_request_id', '=', 'service_requests.id')
             ->join('fixers', 'service_requests.fixer_id', '=', 'fixers.id')
@@ -265,7 +268,7 @@ class Reportd extends Component
             ->selectRaw('fixers.id as fixer_id, users.first_name, users.last_name, SUM(payments.amount) as total')
             ->groupBy('fixers.id', 'users.first_name', 'users.last_name')
             ->orderByDesc('total')
-            ->take(10)
+            ->take($limit)
             ->get()
             ->map(function ($row) {
                 $name = trim(($row->first_name ?? 'Unknown') . ' ' . ($row->last_name ?? ''));
@@ -279,13 +282,14 @@ class Reportd extends Component
 
     protected function buildTopServices(): array
     {
+        $limit = $this->settingInt('reports.top_services_limit', 10, 1, 100);
         $services = Payment::where('payments.status', 'paid')
             ->join('service_requests', 'payments.service_request_id', '=', 'service_requests.id')
             ->join('services', 'service_requests.service_id', '=', 'services.id')
             ->selectRaw('services.id as service_id, services.name, COUNT(*) as bookings, SUM(payments.amount) as revenue')
             ->groupBy('services.id', 'services.name')
             ->orderByDesc('revenue')
-            ->take(10)
+            ->take($limit)
             ->get();
 
         $totalRevenue = max((float) $services->sum('revenue'), 1.0);
@@ -300,5 +304,11 @@ class Reportd extends Component
                 'percentage' => round(($revenue / $totalRevenue) * 100),
             ];
         })->toArray();
+    }
+
+    private function settingInt(string $key, int $default, int $min, int $max): int
+    {
+        $value = (int) Setting::get($key, $default);
+        return max($min, min($value, $max));
     }
 }

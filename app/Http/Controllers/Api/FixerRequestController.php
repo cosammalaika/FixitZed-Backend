@@ -9,6 +9,7 @@ use App\Models\ServiceRequest;
 use App\Models\ServiceRequestDecline;
 use App\Models\Payment;
 use App\Models\Notification;
+use App\Models\Setting;
 use App\Services\PriorityPointService;
 use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
@@ -33,6 +34,7 @@ class FixerRequestController extends Controller
             abort(403, 'Forbidden');
         }
 
+        $this->expirePendingRequests();
         $status = $request->query('status');
         if ($status === 'declined') {
             $declines = ServiceRequestDecline::with(['serviceRequest.service', 'serviceRequest.customer'])
@@ -73,6 +75,16 @@ class FixerRequestController extends Controller
             $q->where('status', $status);
         }
 
+        if (! $status || $status === 'pending') {
+            $cutoff = $this->expiryCutoff();
+            if ($cutoff) {
+                $q->where('created_at', '>=', $cutoff);
+            }
+            $q->whereDoesntHave('declines', function ($query) use ($fixer) {
+                $query->where('fixer_id', $fixer->id);
+            });
+        }
+
         $requests = $q->paginate(20)->through(function (ServiceRequest $sr) {
             return $this->transformForFixer($sr);
         });
@@ -93,21 +105,95 @@ class FixerRequestController extends Controller
             abort(403, 'Forbidden');
         }
 
-        // Only accept if unassigned or already assigned to this fixer
-        if ($serviceRequest->fixer_id && $serviceRequest->fixer_id !== $fixer->id) {
-            abort(403, 'Already assigned');
-        }
+        $response = null;
 
-        DB::transaction(function () use ($serviceRequest, $fixer, $wallets) {
-            // Deduct 1 coin first to enforce business rules
-            $wallets->deductOnAccept($fixer->id, $serviceRequest->id);
+        DB::transaction(function () use (
+            $serviceRequest,
+            $fixer,
+            $wallets,
+            &$response
+        ) {
+            $locked = ServiceRequest::whereKey($serviceRequest->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-            if (! $serviceRequest->fixer_id) {
-                $serviceRequest->fixer_id = $fixer->id;
+            if ($this->isExpired($locked) || $locked->status === 'cancelled') {
+                $this->markExpired($locked);
+                $response = response()->json([
+                    'success' => false,
+                    'message' => 'This request is no longer available.',
+                ], 410);
+                return;
             }
-            $serviceRequest->status = 'accepted';
-            $serviceRequest->save();
+
+            if ($locked->status === 'accepted' && $locked->fixer_id === $fixer->id) {
+                $response = response()->json([
+                    'success' => true,
+                    'message' => 'Request already accepted.',
+                    'data' => $locked->fresh()->load(['service', 'fixer.user']),
+                ]);
+                return;
+            }
+
+            if ($locked->status !== 'pending') {
+                $response = response()->json([
+                    'success' => false,
+                    'message' => 'This request has already been taken.',
+                ], 409);
+                return;
+            }
+
+            if ($locked->fixer_id && $locked->fixer_id !== $fixer->id) {
+                $response = response()->json([
+                    'success' => false,
+                    'message' => 'This request has already been assigned.',
+                ], 409);
+                return;
+            }
+
+            if (! $locked->fixer_id) {
+                $eligible = $locked->service()
+                    ->whereHas('fixers', fn ($q) => $q->where('fixers.id', $fixer->id))
+                    ->exists();
+                if (! $eligible) {
+                    $response = response()->json([
+                        'success' => false,
+                        'message' => 'You are not eligible for this request.',
+                    ], 403);
+                    return;
+                }
+            }
+
+            $alreadyDeclined = ServiceRequestDecline::where('service_request_id', $locked->id)
+                ->where('fixer_id', $fixer->id)
+                ->exists();
+            if ($alreadyDeclined) {
+                $response = response()->json([
+                    'success' => false,
+                    'message' => 'You already declined this request.',
+                ], 409);
+                return;
+            }
+
+            // Deduct 1 coin first to enforce business rules
+            $wallets->deductOnAccept($fixer->id, $locked->id);
+
+            if (! $locked->fixer_id) {
+                $locked->fixer_id = $fixer->id;
+            }
+            $locked->status = 'accepted';
+            $locked->save();
+
+            $response = response()->json([
+                'success' => true,
+                'data' => $locked->fresh()->load(['service', 'fixer.user']),
+                'message' => '1 coin deducted. Request accepted.',
+            ]);
         });
+
+        if ($response instanceof JsonResponse) {
+            return $response;
+        }
 
         $this->priorityPoints->onAssignment($fixer, [
             'service_request_id' => $serviceRequest->id,
@@ -116,10 +202,9 @@ class FixerRequestController extends Controller
         $fixer->forceFill(['last_assigned_at' => now()])->save();
 
         return response()->json([
-            'success' => true,
-            'data' => $serviceRequest->fresh()->load(['service', 'fixer.user']),
-            'message' => '1 coin deducted. Request accepted.',
-        ]);
+            'success' => false,
+            'message' => 'Unable to process request at this time.',
+        ], 500);
     }
 
     public function decline(ServiceRequest $serviceRequest, Request $request): JsonResponse
@@ -127,33 +212,89 @@ class FixerRequestController extends Controller
         $user = $request->user();
         /** @var Fixer|null $fixer */
         $fixer = $user->fixer;
-        if (! $fixer || $serviceRequest->fixer_id !== $fixer->id) {
+        if (! $fixer) {
             abort(403, 'Forbidden');
         }
 
         $nextFixer = null;
+        $response = null;
 
-        DB::transaction(function () use ($serviceRequest, $fixer, &$nextFixer) {
-            ServiceRequestDecline::create([
-                'service_request_id' => $serviceRequest->id,
-                'fixer_id' => $fixer->id,
-                'declined_at' => now(),
-            ]);
+        DB::transaction(function () use ($serviceRequest, $fixer, &$nextFixer, &$response) {
+            $locked = ServiceRequest::whereKey($serviceRequest->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-            $serviceRequest->fixer_snoozed_until = null;
-            $serviceRequest->fixer_id = null;
-            $serviceRequest->status = 'pending';
-            $serviceRequest->save();
+            if ($this->isExpired($locked) || $locked->status === 'cancelled') {
+                $this->markExpired($locked);
+                $response = response()->json([
+                    'success' => false,
+                    'message' => 'This request is no longer available.',
+                ], 410);
+                return;
+            }
 
-            $this->notifyCustomerDeclined($serviceRequest, $fixer);
+            if ($locked->status !== 'pending') {
+                $response = response()->json([
+                    'success' => false,
+                    'message' => 'This request has already been taken.',
+                ], 409);
+                return;
+            }
 
-            $nextFixer = $this->assignNextFixer($serviceRequest, $fixer->id);
+            if ($locked->fixer_id && $locked->fixer_id !== $fixer->id) {
+                $response = response()->json([
+                    'success' => false,
+                    'message' => 'This request is assigned to another fixer.',
+                ], 409);
+                return;
+            }
+
+            $decline = ServiceRequestDecline::firstOrCreate(
+                [
+                    'service_request_id' => $locked->id,
+                    'fixer_id' => $fixer->id,
+                ],
+                ['declined_at' => now()],
+            );
+
+            // If this fixer is not assigned, just record decline and exit.
+            if (! $locked->fixer_id) {
+                $eligible = $locked->service()
+                    ->whereHas('fixers', fn ($q) => $q->where('fixers.id', $fixer->id))
+                    ->exists();
+                if (! $eligible) {
+                    $response = response()->json([
+                        'success' => false,
+                        'message' => 'You are not eligible for this request.',
+                    ], 403);
+                    return;
+                }
+                $response = response()->json([
+                    'success' => true,
+                    'message' => 'Request declined.',
+                    'data' => $locked->fresh(['service', 'fixer']),
+                ]);
+                return;
+            }
+
+            $locked->fixer_snoozed_until = null;
+            $locked->fixer_id = null;
+            $locked->status = 'pending';
+            $locked->save();
+
+            $this->notifyCustomerDeclined($locked, $fixer);
+
+            $nextFixer = $this->assignNextFixer($locked, $fixer->id);
 
             if (! $nextFixer) {
-                NotifyCustomerNoFixerJob::dispatch($serviceRequest->id)
+                NotifyCustomerNoFixerJob::dispatch($locked->id)
                     ->delay(now()->addMinutes(5));
             }
         });
+
+        if ($response instanceof JsonResponse) {
+            return $response;
+        }
 
         $this->priorityPoints->onTimeout($fixer, [
             'service_request_id' => $serviceRequest->id,
@@ -284,6 +425,11 @@ class FixerRequestController extends Controller
 
     protected function assignNextFixer(ServiceRequest $serviceRequest, int $excludeFixerId): ?Fixer
     {
+        if ($this->isExpired($serviceRequest) || $serviceRequest->status === 'cancelled') {
+            $this->markExpired($serviceRequest);
+            return null;
+        }
+
         $candidates = Fixer::query()
             ->with(['user'])
             ->withCount([
@@ -346,6 +492,50 @@ class FixerRequestController extends Controller
         $candidate->forceFill(['last_assigned_at' => now()])->save();
 
         return $candidate;
+    }
+
+    protected function isExpired(ServiceRequest $serviceRequest): bool
+    {
+        $cutoff = $this->expiryCutoff();
+        if (! $cutoff) {
+            return false;
+        }
+        return $serviceRequest->status === 'pending' && $serviceRequest->created_at < $cutoff;
+    }
+
+    protected function markExpired(ServiceRequest $serviceRequest): void
+    {
+        if ($serviceRequest->status === 'expired') {
+            return;
+        }
+        $serviceRequest->status = 'expired';
+        $serviceRequest->fixer_id = null;
+        $serviceRequest->fixer_snoozed_until = null;
+        $serviceRequest->save();
+    }
+
+    protected function expiryCutoff(): ?\Illuminate\Support\Carbon
+    {
+        $minutes = (int) Setting::get('requests.expiry_minutes', 15);
+        if ($minutes <= 0) {
+            return null;
+        }
+        return now()->subMinutes($minutes);
+    }
+
+    protected function expirePendingRequests(): void
+    {
+        $cutoff = $this->expiryCutoff();
+        if (! $cutoff) {
+            return;
+        }
+        ServiceRequest::where('status', 'pending')
+            ->where('created_at', '<', $cutoff)
+            ->update([
+                'status' => 'expired',
+                'fixer_id' => null,
+                'fixer_snoozed_until' => null,
+            ]);
     }
 
     protected function estimateDistanceKm(Fixer $fixer, ServiceRequest $serviceRequest): float

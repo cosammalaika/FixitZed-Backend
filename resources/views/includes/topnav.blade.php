@@ -148,6 +148,20 @@
                         </li>
                     @endcanany
 
+
+                    @can('view.reports')
+                        <li class="nav-item" data-permission="view.reports">
+                            <a class="nav-link" href="{{ route('reportd.index') }}">
+                                <span data-key="t-reports">Reports</span>
+                            </a>
+                        </li>
+                        <li class="nav-item" data-permission="view.reports">
+                            <a class="nav-link" href="{{ route('issues.index') }}">
+                                <span data-key="t-issues">Issues</span>
+                            </a>
+                        </li>
+                    @endcan
+
                     @canany(['edit.settings', 'view.roles', 'view.logs', 'view.location_options'])
                         <li class="nav-item dropdown"
                             data-permission-any="edit.settings|view.roles|view.logs|view.location_options">
@@ -175,19 +189,6 @@
                             </div>
                         </li>
                     @endcanany
-
-                    @can('view.reports')
-                        <li class="nav-item" data-permission="view.reports">
-                            <a class="nav-link" href="{{ route('reportd.index') }}">
-                                <span data-key="t-reports">Reports</span>
-                            </a>
-                        </li>
-                        <li class="nav-item" data-permission="view.reports">
-                            <a class="nav-link" href="{{ route('issues.index') }}">
-                                <span data-key="t-issues">Issues</span>
-                            </a>
-                        </li>
-                    @endcan
                 </ul>
             </div>
         </nav>

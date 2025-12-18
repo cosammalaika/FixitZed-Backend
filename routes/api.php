@@ -28,14 +28,14 @@ use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\MfaController;
 
 // Guest routes (no authentication required)
-Route::post('login', [AuthController::class, 'login'])->middleware('settings.throttle:tight');
-Route::post('register', [AuthController::class, 'register'])->middleware('settings.throttle:relaxed');
-Route::post('password/forgot', [AuthController::class, 'forgotPassword'])->middleware('settings.throttle:tight');
-Route::post('password/reset', [AuthController::class, 'resetPassword'])->middleware('settings.throttle:tight');
+Route::post('login', [AuthController::class, 'login'])->middleware('throttle:6,1');
+Route::post('register', [AuthController::class, 'register'])->middleware('throttle:6,1');
+Route::post('password/forgot', [AuthController::class, 'forgotPassword'])->middleware('throttle:6,1');
+Route::post('password/reset', [AuthController::class, 'resetPassword'])->middleware('throttle:6,1');
 Route::get('email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
     ->middleware(['signed'])
     ->name('verification.verify');
-Route::post('login/mfa', [MfaController::class, 'complete'])->middleware('settings.throttle:tight');
+Route::post('login/mfa', [MfaController::class, 'complete'])->middleware('throttle:6,1');
 
 // Public data (read-only)
 Route::get('categories', [CategoryController::class, 'index']);
@@ -64,7 +64,7 @@ Route::get('subscription/plans', [SubscriptionController::class, 'plans']);
 // Authenticated routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('email/verification-notification', [AuthController::class, 'resendVerification'])
-        ->middleware('settings.throttle:relaxed')
+        ->middleware('throttle:6,1')
         ->name('verification.send');
     Route::get('me', [AuthController::class, 'me']);
     Route::post('logout', [AuthController::class, 'logout']);

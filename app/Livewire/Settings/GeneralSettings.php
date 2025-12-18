@@ -204,15 +204,6 @@ class GeneralSettings extends Component
                 'section' => 'Auth & Security',
             ],
             [
-                'key' => 'auth.throttle_login',
-                'label' => 'Login throttle (attempts, minutes)',
-                'help' => 'Applied to web login verification routes.',
-                'type' => 'text',
-                'placeholder' => 'e.g., 6,1',
-                'default' => '6,1',
-                'section' => 'Auth & Security',
-            ],
-            [
                 'key' => 'priority.location_radius_km_default',
                 'label' => 'Location radius default (km)',
                 'help' => 'Fallback distance for matching if no override is set.',
@@ -316,7 +307,6 @@ class GeneralSettings extends Component
             'api.per_page_default' => 'required|integer|min:1|max:100',
             'auth.password_reset_expiry_minutes' => 'required|integer|min:5|max:120',
             'auth.mfa_challenge_expiry_minutes' => 'required|integer|min:1|max:30',
-            'auth.throttle_login' => ['required', 'regex:/^\\d+,\\d+$/'],
             'priority.location_radius_km_default' => 'required|numeric|min:1|max:1000',
             'priority.location_radius_km' => 'required|numeric|min:1|max:1000',
             'priority.cap_default' => 'required|integer|min:1|max:10000',

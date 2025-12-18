@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Fixer;
 use App\Models\User;
 use App\Support\ApiCache;
-use App\Http\Controllers\Api\ResolvesPerPage;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -15,8 +14,6 @@ use Illuminate\Validation\Rule;
 
 class FixerController extends Controller
 {
-    use ResolvesPerPage;
-
     public function index(Request $request)
     {
         $q = Fixer::query()->with(['user', 'services', 'wallet']);
@@ -40,11 +37,10 @@ class FixerController extends Controller
             });
         }
 
-        $perPage = $this->resolvePerPage($request);
         $cacheKey = 'fixers:index:' . md5($request->getQueryString() ?? 'page=1');
 
-        return ApiCache::remember(['fixers'], $cacheKey, function () use ($q, $perPage) {
-            $fixers = $q->latest()->paginate($perPage);
+        return ApiCache::remember(['fixers'], $cacheKey, function () use ($q) {
+            $fixers = $q->latest()->paginate(20);
 
             return response()->json([
                 'success' => true,
@@ -64,9 +60,7 @@ class FixerController extends Controller
 
     public function top(Request $request)
     {
-        $defaultLimit = (int) \App\Models\Setting::get('fixers.top_default_limit', 10);
-        $limit = (int) $request->query('limit', $defaultLimit);
-        $limit = max(1, min($limit, 50));
+        $limit = (int) $request->query('limit', 10);
         $cacheKey = 'fixers:top:' . $limit;
 
         return ApiCache::remember(['fixers', 'fixers:top'], $cacheKey, function () use ($limit) {

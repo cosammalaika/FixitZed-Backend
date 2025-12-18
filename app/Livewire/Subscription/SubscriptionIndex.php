@@ -55,12 +55,10 @@ class SubscriptionIndex extends Component
 
     public function render()
     {
-        $perPage = (int) setting('admin.per_page', 20);
-        $perPage = max(5, min($perPage, 200));
         $missing = ! Schema::hasTable('fixer_subscriptions');
         $purchases = $missing ? collect() : FixerSubscription::with(['fixer.user', 'plan'])
             ->latest()
-            ->paginate($perPage);
+            ->paginate(20);
         return view('livewire.subscription.subscription-index', compact('purchases', 'missing'))
             ->with('statuses', $this->statuses);
     }

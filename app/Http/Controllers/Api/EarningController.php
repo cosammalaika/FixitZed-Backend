@@ -21,8 +21,7 @@ class EarningController extends Controller
             ]);
         }
 
-        $range = (string) $request->query('filter', 'all');
-        $presets = $this->earningPresets();
+        $range = $request->query('filter', 'all');
 
         $query = Payment::with(['serviceRequest.service'])
             ->whereHas('serviceRequest', function ($q) use ($fixer) {
@@ -32,21 +31,23 @@ class EarningController extends Controller
             ->orderByDesc('paid_at');
 
         $now = now();
-        if (preg_match('/^(\d+)d$/', $range, $matches)) {
-            $days = (int) $matches[1];
-            if (in_array($days, $presets, true)) {
-                $query->where('paid_at', '>=', $now->copy()->subDays($days));
-            }
-        } else {
-            switch ($range) {
-                case 'year':
-                    $query->where('paid_at', '>=', $now->copy()->startOfYear());
-                    break;
-                case 'all':
-                default:
-                    // no date filter
-                    break;
-            }
+        switch ($range) {
+            case '7d':
+                $query->where('paid_at', '>=', $now->copy()->subDays(7));
+                break;
+            case '30d':
+                $query->where('paid_at', '>=', $now->copy()->subDays(30));
+                break;
+            case '90d':
+                $query->where('paid_at', '>=', $now->copy()->subDays(90));
+                break;
+            case 'year':
+                $query->where('paid_at', '>=', $now->copy()->startOfYear());
+                break;
+            case 'all':
+            default:
+                // no date filter
+                break;
         }
 
         $payments = $query->get()->map(function (Payment $payment) {
@@ -69,28 +70,5 @@ class EarningController extends Controller
             'data' => $payments,
         ]);
     }
-
-    private function earningPresets(): array
-    {
-        $raw = (string) setting('earnings.filter_presets_days', '7,30,90');
-        $parts = array_filter(array_map('trim', explode(',', $raw)));
-        $values = [];
-
-        foreach ($parts as $part) {
-            if (! ctype_digit($part)) {
-                return [7, 30, 90];
-            }
-            $value = (int) $part;
-            if ($value < 1 || $value > 365) {
-                return [7, 30, 90];
-            }
-            $values[] = $value;
-        }
-
-        if (empty($values) || count($values) > 10) {
-            return [7, 30, 90];
-        }
-
-        return array_values(array_unique($values));
-    }
 }
+

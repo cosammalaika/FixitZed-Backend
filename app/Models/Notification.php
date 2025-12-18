@@ -34,8 +34,6 @@ class Notification extends Model
      */
     public function prunable()
     {
-        $days = (int) \App\Models\Setting::get('notifications.retention_days', 7);
-        $days = max(1, min($days, 3650));
-        return static::where('created_at', '<', now()->subDays($days));
+        return static::where('created_at', '<', now()->subDays(7));
     }
 }

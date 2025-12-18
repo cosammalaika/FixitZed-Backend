@@ -37,8 +37,6 @@ class LoginAuditIndex extends Component
 
     public function render()
     {
-        $perPage = (int) setting('admin.per_page', 20);
-        $perPage = max(5, min($perPage, 200));
         $audits = LoginAudit::with('user')
             ->when($this->status !== 'all', fn ($query) => $query->where('status', $this->status))
             ->when($this->event !== 'all', fn ($query) => $query->where('event', $this->event))
@@ -53,7 +51,7 @@ class LoginAuditIndex extends Component
                 });
             })
             ->latest()
-            ->paginate($perPage);
+            ->paginate(20);
 
         $events = LoginAudit::query()
             ->select('event')

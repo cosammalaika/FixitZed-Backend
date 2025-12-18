@@ -21,7 +21,6 @@ class Issues extends Component
 
     public function render()
     {
-        $this->perPage = max(5, min((int) setting('admin.per_page', $this->perPage), 200));
         $reports = Report::with(['reporter', 'target'])
             ->when($this->statusFilter !== 'all', fn ($q) => $q->where('status', $this->statusFilter))
             ->when($this->typeFilter !== 'all', fn ($q) => $q->where('type', $this->typeFilter))
@@ -75,10 +74,8 @@ class Issues extends Component
             return;
         }
 
-        $defaultDays = (int) Setting::get('admin.reports.default_action_duration_days', 7);
-        $useDays = $days ?: $defaultDays;
         $report->action = $action;
-        $this->applyActionToUser($report->target_user_id, $action, $useDays);
+        $this->applyActionToUser($report->target_user_id, $action, $days);
 
         if ($action !== 'none' && $report->status === 'open') {
             $report->status = 'action_taken';
@@ -111,8 +108,7 @@ class Issues extends Component
                 $user->save();
             }
         } elseif ($action === 'suspend') {
-            $defaultDays = (int) setting('admin.reports.default_action_duration_days', 7);
-            $until = now()->addDays(max(1, (int) ($days ?? $defaultDays)));
+            $until = now()->addDays(max(1, (int) ($days ?? 7)));
             if (Schema::hasColumn('users', 'suspended_until')) {
                 $user->suspended_until = $until;
                 $user->save();

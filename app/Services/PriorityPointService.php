@@ -41,14 +41,8 @@ class PriorityPointService
     ): int {
         $current = $this->currentPoints($fixer);
 
-        $cap = $cap ?? (int) Setting::get(
-            'priority.cap',
-            Setting::get('priority.cap_default', self::DEFAULT_CAP)
-        );
-        $floor = $floor ?? (int) Setting::get(
-            'priority.floor',
-            Setting::get('priority.floor_default', self::DEFAULT_FLOOR)
-        );
+        $cap = $cap ?? (int) Setting::get('priority.cap', self::DEFAULT_CAP);
+        $floor = $floor ?? (int) Setting::get('priority.floor', self::DEFAULT_FLOOR);
 
         $next = max($floor, min($cap, $current + $delta));
 
@@ -79,10 +73,7 @@ class PriorityPointService
 
     public function onAssignment(Fixer $fixer, array $meta = []): int
     {
-        $delta = (int) Setting::get(
-            'priority.assignment_penalty',
-            Setting::get('priority.assignment_penalty_default', 0)
-        );
+        $delta = (int) Setting::get('priority.assignment_penalty', 0);
         if ($delta < 0) {
             $delta = 0;
         }
@@ -92,10 +83,7 @@ class PriorityPointService
 
     public function onCompletion(Fixer $fixer, array $meta = []): int
     {
-        $bonus = (int) Setting::get(
-            'priority.completion_bonus',
-            Setting::get('priority.completion_bonus_default', 10)
-        );
+        $bonus = (int) Setting::get('priority.completion_bonus', 10);
         if ($bonus <= 0) {
             $bonus = 10;
         }
@@ -105,10 +93,7 @@ class PriorityPointService
 
     public function onTimeout(Fixer $fixer, array $meta = []): int
     {
-        $penalty = (int) Setting::get(
-            'priority.timeout_penalty',
-            Setting::get('priority.timeout_penalty_default', -10)
-        );
+        $penalty = (int) Setting::get('priority.timeout_penalty', -10);
         if ($penalty > 0) {
             $penalty = -abs($penalty);
         } elseif ($penalty == 0) {
@@ -125,19 +110,13 @@ class PriorityPointService
 
     public function onWeeklyRecovery(Fixer $fixer, array $meta = []): int
     {
-        $bonus = (int) Setting::get(
-            'priority.weekly_recovery',
-            Setting::get('priority.weekly_recovery_default', 5)
-        );
+        $bonus = (int) Setting::get('priority.weekly_recovery', 5);
         return $this->adjust($fixer, $bonus, self::REASON_WEEKLY_RECOVERY, $meta);
     }
 
     public function onIdleBonus(Fixer $fixer, array $meta = []): int
     {
-        $bonus = (int) Setting::get(
-            'priority.idle_bonus',
-            Setting::get('priority.idle_bonus_default', 4)
-        );
+        $bonus = (int) Setting::get('priority.idle_bonus', 4);
         return $this->adjust($fixer, $bonus, self::REASON_IDLE_BONUS, $meta);
     }
 

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\Api\ResolvesPerPage;
 use App\Models\Service;
 use App\Support\ApiCache;
 use Database\Seeders\ServiceCatalogSeeder;
@@ -11,8 +10,6 @@ use Illuminate\Http\Request;
 
 class ServiceController extends Controller
 {
-    use ResolvesPerPage;
-
     public function index(Request $request)
     {
         $query = Service::query();
@@ -24,7 +21,8 @@ class ServiceController extends Controller
                 $q->where('category_id', $request->integer('category_id'));
             });
         }
-        $perPage = $this->resolvePerPage($request);
+        $perPage = (int) $request->integer('per_page', 20);
+        $perPage = max(1, min($perPage, 100));
         $page = max(1, $request->integer('page', 1));
 
         $key = 'services:index:' . md5(http_build_query([

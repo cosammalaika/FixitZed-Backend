@@ -19,10 +19,7 @@ class FixerAssignmentService
 
         $requestLat = $serviceRequest->location_lat;
         $requestLng = $serviceRequest->location_lng;
-        $radiusKm = (float) Setting::get(
-            'priority.location_radius_km',
-            Setting::get('priority.location_radius_km_default', 15)
-        );
+        $radiusKm = (float) Setting::get('priority.location_radius_km', 15);
         $applyRadiusFilter = $requestLat !== null && $requestLng !== null && $radiusKm > 0;
 
         $candidates = Fixer::query()
@@ -146,9 +143,8 @@ class FixerAssignmentService
             return;
         }
 
-        $delay = (int) Setting::get('no_fixer_retry_delay_minutes', 5);
         NotifyCustomerNoFixerJob::dispatch($serviceRequest->id)
-            ->delay(now()->addMinutes(max(1, $delay)));
+            ->delay(now()->addMinutes(5));
     }
 
     protected function distanceKm($lat1, $lng1, $lat2, $lng2): ?float

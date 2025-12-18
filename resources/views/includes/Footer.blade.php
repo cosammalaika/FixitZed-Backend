@@ -2,11 +2,14 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-sm-6">
-                © 2025 Fixit Zed
+                <script>
+                    document.write(new Date().getFullYear())
+                </script> © Fixit Zed.
             </div>
             <div class="col-sm-6">
                 <div class="text-sm-end d-none d-sm-block">
-                    &nbsp;
+                    Develop by <a href="https://www.nyalitech.com" class="text-decoration-underline">Nyalitech</a>
+
                 </div>
             </div>
         </div>

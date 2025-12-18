@@ -28,14 +28,14 @@ use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\MfaController;
 
 // Guest routes (no authentication required)
-Route::post('login', [AuthController::class, 'login'])->middleware('throttle:6,1');
+Route::post('login', [AuthController::class, 'login'])->middleware('throttle:10,1');
 Route::post('register', [AuthController::class, 'register'])->middleware('throttle:6,1');
-Route::post('password/forgot', [AuthController::class, 'forgotPassword'])->middleware('throttle:6,1');
-Route::post('password/reset', [AuthController::class, 'resetPassword'])->middleware('throttle:6,1');
+Route::post('password/forgot', [AuthController::class, 'forgotPassword'])->middleware('throttle:5,1');
+Route::post('password/reset', [AuthController::class, 'resetPassword'])->middleware('throttle:5,1');
 Route::get('email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
     ->middleware(['signed'])
     ->name('verification.verify');
-Route::post('login/mfa', [MfaController::class, 'complete'])->middleware('throttle:6,1');
+Route::post('login/mfa', [MfaController::class, 'complete'])->middleware('throttle:10,1');
 
 // Public data (read-only)
 Route::get('categories', [CategoryController::class, 'index']);

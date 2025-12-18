@@ -12,7 +12,6 @@ use App\Models\Notification;
 use App\Models\Setting;
 use App\Services\PriorityPointService;
 use App\Services\WalletService;
-use App\Http\Controllers\Api\ResolvesPerPage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,8 +19,6 @@ use Illuminate\Validation\ValidationException;
 
 class FixerRequestController extends Controller
 {
-    use ResolvesPerPage;
-
     public function __construct(private PriorityPointService $priorityPoints)
     {
     }
@@ -39,12 +36,11 @@ class FixerRequestController extends Controller
 
         $this->expirePendingRequests();
         $status = $request->query('status');
-        $perPage = $this->resolvePerPage($request);
         if ($status === 'declined') {
             $declines = ServiceRequestDecline::with(['serviceRequest.service', 'serviceRequest.customer'])
                 ->where('fixer_id', $fixer->id)
                 ->latest('declined_at')
-                ->paginate($perPage)
+                ->paginate(20)
                 ->through(function (ServiceRequestDecline $decline) {
                     $sr = $decline->serviceRequest;
                     if (! $sr) {
@@ -89,7 +85,7 @@ class FixerRequestController extends Controller
             });
         }
 
-        $requests = $q->paginate($perPage)->through(function (ServiceRequest $sr) {
+        $requests = $q->paginate(20)->through(function (ServiceRequest $sr) {
             return $this->transformForFixer($sr);
         });
 
@@ -291,9 +287,8 @@ class FixerRequestController extends Controller
             $nextFixer = $this->assignNextFixer($locked, $fixer->id);
 
             if (! $nextFixer) {
-                $delay = (int) Setting::get('no_fixer_retry_delay_minutes', 5);
                 NotifyCustomerNoFixerJob::dispatch($locked->id)
-                    ->delay(now()->addMinutes(max(1, $delay)));
+                    ->delay(now()->addMinutes(5));
             }
         });
 
@@ -454,9 +449,8 @@ class FixerRequestController extends Controller
             ->get();
 
         if ($candidates->isEmpty()) {
-            $delay = (int) Setting::get('no_fixer_retry_delay_minutes', 5);
             NotifyCustomerNoFixerJob::dispatch($serviceRequest->id)
-                ->delay(now()->addMinutes(max(1, $delay)));
+                ->delay(now()->addMinutes(5));
             return null;
         }
 

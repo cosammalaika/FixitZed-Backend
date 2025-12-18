@@ -9,20 +9,10 @@
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h4 class="card-title mb-0">Notifications List</h4>
 
-                        <div class="d-flex flex-wrap gap-2">
-                            @can('edit.notifications')
-                                <button type="button"
-                                    class="btn btn-outline-danger"
-                                    onclick="return confirm('Prune notifications older than the retention period?')"
-                                    wire:click="pruneOldNotifications">
-                                    Prune old notifications
-                                </button>
-                            @endcan
-                            <button type="button" class="btn btn-primary waves-effect waves-light" data-bs-toggle="modal"
-                                data-bs-target="#createNotificationModal">
-                                + Add Notification
-                            </button>
-                        </div>
+                        <button type="button" class="btn btn-primary waves-effect waves-light" data-bs-toggle="modal"
+                            data-bs-target="#createNotificationModal">
+                            + Add Notification
+                        </button>
                     </div>
 
                     <!-- Create Notification Modal -->

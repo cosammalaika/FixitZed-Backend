@@ -9,7 +9,6 @@ use App\Models\LoginAudit;
 use App\Models\UserTrustedDevice;
 use App\Models\Province;
 use App\Models\User;
-use App\Models\Setting;
 use App\Support\ProvinceDistrict;
 use App\Support\UserSessionManager;
 use App\Notifications\ResetPasswordOtp;
@@ -435,8 +434,7 @@ class AuthController extends Controller
         }
 
         $createdAt = $record->created_at ? Carbon::parse($record->created_at) : null;
-        $resetExpiry = (int) Setting::get('auth.password_reset_expiry_minutes', 15);
-        if (! $createdAt || $createdAt->addMinutes($resetExpiry)->isPast()) {
+        if (! $createdAt || $createdAt->addMinutes(15)->isPast()) {
             DB::table('password_reset_tokens')->where('email', $user->email)->delete();
 
             $this->recordLoginAudit($user, 'password.reset', 'failed', [
@@ -802,13 +800,12 @@ class AuthController extends Controller
     {
         $token = (string) Str::uuid();
 
-        $expiry = (int) Setting::get('auth.mfa_challenge_expiry_minutes', 5);
         Cache::put($this->mfaCacheKey($token), [
             'user_id' => $user->id,
             'remember_device' => (bool) ($context['remember_device'] ?? false),
             'device_name' => $context['device_name'] ?? null,
             'identifier' => $context['identifier'] ?? null,
-        ], now()->addMinutes($expiry));
+        ], now()->addMinutes(5));
 
         return ['token' => $token];
     }

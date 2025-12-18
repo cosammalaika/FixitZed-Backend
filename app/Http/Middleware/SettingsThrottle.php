@@ -9,21 +9,32 @@ use Illuminate\Http\Request;
 
 class SettingsThrottle extends ThrottleRequests
 {
-    public function handle(Request $request, Closure $next, string $profile = 'tight')
+    public function handle(Request $request, Closure $next, $maxAttempts = 60, $decayMinutes = 1, $prefix = '')
     {
-        if ($profile === 'auth_login') {
-            $raw = (string) Setting::get('auth.throttle_login', '6,1');
+        $profile = is_string($maxAttempts) && ! is_numeric($maxAttempts)
+            ? trim($maxAttempts)
+            : null;
+
+        if ($profile) {
+            if ($profile === 'auth_login') {
+                $raw = (string) Setting::get('auth.throttle_login', '6,1');
+            } else {
+                $fallback = $profile === 'relaxed' ? '6,1' : '10,1';
+                $raw = (string) Setting::get('api.rate_limits.default_' . $profile, $fallback);
+            }
+
+            $parts = array_map('trim', explode(',', $raw));
+            $maxAttempts = (int) ($parts[0] ?? 10);
+            $decayMinutes = (int) ($parts[1] ?? 1);
+            $prefix = 'settings:' . $profile;
         } else {
-            $fallback = $profile === 'relaxed' ? '6,1' : '10,1';
-            $raw = (string) Setting::get('api.rate_limits.default_' . $profile, $fallback);
+            $maxAttempts = (int) $maxAttempts;
+            $decayMinutes = (int) $decayMinutes;
         }
-        $parts = array_map('trim', explode(',', $raw));
-        $maxAttempts = (int) ($parts[0] ?? 10);
-        $decayMinutes = (int) ($parts[1] ?? 1);
 
-        $maxAttempts = max(1, min($maxAttempts, 500));
-        $decayMinutes = max(1, min($decayMinutes, 60));
+        $maxAttempts = max(1, min((int) $maxAttempts, 500));
+        $decayMinutes = max(1, min((int) $decayMinutes, 60));
 
-        return parent::handle($request, $next, $maxAttempts, $decayMinutes, 'settings:' . $profile);
+        return parent::handle($request, $next, $maxAttempts, $decayMinutes, $prefix);
     }
 }

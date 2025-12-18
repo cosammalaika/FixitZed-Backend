@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Api\ResolvesPerPage;
 use App\Models\Service;
 use App\Support\ApiCache;
+use Database\Seeders\ServiceCatalogSeeder;
 use Illuminate\Http\Request;
 
 class ServiceController extends Controller
@@ -34,6 +35,10 @@ class ServiceController extends Controller
         ]));
 
         return ApiCache::remember(['catalog', 'services'], $key, function () use ($query, $perPage) {
+            if (! Service::query()->exists()) {
+                (new ServiceCatalogSeeder())->run();
+            }
+
             $paginator = $query
                 ->with(['subcategory', 'subcategory.category'])
                 ->latest()

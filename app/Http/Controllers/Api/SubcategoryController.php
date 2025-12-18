@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Api\ResolvesPerPage;
 use App\Models\Subcategory;
 use App\Support\ApiCache;
+use Database\Seeders\ServiceCatalogSeeder;
 use Illuminate\Http\Request;
 
 class SubcategoryController extends Controller
@@ -28,6 +29,10 @@ class SubcategoryController extends Controller
         ]));
 
         return ApiCache::remember(['catalog', 'subcategories'], $key, function () use ($q, $perPage) {
+            if (! Subcategory::query()->exists()) {
+                (new ServiceCatalogSeeder())->run();
+            }
+
             $paginator = $q->latest()->paginate($perPage);
             return response()->json([
                 'success' => true,

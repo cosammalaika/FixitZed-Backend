@@ -31,6 +31,29 @@ class GeneralSettings extends Component
     public $auth_password_reset_expiry = 15;
     public $auth_mfa_expiry = 5;
 
+    private array $settingMap = [
+        'currency_code' => ['key' => 'currency.code', 'type' => 'string'],
+        'currency_symbol' => ['key' => 'currency.symbol', 'type' => 'string'],
+        'currency_name' => ['key' => 'currency.name', 'type' => 'string'],
+
+        'loyalty_point_value' => ['key' => 'loyalty.point_value', 'type' => 'float'],
+        'loyalty_redeem_threshold_value' => ['key' => 'loyalty.redeem_threshold_value', 'type' => 'float'],
+
+        'notifications_retention_days' => ['key' => 'notifications.retention_days', 'type' => 'int'],
+        'notifications_per_page' => ['key' => 'notifications.per_page', 'type' => 'int'],
+
+        'matching_default_radius_km' => ['key' => 'matching.default_radius_km', 'type' => 'float'],
+        'matching_max_radius_km' => ['key' => 'matching.max_radius_km', 'type' => 'float'],
+        'matching_radius_step_km' => ['key' => 'matching.radius_step_km', 'type' => 'float'],
+        'matching_max_retries' => ['key' => 'matching.max_retries', 'type' => 'int'],
+
+        'pagination_admin_default' => ['key' => 'pagination.admin_default', 'type' => 'int'],
+        'pagination_api_default' => ['key' => 'pagination.api_default', 'type' => 'int'],
+
+        'auth_password_reset_expiry' => ['key' => 'auth.password_reset_expiry', 'type' => 'int'],
+        'auth_mfa_expiry' => ['key' => 'auth.mfa_expiry', 'type' => 'int'],
+    ];
+
     protected $rules = [
         'currency_code' => 'required|string|max:10',
         'currency_symbol' => 'required|string|max:10',
@@ -77,87 +100,40 @@ class GeneralSettings extends Component
         $this->auth_mfa_expiry = (int) Setting::get('auth.mfa_expiry', $this->auth_mfa_expiry);
     }
 
-    public function saveCurrency(): void
+    public function saveField(string $property): void
     {
-        $data = $this->validateOnly([
-            'currency_code', 'currency_symbol', 'currency_name',
-        ]);
-
-        Setting::set('currency.code', strtoupper($data['currency_code']));
-        Setting::set('currency.symbol', $data['currency_symbol']);
-        Setting::set('currency.name', $data['currency_name']);
-
-        $this->toast('Currency settings updated.');
-    }
-
-    public function saveLoyalty(): void
-    {
-        $data = $this->validateOnly([
-            'loyalty_point_value', 'loyalty_redeem_threshold_value',
-        ]);
-
-        Setting::set('loyalty.point_value', (float) $data['loyalty_point_value']);
-        Setting::set('loyalty.redeem_threshold_value', (float) $data['loyalty_redeem_threshold_value']);
-
-        $this->toast('Loyalty settings updated.');
-    }
-
-    public function saveNotifications(): void
-    {
-        $data = $this->validateOnly([
-            'notifications_retention_days', 'notifications_per_page',
-        ]);
-
-        Setting::set('notifications.retention_days', (int) $data['notifications_retention_days']);
-        Setting::set('notifications.per_page', (int) $data['notifications_per_page']);
-
-        $this->toast('Notification settings updated.');
-    }
-
-    public function saveMatching(): void
-    {
-        $data = $this->validateOnly([
-            'matching_default_radius_km',
-            'matching_max_radius_km',
-            'matching_radius_step_km',
-            'matching_max_retries',
-        ]);
-
-        if ($data['matching_default_radius_km'] > $data['matching_max_radius_km']) {
-            $this->addError('matching_default_radius_km', 'Default radius cannot exceed max radius.');
+        if (! isset($this->settingMap[$property])) {
             return;
         }
 
-        Setting::set('matching.default_radius_km', (float) $data['matching_default_radius_km']);
-        Setting::set('matching.max_radius_km', (float) $data['matching_max_radius_km']);
-        Setting::set('matching.radius_step_km', (float) $data['matching_radius_step_km']);
-        Setting::set('matching.max_retries', (int) $data['matching_max_retries']);
+        // Special validation dependency for matching radii
+        if (in_array($property, ['matching_default_radius_km', 'matching_max_radius_km'], true)) {
+            $this->validateOnly('matching_default_radius_km');
+            $this->validateOnly('matching_max_radius_km');
+            if ($this->matching_default_radius_km > $this->matching_max_radius_km) {
+                $this->addError('matching_default_radius_km', 'Default radius cannot exceed max radius.');
+                return;
+            }
+        }
 
-        $this->toast('Search & Matching settings updated.');
-    }
+        $this->validateOnly($property);
 
-    public function savePagination(): void
-    {
-        $data = $this->validateOnly([
-            'pagination_admin_default', 'pagination_api_default',
-        ]);
+        $mapping = $this->settingMap[$property];
+        $value = $this->{$property};
 
-        Setting::set('pagination.admin_default', (int) $data['pagination_admin_default']);
-        Setting::set('pagination.api_default', (int) $data['pagination_api_default']);
+        switch ($mapping['type']) {
+            case 'int':
+                $value = (int) $value;
+                break;
+            case 'float':
+                $value = (float) $value;
+                break;
+            default:
+                $value = is_string($value) ? $value : (string) $value;
+        }
 
-        $this->toast('Pagination settings updated.');
-    }
-
-    public function saveAuth(): void
-    {
-        $data = $this->validateOnly([
-            'auth_password_reset_expiry', 'auth_mfa_expiry',
-        ]);
-
-        Setting::set('auth.password_reset_expiry', (int) $data['auth_password_reset_expiry']);
-        Setting::set('auth.mfa_expiry', (int) $data['auth_mfa_expiry']);
-
-        $this->toast('Auth & Security settings updated.');
+        Setting::set($mapping['key'], $value);
+        $this->toast('Setting saved.');
     }
 
     public function render()

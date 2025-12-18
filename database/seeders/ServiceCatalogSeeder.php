@@ -16,6 +16,11 @@ class ServiceCatalogSeeder extends Seeder
             $category->delete();
         });
 
+        // Remove Pest Control entries (rollback).
+        Category::where('name', 'Pest Control')->each(function (Category $category) {
+            $category->delete();
+        });
+
         $catalog = [
             'Plumbing' => [
                 'Leak Repair',
@@ -81,15 +86,6 @@ class ServiceCatalogSeeder extends Seeder
                 'Garden Soil & Fertilizer Supply',
                 'Greenhouse Setup',
             ],
-            'Pest Control' => [
-                'General Pest Control',
-                'Termite Treatment',
-                'Rodent Control',
-                'Fumigation',
-                'Bed Bug Treatment',
-                'Mosquito Control',
-                'Cockroach Control',
-            ],
             'Appliance Services' => [
                 'Refrigerator Repair',
                 'Washing Machine Repair',
@@ -148,6 +144,15 @@ class ServiceCatalogSeeder extends Seeder
             ['name' => 'All Services'],
             ['description' => 'Complete FixitZed catalog']
         );
+
+        // Remove Pest Control subcategory under the consolidated category (rollback).
+        $pestSubcategoryIds = Subcategory::where('category_id', $category->id)
+            ->where('name', 'Pest Control')
+            ->pluck('id');
+        if ($pestSubcategoryIds->isNotEmpty()) {
+            Service::whereIn('subcategory_id', $pestSubcategoryIds)->delete();
+            Subcategory::whereIn('id', $pestSubcategoryIds)->delete();
+        }
 
         // Reset subcategories under the consolidated category.
         Subcategory::where('category_id', $category->id)->delete();

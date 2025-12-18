@@ -17,8 +17,15 @@
                 <div class="card shadow-sm border-0">
                     <div class="card-body p-5 text-center">
                         <div class="mb-4">
-                            <span class="avatar avatar-xxl rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center">
-                                <img src="{{ asset('assets/images/users/avatar-2.jpg') }}" alt="avatar" class="rounded-circle" height="96">
+                            @php($photo = $user?->profile_photo_path)
+                            <span class="avatar avatar-xxl rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center overflow-hidden">
+                                @if ($photo)
+                                    <img src="{{ Storage::disk('public')->url($photo) }}" alt="avatar" class="rounded-circle" height="96" width="96" style="object-fit: cover;">
+                                @else
+                                    <span class="fw-semibold text-primary fs-3">
+                                        {{ strtoupper(substr($user->first_name ?? $user->name ?? 'U', 0, 1)) }}
+                                    </span>
+                                @endif
                             </span>
                         </div>
                         <h4 class="fw-semibold mb-1">{{ $user->first_name }} {{ $user->last_name }}</h4>

@@ -189,53 +189,53 @@
             </div>
         </div>
     </div>
-</div>
 
-<style>
-    .settings-card {
-        border: none;
-        border-radius: 16px;
-    }
-    .gradient-header {
-        background: linear-gradient(135deg, #f46b45 0%, #ff8f70 100%);
-        border-radius: 16px 16px 0 0;
-        padding: 1rem 1.25rem;
-    }
-    .settings-card .card-body {
-        padding: 1.5rem;
-    }
-    .form-label {
-        font-weight: 600;
-    }
-    .form-control {
-        height: 44px;
-        border-radius: 10px;
-    }
-    .btn-primary {
-        padding: 0.55rem 1.4rem;
-        border-radius: 10px;
-    }
-    @media (max-width: 768px) {
-        .settings-card .card-body {
-            padding: 1.1rem;
+    <style>
+        .settings-card {
+            border: none;
+            border-radius: 16px;
         }
-    }
-</style>
-
-<script>
-    document.addEventListener('livewire:init', () => {
-        Livewire.on('toast', ({type, message}) => {
-            const toast = bootstrap.Toast.getOrCreateInstance(document.getElementById('app-toast'));
-            const toastBody = document.querySelector('#app-toast .toast-body');
-            const toastElement = document.getElementById('app-toast');
-            if (toastBody && toastElement) {
-                toastElement.classList.remove('text-bg-success', 'text-bg-danger', 'text-bg-info');
-                toastElement.classList.add(type === 'success' ? 'text-bg-success' : 'text-bg-danger');
-                toastBody.textContent = message;
-                toast.show();
-            } else {
-                alert(message);
+        .gradient-header {
+            background: linear-gradient(135deg, #f46b45 0%, #ff8f70 100%);
+            border-radius: 16px 16px 0 0;
+            padding: 1rem 1.25rem;
+        }
+        .settings-card .card-body {
+            padding: 1.5rem;
+        }
+        .form-label {
+            font-weight: 600;
+        }
+        .form-control {
+            height: 44px;
+            border-radius: 10px;
+        }
+        .btn-primary {
+            padding: 0.55rem 1.4rem;
+            border-radius: 10px;
+        }
+        @media (max-width: 768px) {
+            .settings-card .card-body {
+                padding: 1.1rem;
             }
+        }
+    </style>
+
+    <script>
+        document.addEventListener('livewire:init', () => {
+            Livewire.on('toast', ({type, message}) => {
+                const toast = bootstrap.Toast.getOrCreateInstance(document.getElementById('app-toast'));
+                const toastBody = document.querySelector('#app-toast .toast-body');
+                const toastElement = document.getElementById('app-toast');
+                if (toastBody && toastElement) {
+                    toastElement.classList.remove('text-bg-success', 'text-bg-danger', 'text-bg-info');
+                    toastElement.classList.add(type === 'success' ? 'text-bg-success' : 'text-bg-danger');
+                    toastBody.textContent = message;
+                    toast.show();
+                } else {
+                    alert(message);
+                }
+            });
         });
-    });
-</script>
+    </script>
+</div>

@@ -2,6 +2,12 @@
 
 use Illuminate\Support\Str;
 
+$defaultCache = env('CACHE_STORE', 'database');
+if ($defaultCache === 'database') {
+    // Safety fallback: avoid DB cache when DB is unreachable.
+    $defaultCache = 'file';
+}
+
 return [
 
     /*
@@ -15,7 +21,7 @@ return [
     |
     */
 
-    'default' => env('CACHE_STORE', 'database'),
+    'default' => $defaultCache,
 
     /*
     |--------------------------------------------------------------------------

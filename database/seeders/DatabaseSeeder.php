@@ -63,7 +63,6 @@ class DatabaseSeeder extends Seeder
         $this->call([
             LocationOptionSeeder::class,
             ServiceCatalogSeeder::class,
-            PestControlSeeder::class,
             ZambianUsersSeeder::class,
             CouponSeeder::class,
         ]);

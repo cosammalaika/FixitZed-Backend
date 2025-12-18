@@ -67,36 +67,19 @@
 
     <style>
         .settings-header {
-            background: linear-gradient(135deg, #f46b45 0%, #ffa477 100%);
-            color: #fff;
-        }
-        .settings-header .text-muted {
-            color: rgba(255, 255, 255, 0.85) !important;
-        }
-        .settings-header h3 {
-            font-weight: 700;
-            letter-spacing: -0.01em;
-        }
-        .settings-header .card-body {
-            border-radius: 14px;
-        }
-        .card {
-            border: 1px solid rgba(15, 23, 42, 0.06);
-            border-radius: 14px;
-            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+            background: linear-gradient(120deg, rgba(242, 101, 34, 0.08), rgba(255, 255, 255, 0.9));
         }
         .settings-card-header {
-            background: linear-gradient(135deg, rgba(244, 107, 69, 0.18) 0%, rgba(255, 164, 119, 0.18) 100%);
+            background: linear-gradient(90deg, rgba(242, 101, 34, 0.08), rgba(255, 255, 255, 0.95));
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-            border-radius: 14px 14px 0 0;
         }
         .settings-row {
             display: grid;
             grid-template-columns: minmax(220px, 1.2fr) minmax(220px, 1fr) minmax(150px, 180px);
             gap: 1.5rem;
-            align-items: center;
-            padding: 0.9rem 0;
-            border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+            align-items: start;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
         }
         .settings-row:last-child {
             border-bottom: none;
@@ -108,33 +91,15 @@
         .settings-meta small {
             display: block;
         }
-        .settings-row .form-control {
-            height: 44px;
-            border-radius: 10px;
-            border-color: rgba(15, 23, 42, 0.12);
-        }
-        .settings-row .form-control:focus {
-            border-color: rgba(244, 107, 69, 0.6);
-            box-shadow: 0 0 0 0.15rem rgba(244, 107, 69, 0.12);
-        }
         .settings-actions {
             display: flex;
             flex-direction: column;
             gap: 0.35rem;
             align-items: flex-start;
         }
-        .settings-actions .btn {
-            border-radius: 10px;
-            padding: 0.45rem 1rem;
-            font-weight: 600;
-            box-shadow: 0 6px 12px rgba(244, 107, 69, 0.2);
-        }
         .settings-actions .saved-indicator {
             color: #198754;
             font-size: 0.85rem;
-        }
-        .settings-group {
-            padding: 0 0.25rem;
         }
         @media (max-width: 992px) {
             .settings-row {

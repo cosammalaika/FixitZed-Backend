@@ -15,6 +15,7 @@ class GeneralSettings extends Component
     public $currency_name = 'Zambian Kwacha';
     public $loyalty_point_value = 0.01; // K0.01 per point
     public $loyalty_redeem_threshold_value = 50; // K50 minimum to redeem
+    public array $fields = [];
 
     protected $rules = [
         'currency_code' => 'required|string|max:10',
@@ -31,6 +32,7 @@ class GeneralSettings extends Component
         $this->currency_name = Setting::get('currency.name', $this->currency_name);
         $this->loyalty_point_value = (float) Setting::get('loyalty.point_value', $this->loyalty_point_value);
         $this->loyalty_redeem_threshold_value = (float) Setting::get('loyalty.redeem_threshold_value', $this->loyalty_redeem_threshold_value);
+        $this->fields = $this->fieldConfig();
     }
 
     public function save(): void
@@ -325,6 +327,5 @@ class GeneralSettings extends Component
         }
 
         return array_values(array_unique($values));
-        return view('livewire.settings.general-settings');
     }
 }

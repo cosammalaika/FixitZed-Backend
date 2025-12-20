@@ -39,6 +39,7 @@ class PaymentMethodIndex extends Component
             'type' => 'success',
             'message' => 'Payment method added',
         ]);
+        $this->dispatchBrowserEvent('close-add-payment-modal');
     }
 
     public function toggle($id)

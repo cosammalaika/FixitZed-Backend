@@ -7,12 +7,22 @@ use App\Models\Service;
 use App\Support\ApiCache;
 use Database\Seeders\ServiceCatalogSeeder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ServiceController extends Controller
 {
     public function index(Request $request)
     {
         $query = Service::query();
+
+        if ($request->filled('search')) {
+            $term = '%' . trim($request->input('search')) . '%';
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'like', $term)
+                    ->orWhere('description', 'like', $term);
+            });
+        }
+
         if ($request->filled('subcategory_id')) {
             $query->where('subcategory_id', $request->integer('subcategory_id'));
         }
@@ -69,5 +79,43 @@ class ServiceController extends Controller
             'success' => true,
             'data' => $service,
         ]);
+    }
+
+    public function fixers(Request $request, Service $service)
+    {
+        try {
+            $fixers = $service->fixers()
+                ->with('user')
+                ->whereHas('user', function ($q) {
+                    $q->where('status', 'Active')->whereNotNull('email_verified_at');
+                })
+                ->where(function ($q) {
+                    $q->whereNull('status')->orWhere('status', 'Active');
+                })
+                ->get()
+                ->map(function ($fixer) {
+                    return [
+                        'id' => $fixer->id,
+                        'user_id' => $fixer->user_id,
+                        'name' => trim($fixer->user->first_name . ' ' . $fixer->user->last_name),
+                        'rating_avg' => $fixer->rating_avg,
+                        'status' => $fixer->status,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $fixers,
+            ], 200);
+        } catch (\Throwable $e) {
+            Log::error('Service fixers lookup failed', [
+                'service_id' => $service->id,
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to load fixers right now.',
+            ], 503);
+        }
     }
 }

@@ -43,6 +43,7 @@ Route::get('categories/{category}', [CategoryController::class, 'show']);
 Route::get('categories/{category}/subcategories', [CategoryController::class, 'subcategories']);
 Route::get('services', [ServiceController::class, 'index']);
 Route::get('services/{service}', [ServiceController::class, 'show']);
+Route::get('services/{service}/fixers', [ServiceController::class, 'fixers']);
 Route::get('subcategories', [SubcategoryController::class, 'index']);
 Route::get('subcategories/{subcategory}', [SubcategoryController::class, 'show']);
 Route::get('fixers', [FixerController::class, 'index']);

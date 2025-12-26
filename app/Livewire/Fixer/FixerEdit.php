@@ -49,9 +49,10 @@ class FixerEdit extends Component
             ->get();
         $this->allServices = Service::query()
             ->select('id', 'name')
-            ->distinct()
             ->orderBy('name')
-            ->get();
+            ->get()
+            ->unique('id')
+            ->values();
     }
 
     public function submit()

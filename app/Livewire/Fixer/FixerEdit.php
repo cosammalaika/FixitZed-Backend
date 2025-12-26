@@ -18,7 +18,7 @@ class FixerEdit extends Component
     protected $rules = [
         'user_id' => 'required|exists:users,id',
         'bio' => 'nullable|string|max:1000',
-        'status' => 'required|in:pending,approved,rejected',
+        'status' => 'required|string|in:pending,approved,rejected',
         'selected_services' => 'array',
         'selected_services.*' => 'exists:services,id',
     ];
@@ -47,7 +47,24 @@ class FixerEdit extends Component
 
     public function submit()
     {
-        $this->status = strtolower(trim((string) $this->status));
+        if (is_array($this->status)) {
+            logger()->warning('FixerEdit status received as array', [
+                'type' => gettype($this->status),
+                'keys' => array_keys($this->status),
+            ]);
+
+            $firstScalar = collect($this->status)
+                ->first(function ($value) {
+                    return is_scalar($value) && trim((string) $value) !== '';
+                });
+
+            $this->status = $firstScalar ?? null;
+        }
+
+        if (is_scalar($this->status)) {
+            $this->status = strtolower(trim((string) $this->status));
+        }
+
         $this->validate();
 
         $fixer = Fixer::findOrFail($this->fixerId);

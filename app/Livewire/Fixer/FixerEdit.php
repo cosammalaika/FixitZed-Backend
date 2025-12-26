@@ -12,7 +12,7 @@ class FixerEdit extends Component
     public $fixerId;
     public $user_id, $bio, $status;
     public $users;
-    public $services;
+    public $allServices;
     public $selected_services = [];
 
     protected $rules = [
@@ -32,7 +32,11 @@ class FixerEdit extends Component
         $this->user_id = $fixer->user_id;
         $this->bio = $fixer->bio;
         $this->status = strtolower($fixer->status ?? 'pending');
-        $this->selected_services = $fixer->services->pluck('id')->toArray();
+        $this->selected_services = $fixer->services()
+            ->pluck('services.id')
+            ->unique()
+            ->map(fn ($id) => (string) $id)
+            ->toArray();
 
         // Allow selecting the current user or any user who isn't already a fixer
         $currentUserId = $this->user_id;
@@ -42,7 +46,10 @@ class FixerEdit extends Component
                   ->orWhere('id', $currentUserId);
             })
             ->get();
-        $this->services = Service::all();
+        $this->allServices = Service::query()
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
     }
 
     public function submit()
@@ -78,6 +85,11 @@ class FixerEdit extends Component
 
         // Sync selected services (many-to-many)
         $fixer->services()->sync($this->selected_services);
+        $this->selected_services = $fixer->services()
+            ->pluck('services.id')
+            ->unique()
+            ->map(fn ($id) => (string) $id)
+            ->toArray();
 
         // If the assigned user changed, update user types accordingly
         if ($originalUserId != $this->user_id) {
@@ -112,7 +124,7 @@ class FixerEdit extends Component
     {
         return view('livewire.fixer.fixer-edit', [
             'users' => $this->users,
-            'services' => $this->services,
+            'services' => $this->allServices,
         ]);
     }
 }

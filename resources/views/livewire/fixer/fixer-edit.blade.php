@@ -44,9 +44,9 @@
                 </div>
                 <div class="col-md-12 mt-3">
                     <label for="selected_services" class="form-label fw-semibold">Services Skilled In</label>
-                    <select wire:model="selected_services" id="selected_services" class="form-multi-select" multiple data-trigger>
+                    <select wire:model.defer="selected_services" id="selected_services" class="form-multi-select" multiple data-trigger>
                         @foreach ($services as $service)
-                            <option value="{{ $service->id }}" @selected(in_array($service->id, $selected_services ?? []))>{{ $service->name }}</option>
+                            <option value="{{ (string) $service->id }}" @selected(in_array((string) $service->id, $selected_services ?? []))>{{ $service->name }}</option>
                         @endforeach
                     </select>
                     <small class="text-muted">Hold Ctrl/Cmd to select multiple.</small>

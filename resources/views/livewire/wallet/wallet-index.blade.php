@@ -31,8 +31,28 @@
                 @foreach ($wallets as $i => $w)
                   <tr>
                     <td>{{ $i + 1 }}</td>
-                    <td>{{ optional($w->fixer->user)->first_name }} {{ optional($w->fixer->user)->last_name }}</td>
-                    <td>{{ optional($w->fixer->user)->email }}</td>
+                    @php
+                      $fixerMissing = ! $w->fixer;
+                      $userMissing = $w->fixer && ! $w->fixer->user;
+                    @endphp
+                    <td>
+                      @if($fixerMissing)
+                        <span class="text-muted">—</span>
+                        <span class="badge bg-secondary ms-1">Missing fixer</span>
+                      @elseif($userMissing)
+                        <span class="text-muted">—</span>
+                        <span class="badge bg-warning text-dark ms-1">No user</span>
+                      @else
+                        {{ $w->fixer?->user?->first_name ?? '—' }} {{ $w->fixer?->user?->last_name ?? '' }}
+                      @endif
+                    </td>
+                    <td>
+                      @if($fixerMissing || $userMissing)
+                        <span class="text-muted">—</span>
+                      @else
+                        {{ $w->fixer?->user?->email ?? '—' }}
+                      @endif
+                    </td>
                     <td>{{ $w->coin_balance }}</td>
                     <td>
                       <span class="badge rounded-pill {{ $w->subscription_status === 'approved' ? 'badge-soft-success' : 'badge-soft-warning' }}">{{ ucfirst($w->subscription_status) }}</span>

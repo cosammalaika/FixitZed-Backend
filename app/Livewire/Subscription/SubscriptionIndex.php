@@ -56,9 +56,21 @@ class SubscriptionIndex extends Component
     public function render()
     {
         $missing = ! Schema::hasTable('fixer_subscriptions');
-        $purchases = $missing ? collect() : FixerSubscription::with(['fixer.user', 'plan'])
+        $purchases = $missing ? collect() : FixerSubscription::query()
+            ->with(['fixer.user', 'plan'])
             ->latest()
             ->paginate(20);
+
+        if (! $missing) {
+            $broken = FixerSubscription::query()
+                ->whereDoesntHave('fixer')
+                ->orWhereHas('fixer', fn ($q) => $q->whereDoesntHave('user'))
+                ->count();
+
+            logger()->warning('Subscription purchases: broken relations detected', [
+                'broken_count' => $broken,
+            ]);
+        }
         return view('livewire.subscription.subscription-index', compact('purchases', 'missing'))
             ->with('statuses', $this->statuses);
     }

@@ -11,8 +11,21 @@ class WalletIndex extends Component
     public function render()
     {
         $missing = ! Schema::hasTable('fixer_wallets');
-        $wallets = $missing ? collect() : FixerWallet::with('fixer.user')->latest()->get();
+        $wallets = $missing ? collect() : FixerWallet::query()
+            ->with(['fixer.user'])
+            ->latest()
+            ->get();
+
+        if (! $missing) {
+            $broken = FixerWallet::query()
+                ->whereDoesntHave('fixer')
+                ->orWhereHas('fixer', fn ($q) => $q->whereDoesntHave('user'))
+                ->count();
+
+            logger()->warning('Wallets page: broken relations detected', [
+                'broken_count' => $broken,
+            ]);
+        }
         return view('livewire.wallet.wallet-index', compact('wallets', 'missing'));
     }
 }
-

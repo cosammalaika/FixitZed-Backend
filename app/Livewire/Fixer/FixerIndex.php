@@ -3,6 +3,7 @@
 namespace App\Livewire\Fixer;
 
 use App\Models\Fixer;
+use App\Services\FixerDeletionService;
 use Livewire\Component;
 
 class FixerIndex extends Component
@@ -21,32 +22,26 @@ class FixerIndex extends Component
         return view('livewire.fixer.fixer-index', compact('fixers'));
     }
 
-    public function delete($id)
+    public function delete($id, FixerDeletionService $deleter)
     {
         $fixer = Fixer::find($id);
 
-        if ($fixer) {
-            $user = $fixer->user;
-            $fixer->delete();
-
-            log_user_action('deleted fixer', "Deleted Fixer ID: {$fixer->id}");
-
-            if ($user) {
-                $user->removeRole('Fixer');
-                if (! $user->hasRole('Customer')) {
-                    $user->assignRole('Customer');
-                }
-            }
-
-            $this->dispatchBrowserEvent('flash-message', [
-                'type' => 'success',
-                'message' => 'Fixer deleted successfully.',
-            ]);
-        } else {
+        if (! $fixer) {
             $this->dispatchBrowserEvent('flash-message', [
                 'type' => 'error',
                 'message' => 'Fixer not found.',
             ]);
+
+            return;
         }
+
+        $deleter->deleteFixerAndUser((int) $id);
+
+        log_user_action('deleted fixer', "Deleted Fixer ID: {$id}");
+
+        $this->dispatchBrowserEvent('flash-message', [
+            'type' => 'success',
+            'message' => 'Fixer deleted successfully.',
+        ]);
     }
 }

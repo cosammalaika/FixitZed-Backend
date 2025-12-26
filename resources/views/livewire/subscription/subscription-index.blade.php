@@ -47,7 +47,21 @@
                 @foreach ($purchases as $i => $s)
                   <tr>
                     <td>{{ $purchases->firstItem() + $i }}</td>
-                    <td>{{ optional($s->fixer->user)->first_name }} {{ optional($s->fixer->user)->last_name }}</td>
+                    @php
+                      $fixerMissing = ! $s->fixer;
+                      $userMissing = $s->fixer && ! $s->fixer->user;
+                    @endphp
+                    <td>
+                      @if($fixerMissing)
+                        <span class="text-muted">—</span>
+                        <span class="badge bg-secondary ms-1">Missing fixer</span>
+                      @elseif($userMissing)
+                        <span class="text-muted">—</span>
+                        <span class="badge bg-warning text-dark ms-1">No user</span>
+                      @else
+                        {{ $s->fixer?->user?->first_name ?? '—' }} {{ $s->fixer?->user?->last_name ?? '' }}
+                      @endif
+                    </td>
                     <td>{{ optional($s->plan)->name }}</td>
                     <td>{{ $s->coins_awarded }}</td>
                     <td>

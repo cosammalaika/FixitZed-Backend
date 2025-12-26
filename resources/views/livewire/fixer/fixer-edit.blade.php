@@ -44,15 +44,35 @@
                 <small class="text-muted">Selected ({{ count($selected_services ?? []) }})</small>
             </div>
             <div class="mt-2">
-                <input type="text" class="form-control mb-2" placeholder="Search services…" oninput="filterServices(event)">
-                <select wire:model.defer="selected_services" id="selected_services" class="form-control" multiple size="8" style="min-height: 180px;">
+                @php
+                    $serviceMap = $services->keyBy('id');
+                @endphp
+                <div class="border rounded p-3" style="min-height: 140px; background: #fff;">
+                    <div class="d-flex flex-wrap gap-2">
+                        @forelse ($selected_services as $sid)
+                            @php
+                                $service = $serviceMap->get((int) $sid) ?? $serviceMap->get($sid);
+                                $name = $service->name ?? 'Unknown';
+                            @endphp
+                            <span class="badge rounded-pill" style="background:#ff7f32; color:#fff; padding:8px 12px; font-size:0.95rem;">
+                                {{ $name }}
+                                <button type="button" class="btn btn-sm btn-link text-white p-0 ms-2" style="line-height:1" wire:click.prevent="removeService('{{ $sid }}')">
+                                    ×
+                                </button>
+                            </span>
+                        @empty
+                            <span class="text-muted">No services selected.</span>
+                        @endforelse
+                    </div>
+                </div>
+                <select wire:model.defer="selected_services" id="selected_services" class="form-control mt-3" multiple size="8" style="min-height: 180px;">
                     @foreach ($services as $service)
                         <option value="{{ (string) $service->id }}">
                             {{ $service->name }}
                         </option>
                     @endforeach
                 </select>
-                <small class="text-muted d-block mt-1">Use Ctrl/Cmd + click to select multiple. Search filters visible options only.</small>
+                <small class="text-muted d-block mt-1">Hold Ctrl/Cmd to select multiple.</small>
                 @error('selected_services')
                     <div class="text-danger small">{{ $message }}</div>
                 @enderror
@@ -68,15 +88,3 @@
         </button>
     </div>
 </form>
-
-<script>
-    function filterServices(event) {
-        const term = event.target.value.toLowerCase();
-        const select = document.getElementById('selected_services');
-        if (!select) return;
-        Array.from(select.options).forEach(option => {
-            const match = option.text.toLowerCase().includes(term);
-            option.style.display = match ? '' : 'none';
-        });
-    }
-</script>

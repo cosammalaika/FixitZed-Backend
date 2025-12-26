@@ -128,4 +128,12 @@ class FixerEdit extends Component
             'services' => $this->allServices,
         ]);
     }
+
+    public function removeService($id): void
+    {
+        $this->selected_services = collect($this->selected_services ?? [])
+            ->filter(fn ($sid) => (string) $sid !== (string) $id)
+            ->values()
+            ->toArray();
+    }
 }

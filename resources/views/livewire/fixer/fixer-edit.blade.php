@@ -6,7 +6,7 @@
                 <select wire:model="user_id" id="user_id" class="form-control" disabled>
                     <option value="">-- Choose User --</option>
                     @foreach ($users as $user)
-                        <option value="{{ $user->id }}">
+                        <option value="{{ (string) $user->id }}">
                             {{ $user->first_name }} {{ $user->last_name }} ({{ $user->email }})
                         </option>
                     @endforeach
@@ -47,17 +47,17 @@
                 @php
                     $serviceMap = $services->keyBy('id');
                 @endphp
-                <div class="border rounded p-3" style="min-height: 140px; background: #fff;">
+                <div class="border rounded p-3" style="min-height: 120px; background: #fff;">
                     <div class="d-flex flex-wrap gap-2">
                         @forelse ($selected_services as $sid)
                             @php
                                 $service = $serviceMap->get((int) $sid) ?? $serviceMap->get($sid);
                                 $name = $service->name ?? 'Unknown';
                             @endphp
-                            <span class="badge rounded-pill" style="background:#ff7f32; color:#fff; padding:8px 12px; font-size:0.95rem;">
-                                {{ $name }}
-                                <button type="button" class="btn btn-sm btn-link text-white p-0 ms-2" style="line-height:1" wire:click.prevent="removeService('{{ $sid }}')">
-                                    ×
+                            <span class="badge rounded-pill d-inline-flex align-items-center" style="background:#ff7f32; color:#fff; padding:6px 10px; font-size:0.82rem; gap:6px;">
+                                <span>{{ $name }}</span>
+                                <button type="button" class="btn btn-sm btn-link text-white p-0 m-0" style="line-height:1; font-size:0.9rem;" wire:click.prevent="removeService('{{ $sid }}')">
+                                    &times;
                                 </button>
                             </span>
                         @empty
@@ -65,14 +65,27 @@
                         @endforelse
                     </div>
                 </div>
-                <select wire:model.defer="selected_services" id="selected_services" class="form-control mt-3" multiple size="8" style="min-height: 180px;">
-                    @foreach ($services as $service)
-                        <option value="{{ (string) $service->id }}">
-                            {{ $service->name }}
-                        </option>
-                    @endforeach
-                </select>
-                <small class="text-muted d-block mt-1">Hold Ctrl/Cmd to select multiple.</small>
+                <div class="mt-3 position-relative">
+                    <button type="button" class="form-control text-start d-flex justify-content-between align-items-center" wire:click="toggleServiceDropdown">
+                        <span>Select services</span>
+                        <span class="badge bg-light text-muted">{{ count($services) }} total</span>
+                    </button>
+                    @if($showServiceDropdown)
+                        <div class="border rounded shadow-sm bg-white mt-1 p-2" style="max-height: 260px; overflow-y: auto; position: absolute; width: 100%; z-index: 1050;">
+                            <input type="text" class="form-control form-control-sm mb-2" placeholder="Search services…" oninput="filterServiceList(event)">
+                            <div id="service-list" class="d-flex flex-column gap-1">
+                                @foreach ($services as $service)
+                                    <button type="button"
+                                        class="btn btn-sm text-start {{ in_array((string) $service->id, $selected_services ?? []) ? 'btn-outline-primary' : 'btn-light' }}"
+                                        data-name="{{ strtolower($service->name) }}"
+                                        wire:click="toggleService('{{ $service->id }}')">
+                                        {{ $service->name }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                </div>
                 @error('selected_services')
                     <div class="text-danger small">{{ $message }}</div>
                 @enderror
@@ -88,3 +101,15 @@
         </button>
     </div>
 </form>
+
+<script>
+    function filterServiceList(event) {
+        const term = event.target.value.toLowerCase();
+        const list = document.getElementById('service-list');
+        if (!list) return;
+        Array.from(list.children).forEach(item => {
+            const match = item.dataset.name?.includes(term);
+            item.style.display = match ? '' : 'none';
+        });
+    }
+</script>

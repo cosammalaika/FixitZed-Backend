@@ -14,6 +14,7 @@ class FixerEdit extends Component
     public $users;
     public $allServices;
     public $selected_services = [];
+    public $showServiceDropdown = false;
 
     protected $rules = [
         'user_id' => 'required|exists:users,id',
@@ -29,9 +30,9 @@ class FixerEdit extends Component
 
         $fixer = Fixer::with('services')->findOrFail($id);
 
-        $this->user_id = $fixer->user_id;
-        $this->bio = $fixer->bio;
-        $this->status = strtolower($fixer->status ?? 'pending');
+        $this->user_id = (string) $fixer->user_id;
+        $this->bio = (string) ($fixer->bio ?? '');
+        $this->status = strtolower((string) ($fixer->status ?? 'pending'));
         $this->selected_services = $fixer->services()
             ->pluck('services.id')
             ->unique()
@@ -119,6 +120,8 @@ class FixerEdit extends Component
             'message' => 'Fixer updated successfully.',
             'redirect' => route('fixer.index'),
         ]);
+
+        $this->showServiceDropdown = false;
     }
 
     public function render()
@@ -135,5 +138,21 @@ class FixerEdit extends Component
             ->filter(fn ($sid) => (string) $sid !== (string) $id)
             ->values()
             ->toArray();
+    }
+
+    public function toggleService($id): void
+    {
+        $id = (string) $id;
+        $current = collect($this->selected_services ?? []);
+        if ($current->contains($id)) {
+            $this->selected_services = $current->reject(fn ($sid) => $sid === $id)->values()->toArray();
+        } else {
+            $this->selected_services = $current->push($id)->unique()->values()->toArray();
+        }
+    }
+
+    public function toggleServiceDropdown(): void
+    {
+        $this->showServiceDropdown = ! $this->showServiceDropdown;
     }
 }

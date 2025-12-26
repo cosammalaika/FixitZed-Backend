@@ -47,7 +47,7 @@
                 <input type="text" class="form-control mb-2" placeholder="Search services…" oninput="filterServices(event)">
                 <select wire:model.defer="selected_services" id="selected_services" class="form-control" multiple size="8" style="min-height: 180px;">
                     @foreach ($services as $service)
-                        <option value="{{ (string) $service->id }}" @selected(in_array((string) $service->id, $selected_services ?? []))>
+                        <option value="{{ (string) $service->id }}">
                             {{ $service->name }}
                         </option>
                     @endforeach

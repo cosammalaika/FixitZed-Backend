@@ -19,7 +19,7 @@ class FixerEdit extends Component
         'user_id' => 'required|exists:users,id',
         'bio' => 'nullable|string|max:1000',
         'status' => 'required|string|in:pending,approved,rejected',
-        'selected_services' => 'array',
+        'selected_services' => 'array|min:1',
         'selected_services.*' => 'exists:services,id',
     ];
 
@@ -48,6 +48,7 @@ class FixerEdit extends Component
             ->get();
         $this->allServices = Service::query()
             ->select('id', 'name')
+            ->distinct()
             ->orderBy('name')
             ->get();
     }

@@ -64,6 +64,8 @@ class RequestExpiryAndAssignmentTest extends TestCase
     {
         $service = $this->makeService();
 
+        // Offset ids so fixer_id cannot equal user_id by coincidence.
+        User::factory()->create();
         $fixerUser = User::factory()->create();
         $fixer = Fixer::create([
             'user_id' => $fixerUser->id,

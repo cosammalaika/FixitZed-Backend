@@ -13,6 +13,8 @@ class FixerCreate extends Component
     public $users;
     public $selected_services = [];
     public $allServices;
+    public $showServiceDropdown = false;
+    public $serviceSearch = '';
 
 
     protected $rules = [
@@ -75,12 +77,56 @@ class FixerCreate extends Component
             'message' => 'Fixer created successfully.',
             'redirect' => route('fixer.index'),
         ]);
+
+        $this->showServiceDropdown = false;
+        $this->serviceSearch = '';
     }
 
     public function render()
     {
         return view('livewire.fixer.fixer-create', [
             'users' => $this->users,
+            'services' => $this->filteredServices,
+            'totalServices' => $this->allServices?->count() ?? 0,
         ]);
+    }
+
+    public function removeService($id): void
+    {
+        $this->selected_services = collect($this->selected_services ?? [])
+            ->filter(fn ($sid) => (string) $sid !== (string) $id)
+            ->values()
+            ->toArray();
+    }
+
+    public function toggleService($id): void
+    {
+        $id = (string) $id;
+        $current = collect($this->selected_services ?? []);
+        if ($current->contains($id)) {
+            $this->selected_services = $current->reject(fn ($sid) => $sid === $id)->values()->toArray();
+        } else {
+            $this->selected_services = $current->push($id)->unique()->values()->toArray();
+        }
+    }
+
+    public function toggleServiceDropdown(): void
+    {
+        $this->showServiceDropdown = ! $this->showServiceDropdown;
+        if (! $this->showServiceDropdown) {
+            $this->serviceSearch = '';
+        }
+    }
+
+    public function getFilteredServicesProperty()
+    {
+        $term = strtolower(trim((string) $this->serviceSearch));
+        if ($term === '') {
+            return $this->allServices ?? collect();
+        }
+
+        return ($this->allServices ?? collect())->filter(function ($service) use ($term) {
+            return str_contains(strtolower($service->name), $term);
+        })->values();
     }
 }

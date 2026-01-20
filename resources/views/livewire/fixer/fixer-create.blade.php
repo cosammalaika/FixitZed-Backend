@@ -30,19 +30,60 @@
                             @enderror
                         </div>
                     </div>
-                <div class="col-md-6">
-                    <div>
-                        <label class="form-label">Services Skilled In</label>
-                        <select wire:model="selected_services" class="form-select" multiple size="8"
-                            aria-describedby="services-help">
-                            @foreach ($allServices as $service)
-                                <option value="{{ $service->id }}">{{ $service->name }}</option>
-                            @endforeach
-                        </select>
-                        <small id="services-help" class="text-muted">Hold Ctrl (Cmd on Mac) to select multiple
-                            services.</small>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <label for="selected_services" class="form-label fw-semibold mb-0">Services Skilled In</label>
+                            <small class="text-muted">Selected ({{ count($selected_services ?? []) }})</small>
+                        </div>
+                        <div class="mt-2">
+                            @php
+                                $serviceMap = ($services ?? collect())->keyBy(fn ($s) => (string) $s->id);
+                            @endphp
+                            <div class="border rounded p-3 bg-white" style="min-height: 120px;">
+                                <div class="d-flex flex-wrap gap-2">
+                                    @forelse ($selected_services as $sid)
+                                        @php
+                                            $service = $serviceMap->get((string) $sid);
+                                            $name = $service->name ?? 'Unknown';
+                                        @endphp
+                                        <span class="badge rounded-pill d-inline-flex align-items-center" style="background:#ff7f32; color:#fff; padding:4px 10px; font-size:0.78rem; gap:6px;">
+                                            <span>{{ $name }}</span>
+                                            <button type="button" class="btn btn-sm btn-link text-white p-0 m-0" style="line-height:1; font-size:0.9rem;" wire:click.prevent="removeService('{{ $sid }}')">
+                                                &times;
+                                            </button>
+                                        </span>
+                                    @empty
+                                        <span class="text-muted">No services selected.</span>
+                                    @endforelse
+                                </div>
+                            </div>
+                            <div class="mt-3 position-relative">
+                                <button type="button" class="form-control text-start d-flex justify-content-between align-items-center" wire:click="toggleServiceDropdown">
+                                    <span>Select services</span>
+                                    <span class="badge bg-light text-muted">{{ $totalServices }} total</span>
+                                </button>
+                                @if ($showServiceDropdown)
+                                    <div class="border rounded shadow-sm bg-white mt-1 p-2" style="max-height: 260px; overflow-y: auto; position: absolute; width: 100%; z-index: 1050;">
+                                        <input type="text" class="form-control form-control-sm mb-2" placeholder="Search services…" wire:model.debounce.250ms="serviceSearch">
+                                        <div class="d-flex flex-column gap-1">
+                                            @forelse ($services as $service)
+                                                <button type="button"
+                                                    class="btn btn-sm text-start {{ in_array((string) $service->id, $selected_services ?? []) ? 'btn-outline-primary' : 'btn-light' }}"
+                                                    wire:click="toggleService('{{ $service->id }}')">
+                                                    {{ $service->name }}
+                                                </button>
+                                            @empty
+                                                <span class="text-muted small px-2 py-1">No services found.</span>
+                                            @endforelse
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                            @error('selected_services')
+                                <div class="text-danger small">{{ $message }}</div>
+                            @enderror
+                        </div>
                     </div>
-                </div>
 
                 </div>
 

@@ -13,6 +13,7 @@ class WalletIndex extends Component
         $missing = ! Schema::hasTable('fixer_wallets');
         $wallets = $missing ? collect() : FixerWallet::query()
             ->with(['fixer.user'])
+            ->whereNotNull('fixer_id')
             ->latest()
             ->get();
 

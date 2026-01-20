@@ -15,22 +15,22 @@
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label class="form-label" for="name">Service Name</label>
-                        <input id="name" class="form-control" type="text" wire:model="name"
+                        <input id="name" class="form-control" type="text" wire:model.defer="name"
                             placeholder="Service Name" required>
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label" for="price">Base Price (ZMW)</label>
-                        <input id="price" class="form-control" type="number" wire:model="price"
-                            placeholder="e.g., 150" required>
+                        <label class="form-label" for="price">Base Price (ZMW) <span class="text-muted small">(optional)</span></label>
+                        <input id="price" class="form-control" type="number" wire:model.defer="price"
+                            placeholder="Leave blank to keep default">
                     </div>
                 </div>
 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label class="form-label" for="duration_minutes">Duration (Minutes)</label>
-                        <input id="duration_minutes" class="form-control" type="number" wire:model="duration_minutes"
-                            placeholder="e.g., 20" required>
+                        <label class="form-label" for="duration_minutes">Duration (Minutes) <span class="text-muted small">(optional)</span></label>
+                        <input id="duration_minutes" class="form-control" type="number" wire:model.defer="duration_minutes"
+                            placeholder="Defaults to 60">
                     </div>
 
                     <div class="col-md-6">

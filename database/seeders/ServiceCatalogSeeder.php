@@ -11,6 +11,8 @@ class ServiceCatalogSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->deduplicateCatalog();
+
         // Remove legacy umbrella categories to avoid duplicates.
         Category::whereIn('name', ['Home Services', 'Outdoor'])->each(function (Category $category) {
             $category->delete();
@@ -131,12 +133,18 @@ class ServiceCatalogSeeder extends Seeder
                 'WiFi Setup',
                 'Smart TV Setup',
                 'Home Automation Devices',
-                'Computer Repair',
+                'Computer & Laptop Repair',
                 'Smart Speaker Setup',
                 'Home Theater Installation',
             ],
             'Custom Service' => [
                 'Other - Specify Your Service',
+            ],
+            'Electronics & Office Repair' => [
+                'Mobile Phone Repair',
+                'Computer & Laptop Repair',
+                'Printer Repair',
+                'Office Equipment Repairs',
             ],
         ];
 
@@ -182,6 +190,50 @@ class ServiceCatalogSeeder extends Seeder
                     ]
                 );
             }
+        }
+    }
+
+    protected function deduplicateCatalog(): void
+    {
+        // Remove duplicate categories by name (keep earliest id)
+        $duplicateCategories = Category::select('name')
+            ->groupBy('name')
+            ->havingRaw('COUNT(*) > 1')
+            ->pluck('name');
+
+        foreach ($duplicateCategories as $name) {
+            Category::where('name', $name)
+                ->orderBy('id')
+                ->skip(1)
+                ->delete();
+        }
+
+        // Remove duplicate subcategories per category
+        $duplicateSubcats = Subcategory::select('name', 'category_id')
+            ->groupBy('name', 'category_id')
+            ->havingRaw('COUNT(*) > 1')
+            ->get();
+
+        foreach ($duplicateSubcats as $dup) {
+            Subcategory::where('name', $dup->name)
+                ->where('category_id', $dup->category_id)
+                ->orderBy('id')
+                ->skip(1)
+                ->delete();
+        }
+
+        // Remove duplicate services per subcategory
+        $duplicateServices = Service::select('name', 'subcategory_id')
+            ->groupBy('name', 'subcategory_id')
+            ->havingRaw('COUNT(*) > 1')
+            ->get();
+
+        foreach ($duplicateServices as $dup) {
+            Service::where('name', $dup->name)
+                ->where('subcategory_id', $dup->subcategory_id)
+                ->orderBy('id')
+                ->skip(1)
+                ->delete();
         }
     }
 }

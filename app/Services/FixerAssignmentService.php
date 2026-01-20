@@ -7,6 +7,7 @@ use App\Models\Fixer;
 use App\Models\Notification;
 use App\Models\ServiceRequest;
 use App\Models\Setting;
+use Illuminate\Support\Facades\Log;
 
 class FixerAssignmentService
 {
@@ -77,8 +78,20 @@ class FixerAssignmentService
             })
             ->values();
 
+        Log::info('[FIXITZED_TRACE] assignment.candidates', [
+            'request_id' => $serviceRequest->id,
+            'service_id' => $serviceId,
+            'customer_id' => $serviceRequest->customer_id,
+            'exclude_fixer_id' => $excludeFixerId,
+            'candidate_count' => $candidates->count(),
+        ]);
+
         if ($candidates->isEmpty()) {
             $this->scheduleNoFixerNotification($serviceRequest);
+            Log::info('[FIXITZED_TRACE] assignment.none', [
+                'request_id' => $serviceRequest->id,
+                'service_id' => $serviceId,
+            ]);
             return null;
         }
 
@@ -95,6 +108,12 @@ class FixerAssignmentService
 
         $this->notifyFixer($serviceRequest, $selected);
         $this->notifyCustomerAwaitingAcceptance($serviceRequest, $selected);
+
+        Log::info('[FIXITZED_TRACE] assignment.selected', [
+            'request_id' => $serviceRequest->id,
+            'service_id' => $serviceId,
+            'selected_fixer_id' => $selected->id,
+        ]);
 
         return $selected;
     }

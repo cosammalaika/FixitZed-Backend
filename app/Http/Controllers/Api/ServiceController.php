@@ -3,78 +3,122 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\Service;
+use App\Models\Subcategory;
 use App\Support\ApiCache;
 use Database\Seeders\ServiceCatalogSeeder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class ServiceController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Service::query();
-
-        if ($request->filled('search')) {
-            $term = '%' . trim($request->input('search')) . '%';
-            $query->where(function ($q) use ($term) {
-                $q->where('name', 'like', $term)
-                    ->orWhere('description', 'like', $term);
-            });
+        try {
+            $validated = $request->validate([
+                'search' => 'nullable|string|max:255',
+                'subcategory_id' => 'nullable|integer',
+                'category_id' => 'nullable|integer',
+                'page' => 'nullable|integer|min:1',
+                'per_page' => 'nullable|integer|min:1|max:100',
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid filters provided.',
+                'errors' => $e->errors(),
+            ], 422);
         }
 
-        if ($request->filled('subcategory_id')) {
-            $query->where('subcategory_id', $request->integer('subcategory_id'));
-        }
-        if ($request->filled('category_id')) {
-            $query->whereHas('subcategory', function ($q) use ($request) {
-                $q->where('category_id', $request->integer('category_id'));
-            });
-        }
-        $perPage = (int) $request->integer('per_page', 20);
-        $perPage = max(1, min($perPage, 100));
-        $page = max(1, $request->integer('page', 1));
+        try {
+            $query = Service::query()
+                ->select('services.*')
+                ->with(['subcategory:id,category_id,name', 'subcategory.category:id,name']);
 
-        $key = 'services:index:' . md5(http_build_query([
-            'page' => $page,
-            'per_page' => $perPage,
-            'subcategory_id' => $request->input('subcategory_id'),
-            'category_id' => $request->input('category_id'),
-        ]));
-
-        return ApiCache::remember(['catalog', 'services'], $key, function () use ($query, $perPage) {
-            if (! Service::query()->exists()) {
-                (new ServiceCatalogSeeder())->run();
+            if (! empty($validated['search'])) {
+                $term = '%' . trim($validated['search']) . '%';
+                $query->where(function ($q) use ($term) {
+                    $q->where('name', 'like', $term)
+                        ->orWhere('description', 'like', $term);
+                });
             }
 
-            $paginator = $query
-                ->with(['subcategory', 'subcategory.category'])
-                ->latest()
-                ->paginate($perPage);
-            return response()->json([
-                'success' => true,
-                'data' => $paginator->items(),
-                'meta' => [
-                    'current_page' => $paginator->currentPage(),
-                    'per_page' => $paginator->perPage(),
-                    'total' => $paginator->total(),
-                    'last_page' => $paginator->lastPage(),
-                    'from' => $paginator->firstItem(),
-                    'to' => $paginator->lastItem(),
-                ],
-                'links' => [
-                    'first' => $paginator->url(1),
-                    'last' => $paginator->url($paginator->lastPage()),
-                    'prev' => $paginator->previousPageUrl(),
-                    'next' => $paginator->nextPageUrl(),
-                ],
+            if (! empty($validated['subcategory_id'])) {
+                $query->where('subcategory_id', (int) $validated['subcategory_id']);
+            }
+
+            if (! empty($validated['category_id'])) {
+                $query->whereHas('subcategory', function ($q) use ($validated) {
+                    $q->where('category_id', (int) $validated['category_id']);
+                });
+            }
+
+            // Deduplicate by name/subcategory, keeping the earliest id to avoid dropdown repeats.
+            $dedupedIds = Service::query()
+                ->selectRaw('MIN(id) as id')
+                ->groupBy('name', 'subcategory_id');
+
+            $query->whereIn('services.id', $dedupedIds);
+
+            $perPage = max(1, min((int) ($validated['per_page'] ?? 20), 100));
+            $page = max(1, (int) ($validated['page'] ?? 1));
+
+            $key = 'services:index:' . md5(http_build_query([
+                'page' => $page,
+                'per_page' => $perPage,
+                'subcategory_id' => $request->input('subcategory_id'),
+                'category_id' => $request->input('category_id'),
+                'search' => $request->input('search'),
+            ]));
+
+            return ApiCache::remember(['catalog', 'services'], $key, function () use ($query, $perPage) {
+                $this->seedCatalogIfMissing();
+
+                $paginator = $query
+                    ->distinct()
+                    ->orderBy('services.name')
+                    ->paginate($perPage);
+
+                return response()->json([
+                    'success' => true,
+                    'data' => array_values($paginator->items()),
+                    'meta' => [
+                        'current_page' => $paginator->currentPage(),
+                        'per_page' => $paginator->perPage(),
+                        'total' => $paginator->total(),
+                        'last_page' => $paginator->lastPage(),
+                        'from' => $paginator->firstItem(),
+                        'to' => $paginator->lastItem(),
+                    ],
+                    'links' => [
+                        'first' => $paginator->url(1),
+                        'last' => $paginator->url($paginator->lastPage()),
+                        'prev' => $paginator->previousPageUrl(),
+                        'next' => $paginator->nextPageUrl(),
+                    ],
+                ]);
+            });
+        } catch (\Throwable $e) {
+            Log::error('Service index failed', [
+                'category_id' => $request->input('category_id'),
+                'subcategory_id' => $request->input('subcategory_id'),
+                'search' => $request->input('search'),
+                'error' => $e->getMessage(),
             ]);
-        });
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to load services right now.',
+                'error_code' => 'SERVICE_LIST_FAILED',
+            ], 503);
+        }
     }
 
     public function show(Service $service)
     {
-        $service->load('subcategory');
+        $service->load(['subcategory', 'subcategory.category']);
         return response()->json([
             'success' => true,
             'data' => $service,
@@ -85,6 +129,7 @@ class ServiceController extends Controller
     {
         try {
             $fixers = $service->fixers()
+                ->select('fixers.id', 'fixers.user_id', 'fixers.rating_avg', 'fixers.status')
                 ->with('user')
                 ->whereHas('user', function ($q) {
                     $q->where('status', 'Active')->whereNotNull('email_verified_at');
@@ -92,6 +137,7 @@ class ServiceController extends Controller
                 ->where(function ($q) {
                     $q->whereNull('status')->orWhere('status', 'Active');
                 })
+                ->distinct()
                 ->get()
                 ->map(function ($fixer) {
                     return [
@@ -115,7 +161,17 @@ class ServiceController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Unable to load fixers right now.',
+                'error_code' => 'SERVICE_FIXERS_FAILED',
             ], 503);
+        }
+    }
+
+    protected function seedCatalogIfMissing(): void
+    {
+        if (! Category::query()->exists() || ! Subcategory::query()->exists() || ! Service::query()->exists()) {
+            Log::info('Seeding service catalog (bootstrap)');
+            (new ServiceCatalogSeeder())->run();
+            ApiCache::flush(['catalog', 'services', 'subcategories']);
         }
     }
 }

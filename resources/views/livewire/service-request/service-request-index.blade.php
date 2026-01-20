@@ -53,12 +53,16 @@
                                  @foreach ($serviceRequests as $index => $request)
                                      <tr>
                                          <td>{{ $index + 1 }}</td>
-                                         <td>{{ $request->customer->first_name }} {{ $request->customer->last_name }}
-                                         </td>
+                                        <td>
+                                            @php($customer = optional($request->customer))
+                                            {{ $customer->first_name ?? 'Deleted user' }} {{ $customer->last_name ?? '' }}
+                                        </td>
                                         <td>
                                             @if ($request->fixer && $request->fixer->user)
                                                 {{ $request->fixer->user->first_name }}
                                                 {{ $request->fixer->user->last_name }}
+                                            @elseif($request->fixer && ! $request->fixer->user)
+                                                <span class="text-muted">Deleted user</span>
                                             @else
                                                 <span class="text-muted">Unassigned</span>
                                             @endif

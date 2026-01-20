@@ -3,6 +3,8 @@
 namespace App\Livewire\Category;
 
 use App\Models\Category;
+use App\Support\ApiCache;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 class CategoryEdit extends Component
@@ -26,15 +28,21 @@ class CategoryEdit extends Component
     public function update()
     {
         $this->validate([
-            'name' => 'required|string|max:255',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('categories', 'name')->ignore($this->category->id),
+            ],
             'description' => 'nullable|string',
         ]);
 
         $this->category->update([
-            'name' => $this->name,
-            'description' => $this->description,
+            'name' => trim((string) $this->name),
+            'description' => trim((string) $this->description),
         ]);
 
+        ApiCache::flush(['catalog', 'categories', 'subcategories', 'services']);
         log_user_action('updated category', "Updated category ID: {$this->category->id}, New Name: {$this->name}");
 
         $this->dispatchBrowserEvent('flash-message', [

@@ -15,6 +15,7 @@ use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class FixerRequestController extends Controller
@@ -34,7 +35,7 @@ class FixerRequestController extends Controller
             abort(403, 'Forbidden');
         }
 
-        $this->expirePendingRequests();
+        $expired = $this->expirePendingRequests();
         $status = $request->query('status');
         if ($status === 'declined') {
             $declines = ServiceRequestDecline::with(['serviceRequest.service', 'serviceRequest.customer'])
@@ -88,6 +89,16 @@ class FixerRequestController extends Controller
         $requests = $q->paginate(20)->through(function (ServiceRequest $sr) {
             return $this->transformForFixer($sr);
         });
+
+        Log::info('[FIXITZED_TRACE] fixer.feed', [
+            'user_id' => $user->id,
+            'fixer_id' => $fixer->id,
+            'status_filter' => $status,
+            'cutoff' => optional($this->expiryCutoff())->toDateTimeString(),
+            'timezone' => now()->timezoneName,
+            'expired_marked' => $expired,
+            'results_count' => $requests->total(),
+        ]);
 
         return response()->json(['success' => true, 'data' => $requests]);
     }
@@ -523,13 +534,13 @@ class FixerRequestController extends Controller
         return now()->subMinutes($minutes);
     }
 
-    protected function expirePendingRequests(): void
+    protected function expirePendingRequests(): int
     {
         $cutoff = $this->expiryCutoff();
         if (! $cutoff) {
-            return;
+            return 0;
         }
-        ServiceRequest::where('status', 'pending')
+        return ServiceRequest::where('status', 'pending')
             ->where('created_at', '<', $cutoff)
             ->update([
                 'status' => 'expired',

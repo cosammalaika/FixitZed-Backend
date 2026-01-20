@@ -29,7 +29,12 @@ class FixerCreate extends Component
         $this->users = User::where('status', 'Active')
             ->whereDoesntHave('fixer')
             ->get();
-        $this->allServices = Service::all();
+        $this->allServices = Service::query()
+            ->select('id', 'name', 'subcategory_id')
+            ->orderBy('name')
+            ->get()
+            ->unique(fn ($service) => strtolower($service->name) . '-' . $service->subcategory_id)
+            ->values();
     }
 
     public function submit()

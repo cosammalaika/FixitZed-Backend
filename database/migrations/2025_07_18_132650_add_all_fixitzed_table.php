@@ -65,7 +65,7 @@ return new class extends Migration {
         Schema::create('service_requests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('customer_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('fixer_id')->constrained('fixers')->onDelete('cascade');
+            $table->foreignId('fixer_id')->nullable()->constrained('fixers')->nullOnDelete();
             $table->foreignId('service_id')->constrained('services')->onDelete('cascade');
             $table->dateTime('scheduled_at');
             $table->enum('status', ['pending', 'accepted', 'completed', 'cancelled'])->default('pending');

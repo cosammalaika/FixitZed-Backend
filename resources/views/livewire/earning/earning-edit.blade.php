@@ -7,7 +7,8 @@
             <select wire:model="fixer_id" class="form-control" id="fixer_id">
                 <option value="">-- Select Fixer --</option>
                 @foreach($fixers as $fixer)
-                    <option value="{{ $fixer->id }}">{{ $fixer->user->first_name }} {{ $fixer->user->last_name }}</option>
+                    @php($fixerUser = optional($fixer->user))
+                    <option value="{{ $fixer->id }}">{{ $fixerUser->first_name ?? 'Deleted user' }} {{ $fixerUser->last_name ?? '' }}</option>
                 @endforeach
             </select>
         </div>

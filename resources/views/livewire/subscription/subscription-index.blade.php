@@ -53,10 +53,10 @@
                     @endphp
                     <td>
                       @if($fixerMissing)
-                        <span class="text-muted">—</span>
+                        <span class="text-muted">Deleted fixer</span>
                         <span class="badge bg-secondary ms-1">Missing fixer</span>
                       @elseif($userMissing)
-                        <span class="text-muted">—</span>
+                        <span class="text-muted">Deleted user</span>
                         <span class="badge bg-warning text-dark ms-1">No user</span>
                       @else
                         {{ $s->fixer?->user?->first_name ?? '—' }} {{ $s->fixer?->user?->last_name ?? '' }}

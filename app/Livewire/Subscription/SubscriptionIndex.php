@@ -58,6 +58,7 @@ class SubscriptionIndex extends Component
         $missing = ! Schema::hasTable('fixer_subscriptions');
         $purchases = $missing ? collect() : FixerSubscription::query()
             ->with(['fixer.user', 'plan'])
+            ->whereNotNull('fixer_id')
             ->latest()
             ->paginate(20);
 

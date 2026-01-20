@@ -29,7 +29,8 @@
                                  @foreach ($earnings as $earning)
                                      <tr>
                                          <td>{{ $earning->id }}</td>
-                                         <td>{{ $earning->fixer->user->first_name }} {{ $earning->fixer->user->last_name }}</td>
+                                        @php($fixerUser = optional(optional($earning->fixer)->user))
+                                        <td>{{ $fixerUser->first_name ?? 'Deleted user' }} {{ $fixerUser->last_name ?? '' }}</td>
                                          <td>{{ (int) $earning->service_count }}</td>
                                          <td>ZMW {{ number_format($earning->amount ?? 0, 2) }}</td>
                                          <td>

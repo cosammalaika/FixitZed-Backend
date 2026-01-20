@@ -3,7 +3,8 @@
 
     <div class="mb-3">
         <strong>Fixer:</strong>
-        <p>{{ $earning->fixer->user->first_name ?? 'N/A' }}</p>
+        @php($fixerUser = optional(optional($earning->fixer)->user))
+        <p>{{ $fixerUser->first_name ?? 'Deleted user' }}</p>
 
     </div>
 

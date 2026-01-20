@@ -12,22 +12,10 @@
                     </div>
                 @endif
 
-                <div class="row">
+                <div class="row g-4">
                     <div class="col-md-6">
                         <label class="form-label" for="default-input">Service Name</label>
-                        <input class="form-control" type="text" wire:model="name" placeholder="Service Name"
-                            required>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label" for="default-input">Base Price (ZMW)</label>
-                        <input class="form-control" type="text" wire:model="price" placeholder="e.g, ZMK" required>
-                    </div>
-                </div>
-                <div class="row mt-6">
-                    <div class="col-md-6">
-                        <label class="form-label" for="default-input">Duration (Minutes)</label>
-                        <input class="form-control" type="text" wire:model="duration_minutes" placeholder="e.g, 20"
-                            required>
+                        <input class="form-control" type="text" wire:model.defer="name" placeholder="Service Name" required>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label" for="default-input">Subcategory</label>
@@ -41,12 +29,20 @@
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="default-input">Base Price (ZMW) <span class="text-muted small">(optional)</span></label>
+                        <input class="form-control" type="number" wire:model.defer="price" placeholder="Leave blank to default to 0">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="default-input">Duration (Minutes) <span class="text-muted small">(optional)</span></label>
+                        <input class="form-control" type="number" wire:model.defer="duration_minutes" placeholder="Defaults to 60">
+                    </div>
 
                 </div>
-                <div class="row mt-4">
-                    <div class="col-md-6 mb-3">
+                <div class="row g-4 mt-1">
+                    <div class="col-md-6">
                         <label class="form-label" for="description">Description</label>
-                        <textarea id="description" wire:model="description" class="form-control" placeholder="Description text ..."
+                        <textarea id="description" wire:model.defer="description" class="form-control" placeholder="Description text ..."
                             rows="4"></textarea>
                         @error('description')
                             <small class="text-danger">{{ $message }}</small>

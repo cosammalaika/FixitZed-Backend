@@ -15,6 +15,7 @@ class FixerEdit extends Component
     public $allServices;
     public $selected_services = [];
     public $showServiceDropdown = false;
+    public $serviceSearch = '';
 
     protected $rules = [
         'user_id' => 'required|exists:users,id',
@@ -28,7 +29,7 @@ class FixerEdit extends Component
     {
         $this->fixerId = $id;
 
-        $fixer = Fixer::with('services')->findOrFail($id);
+        $fixer = Fixer::with(['services', 'user'])->findOrFail($id);
 
         $this->user_id = (string) $fixer->user_id;
         $this->bio = (string) ($fixer->bio ?? '');
@@ -41,17 +42,22 @@ class FixerEdit extends Component
 
         // Allow selecting the current user or any user who isn't already a fixer
         $currentUserId = $this->user_id;
-        $this->users = User::where('status', 'Active')
+        $this->users = User::query()
             ->where(function ($q) use ($currentUserId) {
-                $q->whereDoesntHave('fixer')
+                $q->where('status', 'Active')
+                  ->whereDoesntHave('fixer')
                   ->orWhere('id', $currentUserId);
             })
-            ->get();
-        $this->allServices = Service::query()
-            ->select('id', 'name')
-            ->orderBy('name')
+            ->orderBy('first_name')
+            ->orderBy('last_name')
             ->get()
             ->unique('id')
+            ->values();
+        $this->allServices = Service::query()
+            ->select('id', 'name', 'subcategory_id')
+            ->orderBy('name')
+            ->get()
+            ->unique(fn ($service) => strtolower($service->name) . '-' . $service->subcategory_id)
             ->values();
     }
 
@@ -87,10 +93,15 @@ class FixerEdit extends Component
         ]);
 
         // Sync selected services (many-to-many)
-        $fixer->services()->sync($this->selected_services);
-        $this->selected_services = $fixer->services()
-            ->pluck('services.id')
+        $serviceIds = collect($this->selected_services ?? [])
+            ->filter(fn ($id) => filled($id))
+            ->map(fn ($id) => (int) $id)
             ->unique()
+            ->values()
+            ->all();
+
+        $fixer->services()->sync($serviceIds);
+        $this->selected_services = collect($serviceIds)
             ->map(fn ($id) => (string) $id)
             ->toArray();
 
@@ -123,13 +134,16 @@ class FixerEdit extends Component
         ]);
 
         $this->showServiceDropdown = false;
+        $this->serviceSearch = '';
     }
 
     public function render()
     {
         return view('livewire.fixer.fixer-edit', [
             'users' => $this->users,
-            'services' => $this->allServices,
+            'services' => $this->filteredServices,
+            'allServicesList' => $this->allServices,
+            'totalServices' => $this->allServices?->count() ?? 0,
         ]);
     }
 
@@ -155,5 +169,20 @@ class FixerEdit extends Component
     public function toggleServiceDropdown(): void
     {
         $this->showServiceDropdown = ! $this->showServiceDropdown;
+        if (! $this->showServiceDropdown) {
+            $this->serviceSearch = '';
+        }
+    }
+
+    public function getFilteredServicesProperty()
+    {
+        $term = strtolower(trim((string) $this->serviceSearch));
+        if ($term === '') {
+            return $this->allServices ?? collect();
+        }
+
+        return ($this->allServices ?? collect())->filter(function ($service) use ($term) {
+            return str_contains(strtolower($service->name), $term);
+        })->values();
     }
 }

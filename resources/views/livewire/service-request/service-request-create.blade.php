@@ -62,7 +62,8 @@
                             @foreach ($filteredFixers as $fixer)
                                 @php($status = strtolower($fixer->status))
                                 <option value="{{ $fixer->id }}" @if($status !== 'approved') disabled @endif>
-                                    {{ $fixer->user->first_name }} {{ $fixer->user->last_name }}
+                                    @php($fixerUser = optional($fixer->user))
+                                    {{ $fixerUser->first_name ?? 'Deleted user' }} {{ $fixerUser->last_name ?? '' }}
                                     ({{ ucfirst($status) }})
                                 </option>
                             @endforeach

@@ -21,8 +21,14 @@ class FixerDeletionService
 
             $fixer->delete();
 
-            if ($user) {
-                $user->delete();
+            if ($user && $user->exists) {
+                $user->refresh();
+                $hasCustomerHistory = $user->serviceRequests()->exists();
+                $hasAdminRole = $user->hasAnyRole(['Super Admin', 'Support']);
+
+                if (! $user->fixer()->exists() && ! $hasCustomerHistory && ! $hasAdminRole) {
+                    $user->delete();
+                }
             }
 
             Log::info('FixerDeletionService: deleted fixer and user', [
@@ -31,4 +37,10 @@ class FixerDeletionService
             ]);
         });
     }
+
+    /**
+     * Cleanup reference (manual SQL if legacy orphans remain):
+     * DELETE FROM fixer_wallets WHERE fixer_id NOT IN (SELECT id FROM fixers);
+     * DELETE FROM fixer_subscriptions WHERE fixer_id NOT IN (SELECT id FROM fixers);
+     */
 }

@@ -94,4 +94,35 @@ class Fixer extends Model
             $cap
         );
     }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (Fixer $fixer) {
+            // Prevent stale pivots or wallet rows
+            $fixer->services()->detach();
+            $fixer->wallet()?->delete();
+            $fixer->subscriptions()->each->delete();
+            $fixer->declines()->each->delete();
+            $fixer->priorityHistory()->delete();
+
+            // Release service requests without deleting the customer records
+            $fixer->serviceRequests()->update(['fixer_id' => null]);
+        });
+
+        static::deleted(function (Fixer $fixer) {
+            $user = $fixer->user;
+
+            if (! $user) {
+                return;
+            }
+
+            $hasCustomerHistory = $user->serviceRequests()->exists();
+            $hasAdminRole = $user->hasAnyRole(['Super Admin', 'Support']);
+
+            // Only remove the user if they are solely tied to this fixer profile.
+            if (! $hasCustomerHistory && ! $hasAdminRole) {
+                $user->delete();
+            }
+        });
+    }
 }

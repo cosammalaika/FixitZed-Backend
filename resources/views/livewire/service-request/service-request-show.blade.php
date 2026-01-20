@@ -7,13 +7,16 @@
                 <div class="col-md-6">
                     <div class="mb-4">
                         <strong>Customer</strong>
-                        <p>{{ $serviceRequest->customer->first_name }} {{ $serviceRequest->customer->last_name }}</p>
+                        @php($customer = optional($serviceRequest->customer))
+                        <p>{{ $customer->first_name ?? 'Deleted user' }} {{ $customer->last_name ?? '' }}</p>
                     </div>
 
                     <div class="mb-4">
                         <strong>Fixer</strong>
-                        <p> {{ $serviceRequest->fixer->user->first_name ?? 'N/A' }}
-                            {{ $serviceRequest->fixer->user->last_name ?? '' }}</p>
+                        @php
+                            $fixerUser = optional(optional($serviceRequest->fixer)->user);
+                        @endphp
+                        <p>{{ $fixerUser->first_name ?? 'Deleted fixer' }} {{ $fixerUser->last_name ?? '' }}</p>
                     </div>
                 </div>
                 <div class="col-md-6">

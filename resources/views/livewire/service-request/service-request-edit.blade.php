@@ -9,18 +9,19 @@
                         <select wire:model="customer_id" class="form-control" required>
                             <option value="">-- Choose User --</option>
                             @foreach ($customers as $customer)
-                                <option value="{{ $customer->id }}">{{ $customer->first_name }}
-                                    {{ $customer->last_name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+                            <option value="{{ $customer->id }}">{{ $customer->first_name }}
+                                {{ $customer->last_name }}</option>
+                        @endforeach
+                    </select>
+                </div>
                     <div class="col-md-6">
                         <label class="form-label" for="fixer_id">Fixer</label>
                         <select wire:model="fixer_id" class="form-control">
                             <option value="">-- Select Fixer --</option>
                             @foreach ($fixers as $fixer)
-                                <option value="{{ $fixer->id }}">{{ $fixer->user->first_name }}
-                                    {{ $fixer->user->last_name }}</option>
+                                @php($fixerUser = optional($fixer->user))
+                                <option value="{{ $fixer->id }}">{{ $fixerUser->first_name ?? 'Deleted user' }}
+                                    {{ $fixerUser->last_name ?? '' }}</option>
                             @endforeach
                         </select>
                     </div>

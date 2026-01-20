@@ -43,18 +43,18 @@
                 <label for="selected_services" class="form-label fw-semibold mb-0">Services Skilled In</label>
                 <small class="text-muted">Selected ({{ count($selected_services ?? []) }})</small>
             </div>
-            <div class="mt-2" x-data="{ open: false }" @keydown.escape.window="open = false">
+            <div class="mt-2">
                 @php
-                    $serviceMap = $services->keyBy(fn ($s) => (string) $s->id);
+                    $serviceMap = ($allServicesList ?? collect())->keyBy(fn ($s) => (string) $s->id);
                 @endphp
-                <div class="border rounded p-3" style="min-height: 120px; background: #fff;">
+                <div class="border rounded p-3 bg-white" style="min-height: 120px;">
                     <div class="d-flex flex-wrap gap-2">
                         @forelse ($selected_services as $sid)
                             @php
                                 $service = $serviceMap->get((string) $sid);
                                 $name = $service->name ?? 'Unknown';
                             @endphp
-                            <span class="badge rounded-pill d-inline-flex align-items-center" style="background:#ff7f32; color:#fff; padding:4px 10px; font-size:0.8rem; gap:6px;">
+                            <span class="badge rounded-pill d-inline-flex align-items-center" style="background:#ff7f32; color:#fff; padding:4px 10px; font-size:0.78rem; gap:6px;">
                                 <span>{{ $name }}</span>
                                 <button type="button" class="btn btn-sm btn-link text-white p-0 m-0" style="line-height:1; font-size:0.9rem;" wire:click.prevent="removeService('{{ $sid }}')">
                                     &times;
@@ -65,24 +65,27 @@
                         @endforelse
                     </div>
                 </div>
-                <div class="mt-3 position-relative" @click.outside="open = false">
-                    <button type="button" class="form-control text-start d-flex justify-content-between align-items-center" @click="open = !open">
+                <div class="mt-3 position-relative">
+                    <button type="button" class="form-control text-start d-flex justify-content-between align-items-center" wire:click="toggleServiceDropdown">
                         <span>Select services</span>
-                        <span class="badge bg-light text-muted">{{ count($services) }} total</span>
+                        <span class="badge bg-light text-muted">{{ $totalServices }} total</span>
                     </button>
-                    <div class="border rounded shadow-sm bg-white mt-1 p-2" x-cloak x-show="open" style="max-height: 260px; overflow-y: auto; position: absolute; width: 100%; z-index: 1050;">
-                        <input type="text" class="form-control form-control-sm mb-2" placeholder="Search services…" oninput="filterServiceList(event)">
-                        <div id="service-list" class="d-flex flex-column gap-1">
-                            @foreach ($services as $service)
-                                <button type="button"
-                                    class="btn btn-sm text-start {{ in_array((string) $service->id, $selected_services ?? []) ? 'btn-outline-primary' : 'btn-light' }}"
-                                    data-name="{{ strtolower($service->name) }}"
-                                    wire:click="toggleService('{{ $service->id }}')">
-                                    {{ $service->name }}
-                                </button>
-                            @endforeach
+                    @if ($showServiceDropdown)
+                        <div class="border rounded shadow-sm bg-white mt-1 p-2" style="max-height: 260px; overflow-y: auto; position: absolute; width: 100%; z-index: 1050;">
+                            <input type="text" class="form-control form-control-sm mb-2" placeholder="Search services…" wire:model.debounce.250ms="serviceSearch">
+                            <div class="d-flex flex-column gap-1">
+                                @forelse ($services as $service)
+                                    <button type="button"
+                                        class="btn btn-sm text-start {{ in_array((string) $service->id, $selected_services ?? []) ? 'btn-outline-primary' : 'btn-light' }}"
+                                        wire:click="toggleService('{{ $service->id }}')">
+                                        {{ $service->name }}
+                                    </button>
+                                @empty
+                                    <span class="text-muted small px-2 py-1">No services found.</span>
+                                @endforelse
+                            </div>
                         </div>
-                    </div>
+                    @endif
                 </div>
                 @error('selected_services')
                     <div class="text-danger small">{{ $message }}</div>
@@ -99,15 +102,3 @@
         </button>
     </div>
 </form>
-
-<script>
-    function filterServiceList(event) {
-        const term = event.target.value.toLowerCase();
-        const list = document.getElementById('service-list');
-        if (!list) return;
-        Array.from(list.children).forEach(item => {
-            const match = item.dataset.name?.includes(term);
-            item.style.display = match ? '' : 'none';
-        });
-    }
-</script>

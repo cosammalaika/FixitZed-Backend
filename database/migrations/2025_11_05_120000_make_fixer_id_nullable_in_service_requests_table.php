@@ -24,6 +24,9 @@ return new class extends Migration {
 
     public function up(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
         if (!Schema::hasTable($this->table)) return;
 
         // 1) Drop existing FK if present (whatever its name is)
@@ -46,6 +49,9 @@ return new class extends Migration {
 
     public function down(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
         if (!Schema::hasTable($this->table)) return;
 
         // Drop FK if present

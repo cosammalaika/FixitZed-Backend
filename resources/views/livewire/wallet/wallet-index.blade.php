@@ -37,18 +37,20 @@
                     @endphp
                     <td>
                       @if($fixerMissing)
-                        <span class="text-muted">—</span>
+                        <span class="text-muted">Deleted fixer</span>
                         <span class="badge bg-secondary ms-1">Missing fixer</span>
                       @elseif($userMissing)
-                        <span class="text-muted">—</span>
+                        <span class="text-muted">Deleted user</span>
                         <span class="badge bg-warning text-dark ms-1">No user</span>
                       @else
                         {{ $w->fixer?->user?->first_name ?? '—' }} {{ $w->fixer?->user?->last_name ?? '' }}
                       @endif
                     </td>
                     <td>
-                      @if($fixerMissing || $userMissing)
-                        <span class="text-muted">—</span>
+                      @if($fixerMissing)
+                        <span class="text-muted">Deleted fixer</span>
+                      @elseif($userMissing)
+                        <span class="text-muted">Deleted user</span>
                       @else
                         {{ $w->fixer?->user?->email ?? '—' }}
                       @endif

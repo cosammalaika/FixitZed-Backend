@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\FileController;
 use App\Livewire\Audit\LoginAuditIndex;
-use App\Livewire\Category\{CategoryCreate, CategoryEdit, CategoryIndex, CategoryShow};
 use App\Livewire\Coupon\{CouponCreate, CouponEdit, CouponIndex, CouponShow};
 use App\Livewire\Dashboard;
 use App\Livewire\Earning\{EarningCreate, EarningEdit, EarningIndex, EarningShow};
@@ -19,7 +18,6 @@ use App\Livewire\Review\{ReviewCreate, ReviewEdit, ReviewIndex, ReviewShow};
 use App\Livewire\Role\{RoleCreate, RoleEdit, RoleIndex, RoleShow};
 use App\Livewire\Service\{ServiceCreate, ServiceEdit, ServiceIndex, ServiceShow};
 use App\Livewire\ServiceRequest\{ServiceRequestCreate, ServiceRequestEdit, ServiceRequestIndex, ServiceRequestShow};
-use App\Livewire\Subcategory\{SubcategoryCreate, SubcategoryEdit, SubcategoryIndex, SubcategoryShow};
 use App\Livewire\Subscription\{PlanIndex as SubscriptionPlanIndex, SubscriptionIndex as SubscriptionPurchaseIndex};
 use App\Livewire\Wallet\WalletIndex as WalletIndex;
 use App\Livewire\UserLog\UserLogIndex;
@@ -102,19 +100,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('role/{id}', RoleShow::class)
         ->name('roles.show')
         ->middleware('permission:show.roles');
-
-    Route::get('category', CategoryIndex::class)
-        ->name('category.index')
-        ->middleware('permission:view.categories');
-    Route::get('category/create', CategoryCreate::class)
-        ->name('category.create')
-        ->middleware('permission:create.categories');
-    Route::get('category/{id}/edit', CategoryEdit::class)
-        ->name('category.edit')
-        ->middleware('permission:edit.categories');
-    Route::get('category/{id}', CategoryShow::class)
-        ->name('category.show')
-        ->middleware('permission:show.categories');
 
     Route::get('coupon', CouponIndex::class)
         ->name('coupon.index')
@@ -240,19 +225,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('wallets', WalletIndex::class)
         ->name('wallet.index')
         ->middleware('permission:view.wallet');
-
-    Route::get('subcategory', SubcategoryIndex::class)
-        ->name('subcategory.index')
-        ->middleware('permission:view.subcategories');
-    Route::get('subcategory/create', SubcategoryCreate::class)
-        ->name('subcategory.create')
-        ->middleware('permission:create.subcategories');
-    Route::get('subcategory/{id}/edit', SubcategoryEdit::class)
-        ->name('subcategory.edit')
-        ->middleware('permission:edit.subcategories');
-    Route::get('subcategory/{id}', SubcategoryShow::class)
-        ->name('subcategory.show')
-        ->middleware('permission:show.subcategories');
 
     Route::get('serviceRequest', ServiceRequestIndex::class)
         ->name('serviceRequest.index')

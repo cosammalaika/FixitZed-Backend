@@ -32,10 +32,10 @@ class FixerCreate extends Component
             ->whereDoesntHave('fixer')
             ->get();
         $this->allServices = Service::query()
-            ->select('id', 'name', 'subcategory_id')
+            ->select('id', 'name', 'category')
             ->orderBy('name')
             ->get()
-            ->unique(fn ($service) => strtolower($service->name) . '-' . $service->subcategory_id)
+            ->unique(fn ($service) => strtolower($service->name) . '-' . strtolower((string) $service->category))
             ->values();
     }
 

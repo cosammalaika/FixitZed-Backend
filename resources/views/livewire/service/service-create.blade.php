@@ -18,24 +18,11 @@
                         <input class="form-control" type="text" wire:model.defer="name" placeholder="Service Name" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label" for="default-input">Subcategory</label>
-                        <select wire:model="subcategory_id" class="form-control" required>
-                            <option value="">-- Select Subcategory --</option>
-                            @foreach ($subcategories as $subcategory)
-                                <option value="{{ $subcategory->id }}">{{ $subcategory->name }}</option>
-                            @endforeach
-                        </select>
-                        @error('subcategory_id')
+                        <label class="form-label" for="default-input">Category</label>
+                        <input class="form-control" type="text" wire:model.defer="category" placeholder="Enter a category label" required>
+                        @error('category')
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label" for="default-input">Base Price (ZMW) <span class="text-muted small">(optional)</span></label>
-                        <input class="form-control" type="number" wire:model.defer="price" placeholder="Leave blank to default to 0">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label" for="default-input">Duration (Minutes) <span class="text-muted small">(optional)</span></label>
-                        <input class="form-control" type="number" wire:model.defer="duration_minutes" placeholder="Defaults to 60">
                     </div>
 
                 </div>
@@ -49,11 +36,12 @@
                         @enderror
                     </div>
 
-                    <div class="col-md-6 d-flex align-items-center">
-                        <div class="form-check form-switch mt-4">
-                            <input type="checkbox" class="form-check-input" id="is_active" wire:model="is_active">
-                            <label class="form-check-label" for="is_active">Active</label>
-                        </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="status">Status</label>
+                        <select id="status" class="form-control" wire:model="status" required>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
                     </div>
 
                 </div>

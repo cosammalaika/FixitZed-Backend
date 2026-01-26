@@ -4,41 +4,48 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 class Service extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'subcategory_id',
         'name',
+        'category',
         'description',
-        'price',
-        'duration_minutes',
-        'is_active',
+        'status',
     ];
 
-    public function subcategory()
-    {
-        return $this->belongsTo(Subcategory::class);
-    }
+    protected $casts = [
+        'status' => 'string',
+    ];
+
     public function fixers()
     {
         return $this->belongsToMany(Fixer::class, 'fixer_service');
     }
-    
 
     public function serviceRequests()
     {
         return $this->hasMany(ServiceRequest::class);
     }
 
-    protected $casts = [
-        'subcategory_id' => 'integer',
-        'price' => 'float',
-        'duration_minutes' => 'integer',
-        'is_active' => 'boolean',
-    ];
+    protected static ?bool $hasIsActive = null;
+
+    public function scopeActive($query)
+    {
+        // Determine schema once per process to avoid per-query checks.
+        if (! isset(static::$hasIsActive)) {
+            static::$hasIsActive = Schema::hasColumn('services', 'is_active');
+        }
+
+        if (static::$hasIsActive) {
+            return $query->where('is_active', true);
+        }
+
+        return $query->whereRaw('LOWER(status) = ?', ['active']);
+    }
 
     public function reviews()
     {

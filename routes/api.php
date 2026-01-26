@@ -42,6 +42,7 @@ Route::get('categories', [CategoryController::class, 'index']);
 Route::get('categories/{category}', [CategoryController::class, 'show']);
 Route::get('categories/{category}/subcategories', [CategoryController::class, 'subcategories']);
 Route::get('services', [ServiceController::class, 'index']);
+Route::get('services/active', [ServiceController::class, 'active']);
 Route::get('services/{service}', [ServiceController::class, 'show']);
 Route::get('services/{service}/fixers', [ServiceController::class, 'fixers']);
 Route::get('subcategories', [SubcategoryController::class, 'index']);
@@ -76,9 +77,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Service Requests for the authenticated user (email verification not required)
     Route::get('requests', [ServiceRequestController::class, 'index']);
     Route::post('requests', [ServiceRequestController::class, 'store']);
+    Route::post('service-requests', [ServiceRequestController::class, 'store']); // alias for legacy mobile client
     Route::get('requests/{serviceRequest}', [ServiceRequestController::class, 'show']);
     Route::patch('requests/{serviceRequest}', [ServiceRequestController::class, 'update']);
     Route::post('requests/{serviceRequest}/cancel', [ServiceRequestController::class, 'cancel']);
+    Route::post('service-requests/{serviceRequest}/cancel', [ServiceRequestController::class, 'cancel']); // alias
 });
 
 Route::middleware('auth:sanctum')->group(function () {

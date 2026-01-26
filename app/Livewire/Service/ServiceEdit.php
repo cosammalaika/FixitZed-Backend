@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Service;
 
-use App\Models\Subcategory;
 use Livewire\Component;
 use App\Models\Service;
 use App\Support\ApiCache;
@@ -10,7 +9,7 @@ use Illuminate\Validation\Rule;
 
 class ServiceEdit extends Component
 {
-    public $serviceId, $name, $description, $price, $is_active, $subcategories, $subcategory_id, $duration_minutes;
+    public $serviceId, $name, $category, $description, $status;
 
     protected $rules = [];
 
@@ -20,12 +19,9 @@ class ServiceEdit extends Component
         $service = Service::find($id);
         $this->serviceId = $service->id;
         $this->name = $service->name;
+        $this->category = $service->category;
         $this->description = $service->description;
-        $this->duration_minutes = $service->duration_minutes;
-        $this->price = $service->price;
-        $this->is_active = $service->is_active;
-        $this->subcategory_id = $service->subcategory_id;
-        $this->subcategories = Subcategory::orderBy('name')->get();
+        $this->status = $service->status;
     }
     public function render()
     {
@@ -40,14 +36,12 @@ class ServiceEdit extends Component
 
         $service->update([
             'name' => trim((string) $this->name),
+            'category' => trim((string) $this->category),
             'description' => trim((string) $this->description),
-            'price' => ($this->price === '' || $this->price === null) ? 0 : $this->price,
-            'duration_minutes' => ($this->duration_minutes === '' || $this->duration_minutes === null) ? 60 : $this->duration_minutes,
-            'subcategory_id' => $this->subcategory_id,
-            'is_active' => $this->is_active,
+            'status' => $this->status,
         ]);
 
-        ApiCache::flush(['catalog', 'categories', 'subcategories', 'services']);
+        ApiCache::flush(['catalog', 'services']);
         log_user_action('updated service', "From '{$oldName}' to '{$this->name}', ID: {$service->id}");
 
         $this->dispatchBrowserEvent('flash-message', [
@@ -65,14 +59,12 @@ class ServiceEdit extends Component
                 'string',
                 'max:255',
                 Rule::unique('services', 'name')
-                    ->where(fn ($q) => $q->where('subcategory_id', $this->subcategory_id))
+                    ->where(fn ($q) => $q->where('category', $this->category))
                     ->ignore($this->serviceId),
             ],
+            'category' => ['required', 'string', 'max:255'],
             'description' => 'nullable|string',
-            'price' => 'nullable|numeric|min:0',
-            'duration_minutes' => 'nullable|numeric|min:0',
-            'is_active' => 'boolean',
-            'subcategory_id' => 'required|exists:subcategories,id',
+            'status' => ['required', Rule::in(['active', 'inactive'])],
         ];
     }
 

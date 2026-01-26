@@ -9,8 +9,6 @@ use Illuminate\Support\Str;
 use Carbon\Carbon;
 
 use App\Models\User;
-use App\Models\Category;
-use App\Models\Subcategory;
 use App\Models\Service;
 use App\Models\Fixer;
 use App\Models\ServiceRequest;
@@ -53,21 +51,12 @@ class OtherData extends Seeder
         ]);
         $fixerUser->assignRole('Fixer');
 
-        // Categories
-        $plumbing = Category::create(['name' => 'Plumbing', 'description' => 'All plumbing related services']);
-        $electrical = Category::create(['name' => 'Electrical', 'description' => 'Electrical services']);
-
-        // Subcategories
-        $pipeRepair = Subcategory::create(['category_id' => $plumbing->id, 'name' => 'Pipe Repair', 'description' => 'Fix leaking pipes']);
-        $wiring = Subcategory::create(['category_id' => $electrical->id, 'name' => 'Wiring', 'description' => 'Install electrical wiring']);
-
         // Services
         $service = Service::create([
-            'subcategory_id' => $pipeRepair->id,
             'name' => 'Fix leaking pipe',
+            'category' => 'Plumbing',
             'description' => 'Bathroom or kitchen pipe repair',
-            'price' => 150.00,
-            'duration_minutes' => 60,
+            'status' => 'active',
         ]);
 
         // Fixer

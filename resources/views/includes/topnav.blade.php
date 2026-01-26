@@ -50,25 +50,6 @@
                         </li>
                     @endcanany
 
-                    @canany(['view.categories', 'view.subcategories'])
-                        <li class="nav-item dropdown" data-permission-any="view.categories|view.subcategories">
-                            <a class="nav-link dropdown-toggle arrow-none" href="#" id="topnav-categories" role="button">
-                                <span data-key="t-elements">Category</span>
-                                <div class="arrow-down"></div>
-                            </a>
-                            <div class="dropdown-menu" aria-labelledby="topnav-categories">
-                                @can('view.categories')
-                                    <a href="{{ route('category.index') }}" class="dropdown-item" data-permission="view.categories"
-                                        data-key="t-calendar">Categories</a>
-                                @endcan
-                                @can('view.subcategories')
-                                    <a href="{{ route('subcategory.index') }}" class="dropdown-item"
-                                        data-permission="view.subcategories" data-key="t-chat">Sub Categories</a>
-                                @endcan
-                            </div>
-                        </li>
-                    @endcanany
-
                     @canany(['view.payments', 'view.payment_methods', 'view.earnings'])
                         <li class="nav-item dropdown"
                             data-permission-any="view.payments|view.payment_methods|view.earnings">

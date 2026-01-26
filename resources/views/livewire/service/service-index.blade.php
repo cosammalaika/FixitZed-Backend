@@ -39,10 +39,8 @@
                                  <tr>
                                      <th>#</th>
                                      <th>Name</th>
-                                     <th>Base Price (ZMW)</th>
-                                     <th>Subcategory</th>
+                                     <th>Category</th>
                                      <th>Description</th>
-                                     <th>Duration</th>
                                      <th>Status</th>
                                      <th style="width: 80px; min-width: 80px;">Action</th>
                                  </tr>
@@ -54,12 +52,10 @@
                                      <tr>
                                          <td>{{ $index + 1 }}</td>
                                          <td>{{ $service->name }}</td>
-                                         <td>ZMW {{ number_format($service->price, 2) }}</td>
-                                         <td>{{ $service->subcategory->name ?? 'N/A' }}</td>
+                                         <td>{{ $service->category }}</td>
                                          <td>{{ $service->description }}</td>
-                                         <td>{{ $service->duration_minutes }} min</td>
                                          <td>
-                                             @if ($service->is_active == 1)
+                                             @if ($service->status === 'active')
                                                  <span class="badge rounded-pill badge-soft-success">Active</span>
                                              @else
                                                  <span class="badge rounded-pill badge-soft-danger">Inactive</span>

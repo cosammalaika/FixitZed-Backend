@@ -86,12 +86,13 @@ class FixerController extends Controller
                 $avg = $u->average_rating ? round((float) $u->average_rating, 1) : null;
                 $ratingsCount = (int) ($u->ratings_count ?? 0);
 
-                $services = $fixer?->services
+                    $services = $fixer?->services
                     ? $fixer->services->map(function ($service) {
                         return [
                             'id' => $service->id,
                             'name' => $service->name,
-                            'price' => $service->price,
+                            'category' => $service->category,
+                            'status' => $service->status,
                         ];
                     })->values()
                     : collect();
@@ -354,7 +355,8 @@ class FixerController extends Controller
                 return [
                     'id' => $service->id,
                     'name' => $service->name,
-                    'price' => $service->price,
+                    'category' => $service->category,
+                    'status' => $service->status,
                 ];
             })->values()->all(),
             'user' => [

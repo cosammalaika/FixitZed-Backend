@@ -57,7 +57,11 @@ class FixerRequestController extends Controller
                     return $data;
                 });
 
-            return response()->json(['success' => true, 'data' => $declines]);
+            return response()->json([
+                'success' => true,
+                'data' => $declines,
+                'meta' => ['count' => $declines->total()],
+            ]);
         }
 
         $q = ServiceRequest::with(['service', 'customer'])
@@ -101,7 +105,11 @@ class FixerRequestController extends Controller
             ]);
         }
 
-        return response()->json(['success' => true, 'data' => $requests]);
+        return response()->json([
+            'success' => true,
+            'data' => $requests,
+            'meta' => ['count' => $requests->total()],
+        ]);
     }
 
     /**
@@ -129,8 +137,16 @@ class FixerRequestController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($this->isExpired($locked) || $locked->status === 'cancelled') {
+            if ($this->isExpired($locked)) {
                 $this->markExpired($locked);
+                $response = response()->json([
+                    'success' => false,
+                    'message' => 'This request is no longer available.',
+                ], 410);
+                return;
+            }
+
+            if ($locked->status === 'cancelled') {
                 $response = response()->json([
                     'success' => false,
                     'message' => 'This request is no longer available.',
@@ -151,6 +167,7 @@ class FixerRequestController extends Controller
                 $response = response()->json([
                     'success' => false,
                     'message' => 'This request has already been taken.',
+                    'meta' => ['count' => 0],
                 ], 409);
                 return;
             }
@@ -159,6 +176,7 @@ class FixerRequestController extends Controller
                 $response = response()->json([
                     'success' => false,
                     'message' => 'This request has already been assigned.',
+                    'meta' => ['count' => 0],
                 ], 409);
                 return;
             }
@@ -171,6 +189,7 @@ class FixerRequestController extends Controller
                     $response = response()->json([
                         'success' => false,
                         'message' => 'You are not eligible for this request.',
+                        'meta' => ['count' => 0],
                     ], 403);
                     return;
                 }
@@ -200,6 +219,7 @@ class FixerRequestController extends Controller
                 'success' => true,
                 'data' => $locked->fresh()->load(['service', 'fixer.user']),
                 'message' => '1 coin deducted. Request accepted.',
+                'meta' => ['count' => 1],
             ]);
         });
 
@@ -236,8 +256,24 @@ class FixerRequestController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($this->isExpired($locked) || $locked->status === 'cancelled') {
+            if ($this->isExpired($locked)) {
                 $this->markExpired($locked);
+                $response = response()->json([
+                    'success' => false,
+                    'message' => 'This request is no longer available.',
+                ], 410);
+                return;
+            }
+
+            if ($locked->status === 'cancelled') {
+                $response = response()->json([
+                    'success' => false,
+                    'message' => 'This request is no longer available.',
+                ], 410);
+                return;
+            }
+
+            if ($locked->status === 'expired') {
                 $response = response()->json([
                     'success' => false,
                     'message' => 'This request is no longer available.',
@@ -529,8 +565,8 @@ class FixerRequestController extends Controller
     protected function expiryCutoff(): ?\Illuminate\Support\Carbon
     {
         $minutes = (int) Setting::get('requests.expiry_minutes', 15);
-        // Guard against misconfiguration that would expire instantly.
-        if ($minutes < 5) {
+        // Guard against zero/negative; allow low values for testing.
+        if ($minutes < 1) {
             $minutes = 15;
         }
         if ($minutes <= 0) {

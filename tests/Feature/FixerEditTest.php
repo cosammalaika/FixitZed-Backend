@@ -1,10 +1,8 @@
 <?php
 
 use App\Livewire\Fixer\FixerEdit;
-use App\Models\Category;
 use App\Models\Fixer;
 use App\Models\Service;
-use App\Models\Subcategory;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -12,27 +10,13 @@ use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
 
-function createService(?Subcategory $subcategory = null): Service
+function createService(): Service
 {
-    if (! $subcategory) {
-        $category = Category::create([
-            'name' => 'Category',
-            'description' => 'Test category',
-        ]);
-
-        $subcategory = Subcategory::create([
-            'category_id' => $category->id,
-            'name' => 'Subcategory',
-            'description' => 'Test subcategory',
-        ]);
-    }
-
     return Service::create([
-        'subcategory_id' => $subcategory->id,
         'name' => 'Test Service',
+        'category' => 'General',
         'description' => 'Test service description',
-        'price' => 10,
-        'duration_minutes' => 30,
+        'status' => 'active',
     ]);
 }
 
@@ -76,19 +60,9 @@ it('fails validation gracefully when status array contains no value', function (
 });
 
 it('loads all services once, preselects assigned services, and persists updates', function () {
-    $category = Category::create([
-        'name' => 'Category',
-        'description' => 'Test category',
-    ]);
-    $subcategory = Subcategory::create([
-        'category_id' => $category->id,
-        'name' => 'Subcategory',
-        'description' => 'Test subcategory',
-    ]);
-
-    $serviceA = createService($subcategory);
-    $serviceB = createService($subcategory);
-    $serviceC = createService($subcategory);
+    $serviceA = createService();
+    $serviceB = createService();
+    $serviceC = createService();
 
     $user = User::factory()->create(['status' => 'Active']);
     $fixer = Fixer::create([

@@ -2,11 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\Category;
 use App\Models\Fixer;
 use App\Models\Service;
 use App\Models\Setting;
-use App\Models\Subcategory;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -25,20 +23,11 @@ class RequestExpiryAndAssignmentTest extends TestCase
 
     protected function makeService(): Service
     {
-        $category = Category::create(['name' => 'Home', 'description' => '']);
-        $subcategory = Subcategory::create([
-            'category_id' => $category->id,
-            'name' => 'Repairs',
-            'description' => '',
-        ]);
-
         return Service::create([
-            'subcategory_id' => $subcategory->id,
             'name' => 'AC Repair',
+            'category' => 'Repairs',
             'description' => 'Test',
-            'price' => 100,
-            'duration_minutes' => 60,
-            'is_active' => true,
+            'status' => 'active',
         ]);
     }
 

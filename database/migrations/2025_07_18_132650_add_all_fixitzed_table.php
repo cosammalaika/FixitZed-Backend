@@ -23,31 +23,13 @@ return new class extends Migration {
     //         $table->timestamps();
     //     });
 
-        // Categories
-        Schema::create('categories', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->text('description')->nullable();
-            $table->timestamps();
-        });
-
-        // Subcategories
-        Schema::create('subcategories', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
-            $table->string('name');
-            $table->text('description')->nullable();
-            $table->timestamps();
-        });
-
         // Services
         Schema::create('services', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('subcategory_id')->constrained()->onDelete('cascade');
             $table->string('name');
+            $table->string('category');
             $table->text('description')->nullable();
-            $table->decimal('price', 10, 2)->default(0);
-            $table->integer('duration_minutes')->default(60);
+            $table->string('status')->default('active');
             $table->timestamps();
         });
 

@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Subcategory;
+use App\Models\Service;
 use App\Support\ApiCache;
-use Database\Seeders\ServiceCatalogSeeder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -16,7 +15,6 @@ class SubcategoryController extends Controller
     {
         try {
             $validated = $request->validate([
-                'category_id' => 'nullable|integer',
                 'page' => 'nullable|integer|min:1',
                 'per_page' => 'nullable|integer|min:1|max:100',
             ]);
@@ -29,30 +27,36 @@ class SubcategoryController extends Controller
         }
 
         try {
-            $q = Subcategory::query()->select('id', 'category_id', 'name', 'description', 'created_at', 'updated_at');
-            if (! empty($validated['category_id'])) {
-                $q->where('category_id', (int) $validated['category_id']);
-            }
-            $dedupedIds = Subcategory::query()
-                ->selectRaw('MIN(id) as id')
-                ->groupBy('name', 'category_id');
-            $q->whereIn('id', $dedupedIds);
             $perPage = max(1, min((int) ($validated['per_page'] ?? 15), 100));
             $page = max(1, (int) ($validated['page'] ?? 1));
 
             $key = 'subcategories:index:' . md5(http_build_query([
                 'page' => $page,
                 'per_page' => $perPage,
-                'category_id' => $request->input('category_id'),
             ]));
 
-            return ApiCache::remember(['catalog', 'subcategories'], $key, function () use ($q, $perPage) {
-                $this->seedCatalogIfMissing();
+            return ApiCache::remember(['catalog', 'subcategories'], $key, function () use ($perPage) {
+                $paginator = Service::query()
+                    ->active()
+                    ->select('category')
+                    ->whereNotNull('category')
+                    ->groupBy('category')
+                    ->orderBy('category')
+                    ->paginate($perPage);
 
-                $paginator = $q->orderBy('name')->paginate($perPage);
+                $data = collect($paginator->items())->map(function ($item) {
+                    $name = is_array($item) ? $item['category'] : $item->category;
+                    return [
+                        'id' => crc32($name),
+                        'category_id' => crc32($name),
+                        'name' => $name,
+                        'description' => null,
+                    ];
+                })->values();
+
                 return response()->json([
                     'success' => true,
-                    'data' => array_values($paginator->items()),
+                    'data' => $data,
                     'meta' => [
                         'current_page' => $paginator->currentPage(),
                         'per_page' => $paginator->perPage(),
@@ -83,21 +87,16 @@ class SubcategoryController extends Controller
         }
     }
 
-    public function show(Subcategory $subcategory)
+    public function show(string $subcategory)
     {
-        $subcategory->load('category');
         return response()->json([
             'success' => true,
-            'data' => $subcategory,
+            'data' => [
+                'id' => crc32($subcategory),
+                'category_id' => crc32($subcategory),
+                'name' => $subcategory,
+                'description' => null,
+            ],
         ]);
-    }
-
-    protected function seedCatalogIfMissing(): void
-    {
-        if (! Subcategory::query()->exists()) {
-            Log::info('Seeding subcategories (bootstrap)');
-            (new ServiceCatalogSeeder())->run();
-            ApiCache::flush(['catalog', 'categories', 'subcategories', 'services']);
-        }
     }
 }

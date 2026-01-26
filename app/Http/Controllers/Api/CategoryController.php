@@ -3,11 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Category;
+use App\Models\Service;
 use App\Support\ApiCache;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Database\Seeders\ServiceCatalogSeeder;
 
 class CategoryController extends Controller
 {
@@ -23,34 +22,39 @@ class CategoryController extends Controller
             ]));
 
             return ApiCache::remember(['catalog', 'categories'], $cacheKey, function () use ($perPage) {
-                $this->seedCatalogIfMissing();
-
-                $dedupedIds = Category::query()
-                    ->selectRaw('MIN(id) as id')
-                    ->groupBy('name');
-
-                $paginator = Category::query()
-                    ->select('id', 'name', 'description', 'created_at', 'updated_at')
-                    ->whereIn('id', $dedupedIds)
-                    ->orderBy('name')
+                $categories = Service::query()
+                    ->active()
+                    ->select('category')
+                    ->whereNotNull('category')
+                    ->groupBy('category')
+                    ->orderBy('category')
                     ->paginate($perPage);
+
+                $data = collect($categories->items())->map(function ($item) {
+                    $name = is_array($item) ? $item['category'] : $item->category;
+                    return [
+                        'id' => crc32($name),
+                        'name' => $name,
+                        'description' => null,
+                    ];
+                })->values();
 
                 return response()->json([
                     'success' => true,
-                    'data' => array_values($paginator->items()),
+                    'data' => $data,
                     'meta' => [
-                        'current_page' => $paginator->currentPage(),
-                        'per_page' => $paginator->perPage(),
-                        'total' => $paginator->total(),
-                        'last_page' => $paginator->lastPage(),
-                        'from' => $paginator->firstItem(),
-                        'to' => $paginator->lastItem(),
+                        'current_page' => $categories->currentPage(),
+                        'per_page' => $categories->perPage(),
+                        'total' => $categories->total(),
+                        'last_page' => $categories->lastPage(),
+                        'from' => $categories->firstItem(),
+                        'to' => $categories->lastItem(),
                     ],
                     'links' => [
-                        'first' => $paginator->url(1),
-                        'last' => $paginator->url($paginator->lastPage()),
-                        'prev' => $paginator->previousPageUrl(),
-                        'next' => $paginator->nextPageUrl(),
+                        'first' => $categories->url(1),
+                        'last' => $categories->url($categories->lastPage()),
+                        'prev' => $categories->previousPageUrl(),
+                        'next' => $categories->nextPageUrl(),
                     ],
                 ]);
             });
@@ -67,29 +71,23 @@ class CategoryController extends Controller
         }
     }
 
-    public function show(Category $category)
+    public function show(string $category)
     {
         return response()->json([
             'success' => true,
-            'data' => $category,
+            'data' => [
+                'id' => crc32($category),
+                'name' => $category,
+                'description' => null,
+            ],
         ]);
     }
 
-    public function subcategories(Category $category)
+    public function subcategories(string $category)
     {
-        $category->load('subcategories');
         return response()->json([
             'success' => true,
-            'data' => $category->subcategories,
+            'data' => [],
         ]);
-    }
-
-    protected function seedCatalogIfMissing(): void
-    {
-        if (! Category::query()->exists()) {
-            Log::info('Seeding categories (bootstrap)');
-            (new ServiceCatalogSeeder())->run();
-            ApiCache::flush(['catalog', 'categories', 'subcategories', 'services']);
-        }
     }
 }

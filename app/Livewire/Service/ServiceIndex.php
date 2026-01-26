@@ -23,7 +23,7 @@ class ServiceIndex extends Component
             $name = $service->name;
             $service->delete();
 
-            ApiCache::flush(['catalog', 'categories', 'subcategories', 'services']);
+            ApiCache::flush(['catalog', 'services']);
             log_user_action('deleted service', "Service: {$name}, ID: {$id}");
 
             $this->dispatchBrowserEvent('flash-message', [

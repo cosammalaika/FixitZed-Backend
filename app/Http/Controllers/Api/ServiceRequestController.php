@@ -25,6 +25,7 @@ class ServiceRequestController extends Controller
         return response()->json([
             'success' => true,
             'data' => $requests,
+            'meta' => ['count' => $requests->count()],
         ]);
     }
 
@@ -73,6 +74,7 @@ class ServiceRequestController extends Controller
         return response()->json([
             'success' => true,
             'data' => $sr->load(['service', 'fixer.user']),
+            'meta' => ['count' => 1],
         ], 201);
     }
 
@@ -82,6 +84,7 @@ class ServiceRequestController extends Controller
         return response()->json([
             'success' => true,
             'data' => $serviceRequest->load(['service', 'fixer.user']),
+            'meta' => ['count' => 1],
         ]);
     }
 
@@ -133,6 +136,7 @@ class ServiceRequestController extends Controller
             'success' => true,
             'message' => 'Booking cancelled.',
             'data' => $serviceRequest->fresh()->load(['service', 'fixer.user']),
+            'meta' => ['count' => 1],
         ]);
     }
 

@@ -17,7 +17,7 @@ class ServiceController extends Controller
             $validated = $request->validate([
                 'search' => 'nullable|string|max:255',
                 'page' => 'nullable|integer|min:1',
-                'per_page' => 'nullable|integer|min:1|max:100',
+                'per_page' => 'nullable|integer|min:1',
             ]);
         } catch (ValidationException $e) {
             return response()->json([
@@ -33,7 +33,7 @@ class ServiceController extends Controller
                 'name',
                 'category',
                 'description',
-                'status',
+                'is_active',
                 'created_at',
                 'updated_at',
             ]);

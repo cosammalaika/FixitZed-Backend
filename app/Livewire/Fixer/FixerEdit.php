@@ -100,6 +100,8 @@ class FixerEdit extends Component
             ->values()
             ->all();
 
+        // Reset and re-sync to eliminate any duplicate pivot rows.
+        $fixer->services()->detach();
         $fixer->services()->sync($serviceIds);
         $this->selected_services = collect($serviceIds)
             ->map(fn ($id) => (string) $id)

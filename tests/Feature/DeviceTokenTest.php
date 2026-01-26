@@ -4,6 +4,7 @@ use App\Models\DeviceToken;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
+use function Pest\Laravel\postJson;
 
 it('reassigns a token to the latest authenticated user', function () {
     $userA = User::factory()->create();

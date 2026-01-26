@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rules\Password as PasswordRule;
+use Spatie\Permission\Models\Role;
 
 class AuthController extends Controller
 {
@@ -96,6 +97,10 @@ class AuthController extends Controller
         $roles = ['Customer'];
         if ($roleFromRequest && ! in_array($roleFromRequest, $roles, true)) {
             $roles[] = $roleFromRequest;
+        }
+        // Ensure roles exist for the correct guard before syncing to avoid 500s on fresh installs.
+        foreach ($roles as $roleName) {
+            Role::findOrCreate($roleName, config('auth.defaults.guard', 'web'));
         }
         $user->syncRoles($roles);
 

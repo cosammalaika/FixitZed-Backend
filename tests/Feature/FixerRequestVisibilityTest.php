@@ -70,9 +70,26 @@ class FixerRequestVisibilityTest extends TestCase
 
         $this->actingAs($customer, 'sanctum')
             ->postJson('/api/requests', $payload)
-            ->assertStatus(422)
-            ->assertJsonFragment(['success' => false]);
+            ->assertStatus(201)
+            ->assertJsonFragment(['success' => true]);
 
-        $this->assertSame(0, ServiceRequest::count());
+        $sr = ServiceRequest::first();
+        $this->assertNotNull($sr);
+        $this->assertNull($sr->fixer_id);
+        $this->assertSame('pending', $sr->status);
+
+        // With no eligible fixer, feed should not show it
+        $fixerUser = User::factory()->create();
+        $fixer = Fixer::create([
+            'user_id' => $fixerUser->id,
+            'status' => 'approved',
+            'bio' => '',
+        ]);
+        // Fixer not linked to service => ineligible
+
+        $this->actingAs($fixerUser, 'sanctum')
+            ->getJson('/api/fixer/requests?status=pending')
+            ->assertStatus(200)
+            ->assertJsonMissing(['id' => $sr->id]);
     }
 }

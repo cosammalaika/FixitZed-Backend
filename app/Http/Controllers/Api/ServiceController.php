@@ -36,10 +36,23 @@ class ServiceController extends Controller
                 'is_active',
                 'created_at',
                 'updated_at',
+            ])->withCount([
+                'fixers as fixers_count' => function ($q) {
+                    // Count only fixers that are effectively available to customers.
+                    $q->where(function ($q2) {
+                        $q2->whereNull('fixer_service.status')
+                            ->orWhere('fixer_service.status', 'Active');
+                    })->whereHas('user', function ($q3) {
+                        $q3->where('status', 'Active')
+                            ->whereNotNull('email_verified_at');
+                    });
+                },
             ]);
 
-            // Always return only active services; avoid any legacy category/subcategory filters
-            $query->active();
+            // Default: return all services. Apply active-only filter only when explicitly requested.
+            if ($request->boolean('only_active')) {
+                $query->active();
+            }
 
             if (! empty($validated['search'])) {
                 $term = '%' . trim($validated['search']) . '%';
@@ -74,7 +87,9 @@ class ServiceController extends Controller
         } catch (\Throwable $e) {
             Log::error('Service index failed', [
                 'search' => $request->input('search'),
-                'status' => $request->input('status'),
+                'only_active' => $request->boolean('only_active'),
+                'query' => $request->query(),
+                'exception' => get_class($e),
                 'error' => $e->getMessage(),
             ]);
 

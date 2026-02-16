@@ -65,13 +65,12 @@
                         @endforelse
                     </div>
                 </div>
-                <div class="mt-3 position-relative">
-                    <button type="button" class="form-control text-start d-flex justify-content-between align-items-center" wire:click="toggleServiceDropdown">
+                <div class="mt-3 position-relative" x-data="{ open: false }">
+                    <button type="button" class="form-control text-start d-flex justify-content-between align-items-center" @click="open = !open">
                         <span>Select services</span>
                         <span class="badge bg-light text-muted">{{ $totalServices }} total</span>
                     </button>
-                    @if ($showServiceDropdown)
-                        <div class="border rounded shadow-sm bg-white mt-1 p-2" style="max-height: 260px; overflow-y: auto; position: absolute; width: 100%; z-index: 1050;">
+                        <div x-show="open" @click.outside="open = false" class="border rounded shadow-sm bg-white mt-1 p-2" style="max-height: 260px; overflow-y: auto; position: absolute; width: 100%; z-index: 1050;">
                             <input type="text" class="form-control form-control-sm mb-2" placeholder="Search services…" wire:model.debounce.250ms="serviceSearch">
                             <div class="d-flex flex-column gap-1">
                                 @forelse ($services as $service)
@@ -85,7 +84,6 @@
                                 @endforelse
                             </div>
                         </div>
-                    @endif
                 </div>
                 @error('selected_services')
                     <div class="text-danger small">{{ $message }}</div>

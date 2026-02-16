@@ -101,8 +101,8 @@ class Fixer extends Model
             // Prevent stale pivots or wallet rows
             $fixer->services()->detach();
             $fixer->wallet()?->delete();
-            $fixer->subscriptions()->each->delete();
-            $fixer->declines()->each->delete();
+            $fixer->subscriptions()->delete();
+            $fixer->declines()->delete();
             $fixer->priorityHistory()->delete();
 
             // Release service requests without deleting the customer records

@@ -12,9 +12,14 @@ class ServiceIndex extends Component
 
     public function render()
     {
-        $services = Service::orderBy('name')->get();
-        return view('livewire.service.service-index', compact("services"));
+        $services = Service::query()
+            ->with(['subcategory.category'])
+            ->orderBy('name')
+            ->get();
+
+        return view('livewire.service.service-index', compact('services'));
     }
+
     public function delete($id)
     {
         $service = Service::find($id);
@@ -37,5 +42,4 @@ class ServiceIndex extends Component
             ]);
         }
     }
-
 }

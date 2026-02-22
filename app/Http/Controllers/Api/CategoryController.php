@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\Service;
+use App\Models\Subcategory;
 use App\Support\ApiCache;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class CategoryController extends Controller
 {
@@ -22,6 +25,39 @@ class CategoryController extends Controller
             ]));
 
             return ApiCache::remember(['catalog', 'categories'], $cacheKey, function () use ($perPage) {
+                if (Schema::hasTable('categories')) {
+                    $categories = Category::query()
+                        ->orderBy('name')
+                        ->paginate($perPage);
+
+                    $data = collect($categories->items())
+                        ->map(fn (Category $category) => $this->formatCategory($category))
+                        ->values();
+
+                    return $this->paginatedResponse($categories, $data);
+                }
+
+                if (! Schema::hasColumn('services', 'category')) {
+                    return response()->json([
+                        'success' => true,
+                        'data' => [],
+                        'meta' => [
+                            'current_page' => 1,
+                            'per_page' => $perPage,
+                            'total' => 0,
+                            'last_page' => 1,
+                            'from' => null,
+                            'to' => null,
+                        ],
+                        'links' => [
+                            'first' => null,
+                            'last' => null,
+                            'prev' => null,
+                            'next' => null,
+                        ],
+                    ]);
+                }
+
                 $categories = Service::query()
                     ->active()
                     ->select('category')
@@ -32,31 +68,15 @@ class CategoryController extends Controller
 
                 $data = collect($categories->items())->map(function ($item) {
                     $name = is_array($item) ? $item['category'] : $item->category;
+
                     return [
-                        'id' => crc32($name),
+                        'id' => (int) crc32((string) $name),
                         'name' => $name,
                         'description' => null,
                     ];
                 })->values();
 
-                return response()->json([
-                    'success' => true,
-                    'data' => $data,
-                    'meta' => [
-                        'current_page' => $categories->currentPage(),
-                        'per_page' => $categories->perPage(),
-                        'total' => $categories->total(),
-                        'last_page' => $categories->lastPage(),
-                        'from' => $categories->firstItem(),
-                        'to' => $categories->lastItem(),
-                    ],
-                    'links' => [
-                        'first' => $categories->url(1),
-                        'last' => $categories->url($categories->lastPage()),
-                        'prev' => $categories->previousPageUrl(),
-                        'next' => $categories->nextPageUrl(),
-                    ],
-                ]);
+                return $this->paginatedResponse($categories, $data);
             });
         } catch (\Throwable $e) {
             Log::error('Category list failed', [
@@ -73,10 +93,29 @@ class CategoryController extends Controller
 
     public function show(string $category)
     {
+        if (Schema::hasTable('categories')) {
+            $query = Category::query();
+
+            if (is_numeric($category)) {
+                $query->where('id', (int) $category)->orWhere('name', $category);
+            } else {
+                $query->where('name', $category);
+            }
+
+            $record = $query->first();
+
+            if ($record) {
+                return response()->json([
+                    'success' => true,
+                    'data' => $this->formatCategory($record),
+                ]);
+            }
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
-                'id' => crc32($category),
+                'id' => (int) crc32($category),
                 'name' => $category,
                 'description' => null,
             ],
@@ -85,9 +124,71 @@ class CategoryController extends Controller
 
     public function subcategories(string $category)
     {
+        if (Schema::hasTable('categories') && Schema::hasTable('subcategories')) {
+            $categoryQuery = Category::query();
+
+            if (is_numeric($category)) {
+                $categoryQuery->where('id', (int) $category)->orWhere('name', $category);
+            } else {
+                $categoryQuery->where('name', $category);
+            }
+
+            $record = $categoryQuery->first();
+
+            if ($record) {
+                $data = Subcategory::query()
+                    ->where('category_id', $record->id)
+                    ->orderBy('name')
+                    ->get()
+                    ->map(fn (Subcategory $subcategory) => [
+                        'id' => (int) $subcategory->id,
+                        'category_id' => (int) $subcategory->category_id,
+                        'name' => $subcategory->name,
+                        'description' => $subcategory->description,
+                    ])
+                    ->values();
+
+                return response()->json([
+                    'success' => true,
+                    'data' => $data,
+                ]);
+            }
+        }
+
         return response()->json([
             'success' => true,
             'data' => [],
+        ]);
+    }
+
+    protected function formatCategory(Category $category): array
+    {
+        return [
+            'id' => (int) $category->id,
+            'name' => $category->name,
+            'description' => $category->description,
+        ];
+    }
+
+    protected function paginatedResponse($paginator, $data)
+    {
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'last_page' => $paginator->lastPage(),
+                'from' => $paginator->firstItem(),
+                'to' => $paginator->lastItem(),
+            ],
+            'links' => [
+                'first' => $paginator->url(1),
+                'last' => $paginator->url($paginator->lastPage()),
+                'prev' => $paginator->previousPageUrl(),
+                'next' => $paginator->nextPageUrl(),
+            ],
         ]);
     }
 }

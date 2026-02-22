@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Services\PriorityPointService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 class Fixer extends Model
 {
@@ -103,7 +104,9 @@ class Fixer extends Model
             $fixer->wallet()?->delete();
             $fixer->subscriptions()->delete();
             $fixer->declines()->delete();
-            $fixer->priorityHistory()->delete();
+            if (class_exists(PriorityPointLog::class) && Schema::hasTable('priority_point_logs')) {
+                $fixer->priorityHistory()->delete();
+            }
 
             // Release service requests without deleting the customer records
             $fixer->serviceRequests()->update(['fixer_id' => null]);

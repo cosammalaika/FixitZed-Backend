@@ -37,8 +37,8 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label" for="status">Status</label>
-                        <select id="status" class="form-control" wire:model.defer="status" required>
+                        <label class="form-label" for="service_create_status">Status</label>
+                        <select id="service_create_status" class="form-control" wire:model.defer="status" required>
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
                         </select>

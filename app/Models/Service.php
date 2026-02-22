@@ -12,13 +12,12 @@ class Service extends Model
 
     protected $fillable = [
         'name',
-        'subcategory_id',
+        'category',
         'description',
         'is_active',
     ];
 
     protected $casts = [
-        'subcategory_id' => 'integer',
         'is_active' => 'boolean',
     ];
 
@@ -29,7 +28,7 @@ class Service extends Model
     public function isFillable($key)
     {
         // Keep legacy alias inputs working (admin/tests) without advertising them as real persisted fields.
-        if (in_array($key, ['category', 'status'], true)) {
+        if (in_array($key, ['status'], true)) {
             return true;
         }
 
@@ -40,7 +39,7 @@ class Service extends Model
     {
         $fillable = parent::fillableFromArray($attributes);
 
-        foreach (['category', 'status'] as $alias) {
+        foreach (['status'] as $alias) {
             if (array_key_exists($alias, $attributes)) {
                 $fillable[$alias] = $attributes[$alias];
             }

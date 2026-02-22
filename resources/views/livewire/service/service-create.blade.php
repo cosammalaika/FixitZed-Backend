@@ -14,18 +14,18 @@
 
                 <div class="row g-4">
                     <div class="col-md-6">
-                        <label class="form-label" for="default-input">Service Name</label>
-                        <input class="form-control" type="text" wire:model.defer="name" placeholder="Service Name" required>
+                        <label class="form-label" for="service_name">Service Name</label>
+                        <input id="service_name" class="form-control" type="text" wire:model.defer="name" placeholder="Service Name" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label" for="default-input">Category</label>
-                        <input class="form-control" type="text" wire:model.defer="category" placeholder="Enter a category label" required>
+                        <label class="form-label" for="service_category">Category</label>
+                        <input id="service_category" class="form-control" type="text" wire:model.defer="category" placeholder="Enter a category label" required>
                         @error('category')
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
-
                 </div>
+
                 <div class="row g-4 mt-1">
                     <div class="col-md-6">
                         <label class="form-label" for="description">Description</label>
@@ -38,18 +38,15 @@
 
                     <div class="col-md-6">
                         <label class="form-label" for="status">Status</label>
-                        <select id="status" class="form-control" wire:model="status" required>
+                        <select id="status" class="form-control" wire:model.defer="status" required>
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
                         </select>
                     </div>
-
                 </div>
 
                 <button type="submit" class="btn btn-primary waves-effect waves-light">Save Service</button>
-
             </form>
         </div>
     </div>
-
 </div>

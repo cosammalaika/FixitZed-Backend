@@ -13,7 +13,6 @@ class ServiceIndex extends Component
     public function render()
     {
         $services = Service::query()
-            ->with(['subcategory.category'])
             ->orderBy('name')
             ->get();
 
@@ -28,7 +27,7 @@ class ServiceIndex extends Component
             $name = $service->name;
             $service->delete();
 
-            ApiCache::flush(['catalog', 'services']);
+            ApiCache::flush(['catalog', 'services', 'categories', 'subcategories']);
             log_user_action('deleted service', "Service: {$name}, ID: {$id}");
 
             $this->dispatchBrowserEvent('flash-message', [

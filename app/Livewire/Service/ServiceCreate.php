@@ -3,7 +3,6 @@
 namespace App\Livewire\Service;
 
 use App\Models\Service;
-use App\Models\Subcategory;
 use App\Support\ApiCache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
@@ -23,7 +22,7 @@ class ServiceCreate extends Component
         $this->fillService($service);
         $service->save();
 
-        ApiCache::flush(['catalog', 'services']);
+        ApiCache::flush(['catalog', 'services', 'categories', 'subcategories']);
         log_user_action('created service', "Service: {$service->name}, ID: {$service->id}");
 
         $this->dispatchBrowserEvent('flash-message', [
@@ -37,11 +36,9 @@ class ServiceCreate extends Component
     {
         $uniqueName = Rule::unique('services', 'name');
 
-        if (Schema::hasColumn('services', 'subcategory_id')) {
-            $subcategoryId = $this->resolvedSubcategoryId();
-            if ($subcategoryId !== null) {
-                $uniqueName = $uniqueName->where(fn ($q) => $q->where('subcategory_id', $subcategoryId));
-            }
+        $category = trim((string) $this->category);
+        if (Schema::hasColumn('services', 'category') && $category !== '') {
+            $uniqueName = $uniqueName->where(fn ($q) => $q->where('category', $category));
         }
 
         return [
@@ -51,20 +48,7 @@ class ServiceCreate extends Component
                 'max:255',
                 $uniqueName,
             ],
-            'category' => [
-                'required',
-                'string',
-                'max:255',
-                function (string $attribute, mixed $value, \Closure $fail): void {
-                    if (! Schema::hasColumn('services', 'subcategory_id')) {
-                        return;
-                    }
-
-                    if ($this->resolvedSubcategoryId() === null) {
-                        $fail('Please enter a valid subcategory name.');
-                    }
-                },
-            ],
+            'category' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'status' => ['required', Rule::in(['active', 'inactive'])],
         ];
@@ -78,37 +62,9 @@ class ServiceCreate extends Component
     protected function fillService(Service $service): void
     {
         $service->name = trim((string) $this->name);
-        $service->description = $this->nullableTrimmedString($this->description);
-
-        // Keep legacy UI input (`category`) while persisting canonical schema fields.
         $service->category = trim((string) $this->category);
-
-        if (Schema::hasColumn('services', 'subcategory_id')) {
-            $subcategoryId = $this->resolvedSubcategoryId();
-            if ($subcategoryId !== null) {
-                $service->subcategory_id = $subcategoryId;
-            }
-        }
-
+        $service->description = $this->nullableTrimmedString($this->description);
         $service->is_active = $this->status === 'active';
-    }
-
-    protected function resolvedSubcategoryId(): ?int
-    {
-        $name = trim((string) $this->category);
-        if ($name === '') {
-            return null;
-        }
-
-        if (! Schema::hasTable('subcategories')) {
-            return null;
-        }
-
-        $subcategory = Subcategory::query()
-            ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
-            ->first();
-
-        return $subcategory?->id;
     }
 
     protected function nullableTrimmedString(mixed $value): ?string

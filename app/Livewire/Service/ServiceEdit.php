@@ -3,7 +3,6 @@
 namespace App\Livewire\Service;
 
 use App\Models\Service;
-use App\Models\Subcategory;
 use App\Support\ApiCache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
@@ -11,23 +10,19 @@ use Livewire\Component;
 
 class ServiceEdit extends Component
 {
-    public $serviceId, $name, $subcategory_id, $description, $status;
-
-    public array $subcategoryOptions = [];
+    public $serviceId, $name, $category, $description, $status;
 
     protected $rules = [];
 
     public function mount($id)
     {
-        $service = Service::with('subcategory.category')->findOrFail($id);
+        $service = Service::findOrFail($id);
 
         $this->serviceId = $service->id;
         $this->name = $service->name;
-        $this->subcategory_id = $service->subcategory_id;
+        $this->category = $service->category;
         $this->description = $service->description;
         $this->status = $service->status;
-
-        $this->subcategoryOptions = $this->loadSubcategoryOptions();
     }
 
     public function render()
@@ -45,7 +40,7 @@ class ServiceEdit extends Component
         $this->fillService($service);
         $service->save();
 
-        ApiCache::flush(['catalog', 'services']);
+        ApiCache::flush(['catalog', 'services', 'categories', 'subcategories']);
         log_user_action('updated service', "From '{$oldName}' to '{$this->name}', ID: {$service->id}");
 
         $this->dispatchBrowserEvent('flash-message', [
@@ -60,8 +55,9 @@ class ServiceEdit extends Component
         $uniqueName = Rule::unique('services', 'name')
             ->ignore($this->serviceId);
 
-        if (Schema::hasColumn('services', 'subcategory_id') && $this->subcategory_id !== null && $this->subcategory_id !== '') {
-            $uniqueName = $uniqueName->where(fn ($q) => $q->where('subcategory_id', (int) $this->subcategory_id));
+        $category = trim((string) $this->category);
+        if (Schema::hasColumn('services', 'category') && $category !== '') {
+            $uniqueName = $uniqueName->where(fn ($q) => $q->where('category', $category));
         }
 
         return [
@@ -71,9 +67,7 @@ class ServiceEdit extends Component
                 'max:255',
                 $uniqueName,
             ],
-            'subcategory_id' => Schema::hasColumn('services', 'subcategory_id') && Schema::hasTable('subcategories')
-                ? ['required', 'integer', Rule::exists('subcategories', 'id')]
-                : ['nullable'],
+            'category' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'status' => ['required', Rule::in(['active', 'inactive'])],
         ];
@@ -81,43 +75,14 @@ class ServiceEdit extends Component
 
     protected function fillService(Service $service): void
     {
-        $payload = [
-            'name' => trim((string) $this->name),
-            'is_active' => $this->status === 'active',
-        ];
+        $service->name = trim((string) $this->name);
+        $service->category = trim((string) $this->category);
 
         if (Schema::hasColumn('services', 'description')) {
-            $payload['description'] = $this->nullableTrimmedString($this->description);
+            $service->description = $this->nullableTrimmedString($this->description);
         }
 
-        if (Schema::hasColumn('services', 'subcategory_id') && $this->subcategory_id !== null && $this->subcategory_id !== '') {
-            $payload['subcategory_id'] = (int) $this->subcategory_id;
-        }
-
-        $service->fill($payload);
-    }
-
-    protected function loadSubcategoryOptions(): array
-    {
-        if (! Schema::hasTable('subcategories')) {
-            return [];
-        }
-
-        return Subcategory::query()
-            ->with('category:id,name')
-            ->orderBy('name')
-            ->get()
-            ->map(function (Subcategory $subcategory) {
-                $categoryName = $subcategory->category?->name;
-                $prefix = is_string($categoryName) && $categoryName !== '' ? $categoryName . ' / ' : '';
-
-                return [
-                    'id' => (int) $subcategory->id,
-                    'label' => $prefix . $subcategory->name,
-                ];
-            })
-            ->values()
-            ->all();
+        $service->is_active = $this->status === 'active';
     }
 
     protected function nullableTrimmedString(mixed $value): ?string

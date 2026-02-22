@@ -30,22 +30,13 @@ class ServiceController extends Controller
         }
 
         try {
-            $usesNormalizedCatalog = $this->usesNormalizedCatalogSchema();
             $query = Service::query()->select($this->serviceSelectColumns());
-
-            if ($usesNormalizedCatalog) {
-                $query->with([
-                    'subcategory:id,category_id,name',
-                    'subcategory.category:id,name',
-                ]);
-            }
 
             if (Schema::hasTable('fixer_service')) {
                 $pivotHasStatus = Schema::hasColumn('fixer_service', 'status');
 
                 $query->withCount([
                     'fixers as fixers_count' => function ($q) use ($pivotHasStatus) {
-                        // Count only fixers that are effectively available to customers.
                         if ($pivotHasStatus) {
                             $q->where(function ($q2) {
                                 $q2->whereNull('fixer_service.status')
@@ -67,17 +58,18 @@ class ServiceController extends Controller
 
             if (! empty($validated['search'])) {
                 $term = '%' . trim($validated['search']) . '%';
-                $query->where(function ($q) use ($term, $usesNormalizedCatalog) {
-                    $q->where('name', 'like', $term)
-                        ->orWhere('description', 'like', $term);
+                $hasDescription = Schema::hasColumn('services', 'description');
+                $hasCategory = Schema::hasColumn('services', 'category');
 
-                    if ($usesNormalizedCatalog) {
-                        $q->orWhereHas('subcategory', function ($subQuery) use ($term) {
-                            $subQuery->where('name', 'like', $term)
-                                ->orWhereHas('category', function ($categoryQuery) use ($term) {
-                                    $categoryQuery->where('name', 'like', $term);
-                                });
-                        });
+                $query->where(function ($q) use ($term, $hasDescription, $hasCategory) {
+                    $q->where('name', 'like', $term);
+
+                    if ($hasDescription) {
+                        $q->orWhere('description', 'like', $term);
+                    }
+
+                    if ($hasCategory) {
+                        $q->orWhere('category', 'like', $term);
                     }
                 });
             }
@@ -124,10 +116,6 @@ class ServiceController extends Controller
 
     public function show(Service $service)
     {
-        if ($this->usesNormalizedCatalogSchema()) {
-            $service->loadMissing(['subcategory.category']);
-        }
-
         return response()->json([
             'success' => true,
             'data' => (new ServiceResource($service))->resolve(),
@@ -193,18 +181,11 @@ class ServiceController extends Controller
         return $this->index($request);
     }
 
-    protected function usesNormalizedCatalogSchema(): bool
-    {
-        return Schema::hasColumn('services', 'subcategory_id')
-            && Schema::hasTable('subcategories')
-            && Schema::hasTable('categories');
-    }
-
     protected function serviceSelectColumns(): array
     {
-        $columns = ['id', 'name', 'description', 'created_at', 'updated_at'];
+        $columns = ['id', 'name'];
 
-        foreach (['status', 'subcategory_id', 'price', 'duration_minutes', 'is_active'] as $column) {
+        foreach (['category', 'description', 'is_active', 'created_at', 'updated_at'] as $column) {
             if (Schema::hasColumn('services', $column)) {
                 $columns[] = $column;
             }

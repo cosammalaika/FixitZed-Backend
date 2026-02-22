@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ServiceResource;
 use App\Models\Category;
+use App\Models\Service;
 use App\Models\Subcategory;
 use App\Support\ApiCache;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
@@ -23,11 +27,16 @@ class CategoryController extends Controller
                 'per_page' => $perPage,
             ]));
 
-            return ApiCache::remember(['catalog', 'categories'], $cacheKey, function () use ($perPage) {
+            return ApiCache::remember(['catalog', 'categories'], $cacheKey, function () use ($page, $perPage) {
+                $derived = $this->derivedCategories();
+                if ($derived->isNotEmpty()) {
+                    return $this->paginatedCollectionResponse($derived, $page, $perPage);
+                }
+
                 if (Schema::hasTable('categories')) {
                     $categories = Category::query()
                         ->orderBy('name')
-                        ->paginate($perPage);
+                        ->paginate($perPage, ['*'], 'page', $page);
 
                     $data = collect($categories->items())
                         ->map(fn (Category $category) => $this->formatCategory($category))
@@ -36,24 +45,7 @@ class CategoryController extends Controller
                     return $this->paginatedResponse($categories, $data);
                 }
 
-                return response()->json([
-                    'success' => true,
-                    'data' => [],
-                    'meta' => [
-                        'current_page' => 1,
-                        'per_page' => $perPage,
-                        'total' => 0,
-                        'last_page' => 1,
-                        'from' => null,
-                        'to' => null,
-                    ],
-                    'links' => [
-                        'first' => null,
-                        'last' => null,
-                        'prev' => null,
-                        'next' => null,
-                    ],
-                ]);
+                return $this->paginatedCollectionResponse(collect(), $page, $perPage);
             });
         } catch (\Throwable $e) {
             Log::error('Category list failed', [
@@ -70,6 +62,18 @@ class CategoryController extends Controller
 
     public function show(string $category)
     {
+        $derived = $this->derivedCategories();
+        if ($derived->isNotEmpty()) {
+            $record = $this->findDerivedCategory($derived, $category);
+
+            if ($record) {
+                return response()->json([
+                    'success' => true,
+                    'data' => $record,
+                ]);
+            }
+        }
+
         if (Schema::hasTable('categories')) {
             $query = Category::query();
 
@@ -92,7 +96,7 @@ class CategoryController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'id' => (int) crc32($category),
+                'id' => ServiceResource::catalogAliasId($category),
                 'name' => $category,
                 'description' => null,
             ],
@@ -101,6 +105,28 @@ class CategoryController extends Controller
 
     public function subcategories(string $category)
     {
+        $derived = $this->derivedCategories();
+        if ($derived->isNotEmpty()) {
+            $record = $this->findDerivedCategory($derived, $category);
+
+            if (! $record) {
+                return response()->json([
+                    'success' => true,
+                    'data' => [],
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [[
+                    'id' => (int) $record['id'],
+                    'category_id' => (int) $record['id'],
+                    'name' => $record['name'],
+                    'description' => null,
+                ]],
+            ]);
+        }
+
         if (Schema::hasTable('categories') && Schema::hasTable('subcategories')) {
             $categoryQuery = Category::query();
 
@@ -138,6 +164,40 @@ class CategoryController extends Controller
         ]);
     }
 
+    protected function derivedCategories(): Collection
+    {
+        if (! Schema::hasTable('services') || ! Schema::hasColumn('services', 'category')) {
+            return collect();
+        }
+
+        return Service::query()
+            ->select('category')
+            ->whereNotNull('category')
+            ->where('category', '!=', '')
+            ->distinct()
+            ->orderBy('category')
+            ->pluck('category')
+            ->map(fn ($label) => trim((string) $label))
+            ->filter(fn (string $label) => $label !== '')
+            ->values()
+            ->map(fn (string $label) => [
+                'id' => ServiceResource::catalogAliasId($label),
+                'name' => $label,
+                'description' => null,
+            ]);
+    }
+
+    protected function findDerivedCategory(Collection $items, string $category): ?array
+    {
+        if (is_numeric($category)) {
+            return $items->first(fn (array $item) => (int) $item['id'] === (int) $category);
+        }
+
+        $needle = mb_strtolower(trim($category));
+
+        return $items->first(fn (array $item) => mb_strtolower((string) $item['name']) === $needle);
+    }
+
     protected function formatCategory(Category $category): array
     {
         return [
@@ -145,6 +205,21 @@ class CategoryController extends Controller
             'name' => $category->name,
             'description' => $category->description,
         ];
+    }
+
+    protected function paginatedCollectionResponse(Collection $items, int $page, int $perPage)
+    {
+        $total = $items->count();
+        $slice = $items->forPage($page, $perPage)->values();
+        $paginator = new LengthAwarePaginator(
+            $slice,
+            $total,
+            $perPage,
+            $page,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
+
+        return $this->paginatedResponse($paginator, $slice);
     }
 
     protected function paginatedResponse($paginator, $data)

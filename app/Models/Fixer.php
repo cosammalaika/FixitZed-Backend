@@ -119,12 +119,13 @@ class Fixer extends Model
                 return;
             }
 
-            $hasCustomerHistory = $user->serviceRequests()->exists();
-            $hasAdminRole = $user->hasAnyRole(['Super Admin', 'Support']);
+            // Deleting a fixer profile demotes the account back to a customer account.
+            if ($user->hasRole('Fixer')) {
+                $user->removeRole('Fixer');
+            }
 
-            // Only remove the user if they are solely tied to this fixer profile.
-            if (! $hasCustomerHistory && ! $hasAdminRole) {
-                $user->delete();
+            if (! $user->hasRole('Customer')) {
+                $user->assignRole('Customer');
             }
         });
     }

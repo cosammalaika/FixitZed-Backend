@@ -23,15 +23,9 @@ class FixerDeletionService
 
             if ($user && $user->exists) {
                 $user->refresh();
-                $hasCustomerHistory = $user->serviceRequests()->exists();
-                $hasAdminRole = $user->hasAnyRole(['Super Admin', 'Support']);
-
-                if (! $user->fixer()->exists() && ! $hasCustomerHistory && ! $hasAdminRole) {
-                    $user->delete();
-                }
             }
 
-            Log::info('FixerDeletionService: deleted fixer and user', [
+            Log::info('FixerDeletionService: deleted fixer profile and preserved user account', [
                 'fixer_id' => $fixerId,
                 'user_id' => $user?->id,
             ]);

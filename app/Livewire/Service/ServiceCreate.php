@@ -42,9 +42,6 @@ class ServiceCreate extends Component
             if ($subcategoryId !== null) {
                 $uniqueName = $uniqueName->where(fn ($q) => $q->where('subcategory_id', $subcategoryId));
             }
-        } elseif (Schema::hasColumn('services', 'category')) {
-            $category = trim((string) $this->category);
-            $uniqueName = $uniqueName->where(fn ($q) => $q->where('category', $category));
         }
 
         return [

@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
-use App\Models\Service;
 use App\Models\Subcategory;
 use App\Support\ApiCache;
 use Illuminate\Http\Request;
@@ -37,46 +36,24 @@ class CategoryController extends Controller
                     return $this->paginatedResponse($categories, $data);
                 }
 
-                if (! Schema::hasColumn('services', 'category')) {
-                    return response()->json([
-                        'success' => true,
-                        'data' => [],
-                        'meta' => [
-                            'current_page' => 1,
-                            'per_page' => $perPage,
-                            'total' => 0,
-                            'last_page' => 1,
-                            'from' => null,
-                            'to' => null,
-                        ],
-                        'links' => [
-                            'first' => null,
-                            'last' => null,
-                            'prev' => null,
-                            'next' => null,
-                        ],
-                    ]);
-                }
-
-                $categories = Service::query()
-                    ->active()
-                    ->select('category')
-                    ->whereNotNull('category')
-                    ->groupBy('category')
-                    ->orderBy('category')
-                    ->paginate($perPage);
-
-                $data = collect($categories->items())->map(function ($item) {
-                    $name = is_array($item) ? $item['category'] : $item->category;
-
-                    return [
-                        'id' => (int) crc32((string) $name),
-                        'name' => $name,
-                        'description' => null,
-                    ];
-                })->values();
-
-                return $this->paginatedResponse($categories, $data);
+                return response()->json([
+                    'success' => true,
+                    'data' => [],
+                    'meta' => [
+                        'current_page' => 1,
+                        'per_page' => $perPage,
+                        'total' => 0,
+                        'last_page' => 1,
+                        'from' => null,
+                        'to' => null,
+                    ],
+                    'links' => [
+                        'first' => null,
+                        'last' => null,
+                        'prev' => null,
+                        'next' => null,
+                    ],
+                ]);
             });
         } catch (\Throwable $e) {
             Log::error('Category list failed', [

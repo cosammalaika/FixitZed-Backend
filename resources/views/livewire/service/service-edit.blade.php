@@ -20,10 +20,14 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label" for="category">Category</label>
-                        <input id="category" class="form-control" type="text" wire:model.defer="category"
-                            placeholder="Enter a category label" required>
-                        @error('category')
+                        <label class="form-label" for="subcategory_id">Subcategory</label>
+                        <select id="subcategory_id" class="form-control" wire:model.defer="subcategory_id" required>
+                            <option value="">Select subcategory</option>
+                            @foreach ($subcategoryOptions as $option)
+                                <option value="{{ $option['id'] }}">{{ $option['label'] }}</option>
+                            @endforeach
+                        </select>
+                        @error('subcategory_id')
                             <span class="text-danger small">{{ $message }}</span>
                         @enderror
                     </div>
@@ -40,7 +44,7 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label" for="status">Status</label>
-                        <select id="status" class="form-control" wire:model="status" required>
+                        <select id="status" class="form-control" wire:model.defer="status" required>
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
                         </select>

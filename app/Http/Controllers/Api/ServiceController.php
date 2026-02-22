@@ -71,10 +71,6 @@ class ServiceController extends Controller
                     $q->where('name', 'like', $term)
                         ->orWhere('description', 'like', $term);
 
-                    if (Schema::hasColumn('services', 'category')) {
-                        $q->orWhere('category', 'like', $term);
-                    }
-
                     if ($usesNormalizedCatalog) {
                         $q->orWhereHas('subcategory', function ($subQuery) use ($term) {
                             $subQuery->where('name', 'like', $term)
@@ -208,7 +204,7 @@ class ServiceController extends Controller
     {
         $columns = ['id', 'name', 'description', 'created_at', 'updated_at'];
 
-        foreach (['category', 'status', 'subcategory_id', 'price', 'duration_minutes', 'is_active'] as $column) {
+        foreach (['status', 'subcategory_id', 'price', 'duration_minutes', 'is_active'] as $column) {
             if (Schema::hasColumn('services', $column)) {
                 $columns[] = $column;
             }

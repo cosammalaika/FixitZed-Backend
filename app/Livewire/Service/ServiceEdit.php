@@ -11,19 +11,23 @@ use Livewire\Component;
 
 class ServiceEdit extends Component
 {
-    public $serviceId, $name, $category, $description, $status;
+    public $serviceId, $name, $subcategory_id, $description, $status;
+
+    public array $subcategoryOptions = [];
 
     protected $rules = [];
 
     public function mount($id)
     {
-        $service = Service::findOrFail($id);
+        $service = Service::with('subcategory.category')->findOrFail($id);
 
         $this->serviceId = $service->id;
         $this->name = $service->name;
-        $this->category = $service->category;
+        $this->subcategory_id = $service->subcategory_id;
         $this->description = $service->description;
         $this->status = $service->status;
+
+        $this->subcategoryOptions = $this->loadSubcategoryOptions();
     }
 
     public function render()
@@ -53,19 +57,12 @@ class ServiceEdit extends Component
 
     protected function rules(): array
     {
-        $uniqueName = Rule::unique('services', 'name');
+        $uniqueName = Rule::unique('services', 'name')
+            ->ignore($this->serviceId);
 
-        if (Schema::hasColumn('services', 'subcategory_id')) {
-            $subcategoryId = $this->resolvedSubcategoryId();
-            if ($subcategoryId !== null) {
-                $uniqueName = $uniqueName->where(fn ($q) => $q->where('subcategory_id', $subcategoryId));
-            }
-        } elseif (Schema::hasColumn('services', 'category')) {
-            $category = trim((string) $this->category);
-            $uniqueName = $uniqueName->where(fn ($q) => $q->where('category', $category));
+        if (Schema::hasColumn('services', 'subcategory_id') && $this->subcategory_id !== null && $this->subcategory_id !== '') {
+            $uniqueName = $uniqueName->where(fn ($q) => $q->where('subcategory_id', (int) $this->subcategory_id));
         }
-
-        $uniqueName = $uniqueName->ignore($this->serviceId);
 
         return [
             'name' => [
@@ -74,20 +71,9 @@ class ServiceEdit extends Component
                 'max:255',
                 $uniqueName,
             ],
-            'category' => [
-                'required',
-                'string',
-                'max:255',
-                function (string $attribute, mixed $value, \Closure $fail): void {
-                    if (! Schema::hasColumn('services', 'subcategory_id')) {
-                        return;
-                    }
-
-                    if ($this->resolvedSubcategoryId() === null) {
-                        $fail('Please enter a valid subcategory name.');
-                    }
-                },
-            ],
+            'subcategory_id' => Schema::hasColumn('services', 'subcategory_id') && Schema::hasTable('subcategories')
+                ? ['required', 'integer', Rule::exists('subcategories', 'id')]
+                : ['nullable'],
             'description' => ['nullable', 'string'],
             'status' => ['required', Rule::in(['active', 'inactive'])],
         ];
@@ -95,36 +81,43 @@ class ServiceEdit extends Component
 
     protected function fillService(Service $service): void
     {
-        $service->name = trim((string) $this->name);
-        $service->description = $this->nullableTrimmedString($this->description);
-        $service->category = trim((string) $this->category);
+        $payload = [
+            'name' => trim((string) $this->name),
+            'is_active' => $this->status === 'active',
+        ];
 
-        if (Schema::hasColumn('services', 'subcategory_id')) {
-            $subcategoryId = $this->resolvedSubcategoryId();
-            if ($subcategoryId !== null) {
-                $service->subcategory_id = $subcategoryId;
-            }
+        if (Schema::hasColumn('services', 'description')) {
+            $payload['description'] = $this->nullableTrimmedString($this->description);
         }
 
-        $service->is_active = $this->status === 'active';
+        if (Schema::hasColumn('services', 'subcategory_id') && $this->subcategory_id !== null && $this->subcategory_id !== '') {
+            $payload['subcategory_id'] = (int) $this->subcategory_id;
+        }
+
+        $service->fill($payload);
     }
 
-    protected function resolvedSubcategoryId(): ?int
+    protected function loadSubcategoryOptions(): array
     {
-        $name = trim((string) $this->category);
-        if ($name === '') {
-            return null;
-        }
-
         if (! Schema::hasTable('subcategories')) {
-            return null;
+            return [];
         }
 
-        $subcategory = Subcategory::query()
-            ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
-            ->first();
+        return Subcategory::query()
+            ->with('category:id,name')
+            ->orderBy('name')
+            ->get()
+            ->map(function (Subcategory $subcategory) {
+                $categoryName = $subcategory->category?->name;
+                $prefix = is_string($categoryName) && $categoryName !== '' ? $categoryName . ' / ' : '';
 
-        return $subcategory?->id;
+                return [
+                    'id' => (int) $subcategory->id,
+                    'label' => $prefix . $subcategory->name,
+                ];
+            })
+            ->values()
+            ->all();
     }
 
     protected function nullableTrimmedString(mixed $value): ?string

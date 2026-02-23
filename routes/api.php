@@ -143,6 +143,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Fixer requests
     Route::get('fixer/requests', [FixerRequestController::class, 'index']);
+    Route::get('fixer/requests/{serviceRequest}', [FixerRequestController::class, 'show']);
     Route::post('service-requests/{serviceRequest}/accept', [FixerRequestController::class, 'accept']);
     // Fixer creates a bill for a request they own
     Route::post('fixer/requests/{serviceRequest}/bill', [FixerRequestController::class, 'bill']);

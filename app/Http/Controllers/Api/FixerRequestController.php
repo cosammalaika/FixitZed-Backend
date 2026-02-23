@@ -117,6 +117,64 @@ class FixerRequestController extends Controller
     }
 
     /**
+     * GET /api/fixer/requests/{serviceRequest}
+     */
+    public function show(ServiceRequest $serviceRequest, Request $request): JsonResponse
+    {
+        $user = $request->user();
+        /** @var Fixer|null $fixer */
+        $fixer = $user->fixer;
+        if (! $fixer) {
+            abort(403, 'Forbidden');
+        }
+
+        $isApprovedFixer = $fixer->status === 'approved';
+        $isLinkedToFixer = (int) ($serviceRequest->fixer_id ?? 0) === (int) $fixer->id;
+
+        $isEligiblePending = false;
+        if (! $isLinkedToFixer && $isApprovedFixer && $serviceRequest->fixer_id === null && $serviceRequest->status === 'pending') {
+            if ($this->isExpired($serviceRequest)) {
+                $this->markExpired($serviceRequest);
+            } else {
+                $alreadyDeclined = ServiceRequestDecline::query()
+                    ->where('service_request_id', $serviceRequest->id)
+                    ->where('fixer_id', $fixer->id)
+                    ->exists();
+
+                $isEligiblePending = ! $alreadyDeclined && $serviceRequest->service()
+                    ->whereHas('fixers', function ($query) use ($fixer) {
+                        $query->where('fixers.id', $fixer->id);
+                    })
+                    ->exists();
+            }
+        }
+
+        if (! $isLinkedToFixer && ! $isEligiblePending) {
+            abort(404, 'Not found');
+        }
+
+        $serviceRequest->load(['service', 'customer', 'fixer.user']);
+        $data = $this->transformForFixer($serviceRequest);
+
+        if (config('app.debug')) {
+            Log::info('[FIXITZED_TRACE] fixer.request.show', [
+                'user_id' => $user->id,
+                'fixer_id' => $fixer->id,
+                'request_id' => $serviceRequest->id,
+                'status' => $serviceRequest->status,
+                'linked' => $isLinkedToFixer,
+                'eligible_pending' => $isEligiblePending,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+            'meta' => ['count' => 1],
+        ]);
+    }
+
+    /**
      * POST /api/service-requests/{id}/accept
      * Assigns the request to the fixer (if unassigned) and deducts 1 coin atomically.
      */

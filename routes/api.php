@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\AdminPushController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\ServiceRequestController;
 use App\Http\Controllers\Api\FixerController;
+use App\Http\Controllers\Api\FixerDashboardController;
 use App\Http\Controllers\Api\SubcategoryController;
 use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\LocationOptionController;
@@ -137,6 +138,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Fixer profile management
     Route::get('fixer/me', [FixerController::class, 'current']);
+    Route::get('fixer/dashboard', [FixerDashboardController::class, 'show']);
     Route::patch('fixer/me', [FixerController::class, 'update']);
 
     // Fixer requests

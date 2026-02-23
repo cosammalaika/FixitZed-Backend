@@ -11,6 +11,7 @@ class Service extends Model
     use HasFactory;
 
     protected $fillable = [
+        'subcategory_id',
         'name',
         'category',
         'description',
@@ -18,6 +19,7 @@ class Service extends Model
     ];
 
     protected $casts = [
+        'subcategory_id' => 'integer',
         'is_active' => 'boolean',
     ];
 

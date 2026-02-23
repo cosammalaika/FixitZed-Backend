@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response;
 
 class FixerDashboardController extends Controller
@@ -75,18 +76,43 @@ class FixerDashboardController extends Controller
             })
             ->latest();
 
-        // Keep pending feed aligned with FixerRequestController (hide declines / expired old pending)
+        // Keep pending feed aligned with FixerRequestController, but do not hide older linked/accepted jobs.
         $statusFilter = $request->query('status');
         if ($statusFilter) {
             $recentRequestsQuery->where('status', (string) $statusFilter);
         }
-        if (! $statusFilter || $statusFilter === 'pending') {
+
+        if ($statusFilter === 'pending') {
             $cutoff = $this->expiryCutoff();
             if ($cutoff) {
                 $recentRequestsQuery->where('created_at', '>=', $cutoff);
             }
             $recentRequestsQuery->whereDoesntHave('declines', function ($query) use ($fixer) {
                 $query->where('fixer_id', $fixer->id);
+            });
+        } elseif (! $statusFilter) {
+            $cutoff = $this->expiryCutoff();
+            $recentRequestsQuery->where(function ($query) use ($fixer, $isApprovedFixer, $cutoff) {
+                // Always include requests already linked to this fixer (accepted/in-progress/completed history).
+                $query->where('fixer_id', $fixer->id);
+
+                if ($isApprovedFixer) {
+                    // Pending marketplace requests should still respect expiry and decline filters.
+                    $query->orWhere(function ($inner) use ($fixer, $cutoff) {
+                        $inner->whereNull('fixer_id')
+                            ->where('status', 'pending')
+                            ->whereHas('service.fixers', function ($svc) use ($fixer) {
+                                $svc->where('fixers.id', $fixer->id);
+                            })
+                            ->whereDoesntHave('declines', function ($declines) use ($fixer) {
+                                $declines->where('fixer_id', $fixer->id);
+                            });
+
+                        if ($cutoff) {
+                            $inner->where('created_at', '>=', $cutoff);
+                        }
+                    });
+                }
             });
         }
 
@@ -98,6 +124,17 @@ class FixerDashboardController extends Controller
             ->all();
 
         $requestsCount = (clone $recentRequestsQuery)->count();
+
+        if (config('app.debug')) {
+            Log::info('[FIXITZED_TRACE] fixer.dashboard.recent_requests', [
+                'user_id' => $user->id,
+                'fixer_id' => $fixer->id,
+                'status_filter' => $statusFilter,
+                'count' => $requestsCount,
+                'sample_ids' => collect($recentRequests)->pluck('id')->take(5)->values()->all(),
+            ]);
+        }
+
         $latestRequestAt = $this->latestRequestTimestamp($fixer, $isApprovedFixer);
         $latestPaymentAt = $this->latestPaymentTimestamp($fixer);
 

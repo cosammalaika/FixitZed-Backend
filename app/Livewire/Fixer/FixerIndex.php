@@ -8,7 +8,10 @@ use Livewire\Component;
 
 class FixerIndex extends Component
 {
-    protected $listeners = ['deleteFixer' => 'delete'];
+    protected $listeners = [
+        'deleteFixer' => 'deactivate', // legacy confirm event
+        'deactivateFixer' => 'deactivate',
+    ];
 
     public function render()
     {
@@ -22,7 +25,7 @@ class FixerIndex extends Component
         return view('livewire.fixer.fixer-index', compact('fixers'));
     }
 
-    public function delete($id, FixerDeletionService $deleter)
+    public function deactivate($id, FixerDeletionService $deleter)
     {
         $fixer = Fixer::find($id);
 
@@ -35,13 +38,13 @@ class FixerIndex extends Component
             return;
         }
 
-        $deleter->deleteFixerAndUser((int) $id);
+        $deleter->deactivateFixer((int) $id);
 
-        log_user_action('deleted fixer', "Deleted Fixer ID: {$id}");
+        log_user_action('deactivated fixer', "Deactivated Fixer ID: {$id}");
 
         $this->dispatchBrowserEvent('flash-message', [
             'type' => 'success',
-            'message' => 'Fixer deleted successfully.',
+            'message' => 'Fixer deactivated successfully.',
         ]);
     }
 }

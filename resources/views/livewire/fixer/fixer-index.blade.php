@@ -110,12 +110,12 @@
                                                      </a>
                                                      </a>
                                                      <a class="dropdown-item text-danger" href="#"
-                                                         data-confirm-event="deleteFixer"
+                                                         data-confirm-event="deactivateFixer"
                                                          data-confirm-id="{{ $fixer->id }}"
-                                                         data-confirm-title="Delete fixer?"
-                                                         data-confirm-message="This fixer will be removed permanently."
-                                                         data-confirm-button="Yes, delete it">
-                                                         Delete
+                                                         data-confirm-title="Deactivate fixer?"
+                                                         data-confirm-message="This fixer profile will be deactivated. Historical requests remain linked."
+                                                         data-confirm-button="Yes, deactivate">
+                                                         Deactivate
                                                      </a>
 
                                                  </ul>

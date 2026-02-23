@@ -34,6 +34,7 @@ class FixerRequestController extends Controller
         if (! $fixer) {
             abort(403, 'Forbidden');
         }
+        $isApprovedFixer = $fixer->status === 'approved';
 
         $status = $request->query('status');
         if ($status === 'declined') {
@@ -65,14 +66,17 @@ class FixerRequestController extends Controller
         }
 
         $q = ServiceRequest::with(['service', 'customer'])
-            ->where(function ($query) use ($fixer) {
-                $query->where('fixer_id', $fixer->id)
-                      ->orWhere(function ($inner) use ($fixer) {
-                          $inner->whereNull('fixer_id')
-                                ->whereHas('service.fixers', function ($svc) use ($fixer) {
-                                    $svc->where('fixers.id', $fixer->id);
-                                });
-                      });
+            ->where(function ($query) use ($fixer, $isApprovedFixer) {
+                $query->where('fixer_id', $fixer->id);
+
+                if ($isApprovedFixer) {
+                    $query->orWhere(function ($inner) use ($fixer) {
+                        $inner->whereNull('fixer_id')
+                            ->whereHas('service.fixers', function ($svc) use ($fixer) {
+                                $svc->where('fixers.id', $fixer->id);
+                            });
+                    });
+                }
             })
             ->latest();
         if ($status) {
@@ -123,6 +127,13 @@ class FixerRequestController extends Controller
         $fixer = $user->fixer;
         if (! $fixer) {
             abort(403, 'Forbidden');
+        }
+        if ($fixer->status !== 'approved') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Your fixer profile is deactivated.',
+                'meta' => ['count' => 0],
+            ], 403);
         }
 
         $response = null;

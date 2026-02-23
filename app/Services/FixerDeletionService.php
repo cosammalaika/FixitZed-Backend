@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class FixerDeletionService
 {
-    public function deleteFixerAndUser(int $fixerId): void
+    public function deactivateFixer(int $fixerId): void
     {
         DB::transaction(function () use ($fixerId) {
             $fixer = Fixer::with('user')->find($fixerId);
@@ -19,17 +19,25 @@ class FixerDeletionService
 
             $user = $fixer->user;
 
-            $fixer->delete();
+            // Keep the fixer profile row so historical bookings/requests remain linked.
+            $fixer->forceFill(['status' => 'rejected'])->save();
 
-            if ($user && $user->exists) {
-                $user->refresh();
+            if ($user && $user->exists && ! $user->hasRole('Customer')) {
+                $user->assignRole('Customer');
             }
 
-            Log::info('FixerDeletionService: deleted fixer profile and preserved user account', [
+            Log::info('FixerDeletionService: deactivated fixer profile and preserved linked history', [
                 'fixer_id' => $fixerId,
                 'user_id' => $user?->id,
+                'fixer_status' => $fixer->status,
             ]);
         });
+    }
+
+    public function deleteFixerAndUser(int $fixerId): void
+    {
+        // Backward-compatible alias used by existing admin Livewire component.
+        $this->deactivateFixer($fixerId);
     }
 
     /**

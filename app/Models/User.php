@@ -60,6 +60,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $appends = [
         'avatar_url',
+        'profile_photo_url',
         'avatar_updated_at',
         'primary_role',
     ];
@@ -200,6 +201,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getAvatarUpdatedAtAttribute(): ?string
     {
         return optional($this->updated_at)->toISOString();
+    }
+
+    public function getProfilePhotoUrlAttribute(): ?string
+    {
+        return $this->avatar_url;
     }
 
     protected function normalizeAvatarPublicUrl(string $url): string

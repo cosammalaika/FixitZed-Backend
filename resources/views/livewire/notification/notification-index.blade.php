@@ -44,6 +44,14 @@
                             <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3"
                                 id="notification-bulk-actions">
                                 <div class="d-flex align-items-center gap-2">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                        id="bulk-select-page-notifications-btn">
+                                        Select All (Page)
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                        id="bulk-clear-notifications-btn">
+                                        Clear
+                                    </button>
                                     <button type="button" class="btn btn-danger btn-sm"
                                         id="bulk-delete-notifications-btn" disabled>
                                         Delete Selected
@@ -57,12 +65,12 @@
                             <thead>
                                 <tr>
                                     @if ($canBulkDeleteNotifications)
-                                        <th style="min-width: 170px;">
-                                            <div class="d-flex align-items-center gap-2">
+                                        <th style="width: 48px; min-width: 48px;" class="text-center"
+                                            data-orderable="false" data-searchable="false">
+                                            <div class="d-flex align-items-center justify-content-center">
                                                 <input type="checkbox" id="select-notifications-page"
                                                     class="form-check-input" title="Select all on this page"
                                                     aria-label="Select all notifications on this page">
-                                                <span class="small text-muted">Select all on this page</span>
                                             </div>
                                         </th>
                                     @endif
@@ -200,11 +208,13 @@
         (function () {
             function initNotificationBulkDelete() {
                 var tableEl = document.getElementById('datatable-buttons');
+                var selectPageBtnEl = document.getElementById('bulk-select-page-notifications-btn');
+                var clearBtnEl = document.getElementById('bulk-clear-notifications-btn');
                 var buttonEl = document.getElementById('bulk-delete-notifications-btn');
                 var countEl = document.getElementById('bulk-delete-notifications-count');
                 var headerCheckboxEl = document.getElementById('select-notifications-page');
 
-                if (!tableEl || !buttonEl || !countEl || !headerCheckboxEl) {
+                if (!tableEl || !buttonEl || !countEl || !headerCheckboxEl || !selectPageBtnEl || !clearBtnEl) {
                     return;
                 }
 
@@ -283,6 +293,22 @@
                     updateHeaderCheckboxState();
                 }
 
+                function setVisibleRowsSelection(shouldCheck) {
+                    visibleRowCheckboxes().each(function () {
+                        var id = Number(this.value);
+                        if (Number.isNaN(id)) return;
+
+                        this.checked = shouldCheck;
+                        if (shouldCheck) {
+                            selectedIds.add(id);
+                        } else {
+                            selectedIds.delete(id);
+                        }
+                    });
+
+                    updateBulkActionState();
+                }
+
                 $(tableEl).on('change', '.notification-row-select', function () {
                     var id = Number(this.value);
                     if (Number.isNaN(id)) return;
@@ -297,19 +323,16 @@
                 });
 
                 headerCheckboxEl.addEventListener('change', function () {
-                    var shouldCheck = headerCheckboxEl.checked;
-                    visibleRowCheckboxes().each(function () {
-                        var id = Number(this.value);
-                        if (Number.isNaN(id)) return;
+                    setVisibleRowsSelection(headerCheckboxEl.checked);
+                });
 
-                        this.checked = shouldCheck;
-                        if (shouldCheck) {
-                            selectedIds.add(id);
-                        } else {
-                            selectedIds.delete(id);
-                        }
-                    });
+                selectPageBtnEl.addEventListener('click', function () {
+                    setVisibleRowsSelection(true);
+                });
 
+                clearBtnEl.addEventListener('click', function () {
+                    selectedIds.clear();
+                    syncVisibleRowsFromSelection();
                     updateBulkActionState();
                 });
 

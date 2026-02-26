@@ -60,6 +60,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $appends = [
         'avatar_url',
+        'avatar_updated_at',
         'primary_role',
     ];
 
@@ -187,8 +188,58 @@ class User extends Authenticatable implements MustVerifyEmail
         $path = $this->profile_photo_path;
         if (! $path) return null;
         if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-            return $path;
+            return $this->normalizeAvatarPublicUrl($path);
         }
-        return Storage::disk('public')->url($path);
+        $url = Storage::disk('public')->url($path);
+        if (! str_starts_with($url, 'http://') && ! str_starts_with($url, 'https://')) {
+            $url = url($url);
+        }
+        return $this->normalizeAvatarPublicUrl($url);
+    }
+
+    public function getAvatarUpdatedAtAttribute(): ?string
+    {
+        return optional($this->updated_at)->toISOString();
+    }
+
+    protected function normalizeAvatarPublicUrl(string $url): string
+    {
+        $request = request();
+        if (! $request) {
+            return $url;
+        }
+
+        $requestHost = $request->getHost();
+        $requestIsLocal = in_array($requestHost, ['localhost', '127.0.0.1'], true);
+
+        $parts = parse_url($url);
+        if (! is_array($parts)) {
+            return $url;
+        }
+
+        $urlHost = $parts['host'] ?? null;
+        $urlIsLocal = in_array($urlHost, ['localhost', '127.0.0.1'], true);
+
+        if ($urlIsLocal && ! $requestIsLocal && ! empty($requestHost)) {
+            $scheme = $request->getScheme();
+            $path = $parts['path'] ?? '';
+            $query = isset($parts['query']) ? ('?' . $parts['query']) : '';
+            $fragment = isset($parts['fragment']) ? ('#' . $parts['fragment']) : '';
+            $port = $request->getPort();
+            $defaultPort = $request->isSecure() ? 443 : 80;
+            $portPart = ($port && $port !== $defaultPort) ? (':' . $port) : '';
+
+            return $scheme . '://' . $requestHost . $portPart . $path . $query . $fragment;
+        }
+
+        if (($parts['scheme'] ?? null) === 'http' && $request->isSecure() && ! empty($urlHost) && $urlHost === $requestHost) {
+            return 'https://' . ($parts['host'] ?? '') .
+                (isset($parts['port']) ? ':' . $parts['port'] : '') .
+                ($parts['path'] ?? '') .
+                (isset($parts['query']) ? ('?' . $parts['query']) : '') .
+                (isset($parts['fragment']) ? ('#' . $parts['fragment']) : '');
+        }
+
+        return $url;
     }
 }

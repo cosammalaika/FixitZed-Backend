@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
@@ -290,6 +291,7 @@ class AuthController extends Controller
             'name'          => ['nullable', 'string', 'max:60'],
             'full_name'     => ['nullable', 'string', 'max:60'],
             'email'         => RealEmailAddress::rules($user->id, required: false),
+            'profile_photo' => ['nullable', 'file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
             'address'       => ['nullable', 'string', 'max:1000'],
             'province_id'   => ['nullable', 'integer', Rule::exists('provinces', 'id')],
             'province_slug' => ['nullable', 'string', 'max:255'],
@@ -383,11 +385,29 @@ class AuthController extends Controller
             $user->address = $this->composeAddress($user->province, $user->district, $validated['address']);
         }
 
+        if ($request->hasFile('profile_photo')) {
+            if (! empty($user->profile_photo_path)) {
+                try {
+                    Storage::disk('public')->delete($user->profile_photo_path);
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to delete previous profile photo during updateMe', [
+                        'user_id' => $user->id,
+                        'path' => $user->profile_photo_path,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            $user->profile_photo_path = $request->file('profile_photo')->store('users/profile_photos', 'public');
+        }
+
         $user->save();
+        $freshUser = $user->fresh();
 
         return response()->json([
             'success' => true,
-            'user'    => $user->fresh(),
+            'user'    => $freshUser,
+            'avatar_updated_at' => optional($freshUser?->updated_at)->toISOString(),
         ], 200);
     }
 

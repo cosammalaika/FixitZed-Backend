@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\FileController;
 use App\Livewire\Audit\LoginAuditIndex;
 use App\Livewire\Coupon\{CouponCreate, CouponEdit, CouponIndex, CouponShow};
@@ -74,6 +75,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('users/{id}', UserShow::class)
         ->name('users.show')
         ->middleware('permission:show.users');
+
+    Route::delete('admin/users/{user}', [AdminUserController::class, 'destroy'])
+        ->name('admin.users.destroy')
+        ->middleware(['role:Super Admin', 'permission:delete.users']);
 
     Route::get('services', ServiceIndex::class)
         ->name('services.index')

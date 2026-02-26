@@ -16,9 +16,9 @@ test('api registration does not 500 with settings throttle middleware', function
     ]);
 
     $payload = [
-        'first_name' => 'Test',
-        'last_name' => 'User',
-        'email' => 'test+'.uniqid().'@example.com',
+        'first_name' => 'Chanda',
+        'last_name' => 'Mwansa',
+        'email' => 'lskbusiness+'.uniqid().'@gmail.com',
         'contact_number' => '0970000000',
         'province_id' => $province->id,
         'district_id' => $district->id,

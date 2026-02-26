@@ -3,8 +3,11 @@
 namespace App\Livewire\Users;
 
 use App\Models\User;
+use App\Rules\RealEmailAddress;
+use App\Rules\RealHumanName;
 use App\Support\ProvinceDistrict;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Spatie\Permission\Models\Role;
@@ -58,11 +61,17 @@ class UserEdit extends Component
 
     public function submit()
     {
+        $this->first_name = trim((string) $this->first_name);
+        $this->last_name = trim((string) $this->last_name);
+        $this->email = strtolower(trim((string) $this->email));
+        $this->username = trim((string) $this->username);
+        $this->contact_number = trim((string) $this->contact_number);
+
         $this->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
+            'first_name' => ['required', 'string', 'max:60'],
+            'last_name' => ['required', 'string', 'max:60'],
             'username' => 'required|string|max:255|unique:users,username,' . $this->user->id,
-            'email' => 'required|email|max:255|unique:users,email,' . $this->user->id,
+            'email' => RealEmailAddress::rules($this->user->id),
             'contact_number' => 'required|string|max:20',
             'status' => 'required|in:Active,Inactive',
             'province' => 'required|string',
@@ -72,6 +81,10 @@ class UserEdit extends Component
             'nrc_back' => 'nullable|mimes:jpg,jpeg,png,webp|max:10240',
             'documents.*' => 'nullable|file|max:20480|mimes:pdf,jpg,jpeg,png,webp',
         ]);
+
+        if (! $this->validateRealHumanName()) {
+            return;
+        }
 
         $address = trim($this->province . ', ' . $this->district);
 
@@ -148,6 +161,23 @@ class UserEdit extends Component
             'redirect' => route('users.index'),
         ]);
     }
+
+    protected function validateRealHumanName(): bool
+    {
+        $validator = Validator::make(
+            ['name' => trim($this->first_name . ' ' . $this->last_name)],
+            ['name' => RealHumanName::rules()],
+            ['name.required' => 'First and last name are required.']
+        );
+
+        if ($validator->fails()) {
+            $this->addError('first_name', $validator->errors()->first('name'));
+            return false;
+        }
+
+        return true;
+    }
+
 
     protected function loadProvinceData(): void
     {

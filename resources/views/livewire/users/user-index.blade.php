@@ -1,10 +1,12 @@
 @section('page-title', 'Users')
 
 @php
-    $canCreateUser = auth()->user()->can('create.users');
-    $canShowUser = auth()->user()->can('show.users');
-    $canEditUser = auth()->user()->can('edit.users');
-    $canDeleteUser = auth()->user()->can('delete.users');
+    $authUser = auth()->user();
+    $isSuperAdmin = $authUser && method_exists($authUser, 'hasRole') && $authUser->hasRole('Super Admin');
+    $canCreateUser = $authUser->can('create.users');
+    $canShowUser = $authUser->can('show.users');
+    $canEditUser = $authUser->can('edit.users');
+    $canDeleteUser = $isSuperAdmin && $authUser->can('delete.users');
     $hasUserActions = $canShowUser || $canEditUser || $canDeleteUser;
 @endphp
 
@@ -103,6 +105,10 @@
                                                         aria-expanded="false">
                                                         Actions
                                                     </button>
+                                                    @php
+                                                        $canDeleteThisUser = $canDeleteUser && $user->id !== $authUser->id && ! $user->hasRole('Super Admin');
+                                                        $hasVisiblePrimaryActions = $canShowUser || $canEditUser;
+                                                    @endphp
                                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton{{ $user->id }}">
                                                         @if ($canShowUser)
                                                             <li><a class="dropdown-item" data-bs-toggle="modal"
@@ -118,7 +124,23 @@
                                                             </li>
                                                         @endif
 
-                                                        {{-- Implement delete option when delete.users permission is handled --}}
+                                                        @if ($canDeleteThisUser)
+                                                            @if ($hasVisiblePrimaryActions)
+                                                                <li>
+                                                                    <hr class="dropdown-divider">
+                                                                </li>
+                                                            @endif
+                                                            <li>
+                                                                <form method="POST"
+                                                                    action="{{ route('admin.users.destroy', $user) }}"
+                                                                    onsubmit="return confirm('Are you sure you want to permanently delete this user?');">
+                                                                    @csrf
+                                                                    @method('DELETE')
+                                                                    <button type="submit"
+                                                                        class="dropdown-item text-danger">Delete</button>
+                                                                </form>
+                                                            </li>
+                                                        @endif
                                                     </ul>
                                                 </div>
                                             </td>

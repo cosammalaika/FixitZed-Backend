@@ -12,6 +12,8 @@ use App\Models\User;
 use App\Support\ProvinceDistrict;
 use App\Support\UserSessionManager;
 use App\Notifications\ResetPasswordOtp;
+use App\Rules\RealEmailAddress;
+use App\Rules\RealHumanName;
 use Carbon\Carbon;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
@@ -22,6 +24,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rules\Password as PasswordRule;
@@ -34,12 +37,32 @@ class AuthController extends Controller
      */
     public function register(Request $request): JsonResponse
     {
+        $normalizedName = $this->normalizeNameInput(
+            $request->input('name', trim(((string) $request->input('first_name', '')) . ' ' . ((string) $request->input('last_name', ''))))
+        );
+        $normalizedFirstName = $this->normalizeNameInput($request->input('first_name'));
+        $normalizedLastName = $this->normalizeNameInput($request->input('last_name'));
+        $normalizedEmail = $this->normalizeEmailInput($request->input('email'));
+        $normalizedUsername = $this->normalizeTextInput($request->input('username'));
+        $normalizedPhone = $this->normalizeTextInput($request->input('contact_number'));
+        $normalizedAddress = $this->normalizeTextInput($request->input('address'));
+
+        $request->merge([
+            'name' => $normalizedName,
+            'first_name' => $normalizedFirstName,
+            'last_name' => $normalizedLastName,
+            'email' => $normalizedEmail,
+            'username' => $normalizedUsername,
+            'contact_number' => $normalizedPhone,
+            'address' => $normalizedAddress,
+        ]);
+
         $validated = $request->validate([
-            'name'            => ['required_without:first_name', 'string', 'max:255'],
-            'first_name'      => ['required_without:name', 'string', 'max:255'],
-            'last_name'       => ['nullable', 'string', 'max:255'],
+            'name'            => RealHumanName::rules(),
+            'first_name'      => ['nullable', 'string', 'max:60'],
+            'last_name'       => ['nullable', 'string', 'max:60'],
             'username'        => ['nullable', 'string', 'max:255', Rule::unique('users', 'username')],
-            'email'           => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
+            'email'           => RealEmailAddress::rules(),
             'contact_number'  => ['required', 'string', 'max:20'],
             'address'         => ['nullable', 'string', 'max:1000'],
             'province_id'     => ['nullable', 'integer', Rule::exists('provinces', 'id')],
@@ -53,12 +76,10 @@ class AuthController extends Controller
             'password'        => ['required', PasswordRule::defaults()],
         ]);
 
-        // Normalize `name` → first/last
         [$fnFromName, $lnFromName] = $this->splitName($validated['name'] ?? '');
         $firstName = $validated['first_name'] ?? $fnFromName;
         $lastName  = $validated['last_name']  ?? $lnFromName;
 
-        // Username generation if missing
         $username = $validated['username'] ?? $this->makeUniqueUsername(
             seed: trim($firstName . ' ' . ($lastName ?? '')),
             fallbackEmail: $validated['email']
@@ -98,13 +119,12 @@ class AuthController extends Controller
         if ($roleFromRequest && ! in_array($roleFromRequest, $roles, true)) {
             $roles[] = $roleFromRequest;
         }
-        // Ensure roles exist for the correct guard before syncing to avoid 500s on fresh installs.
         foreach ($roles as $roleName) {
             Role::findOrCreate($roleName, config('auth.defaults.guard', 'web'));
         }
         $user->syncRoles($roles);
 
-        event(new Registered($user)); // WHY: triggers any listeners (e.g., verification)
+        event(new Registered($user));
         $user->sendEmailVerificationNotification();
 
         $token = $user->createToken('mobile')->plainTextToken;
@@ -218,31 +238,58 @@ class AuthController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        // Support multiple naming conventions from clients
         $input = [
-            'first_name' => $request->input('first_name', $request->input('firstName')),
-            'last_name'  => $request->input('last_name',  $request->input('lastName')),
-            'name'       => $request->input('name',       $request->input('full_name')),
-            'email'      => $request->input('email'),
+            'first_name' => $this->normalizeNameInput($request->input('first_name', $request->input('firstName'))),
+            'last_name'  => $this->normalizeNameInput($request->input('last_name', $request->input('lastName'))),
+            'name'       => $this->normalizeNameInput($request->input('name', $request->input('full_name'))),
+            'email'      => $this->normalizeEmailInput($request->input('email')),
         ];
 
-        // If only `name` is provided, split into first/last
         if (($input['first_name'] === null || $input['first_name'] === '') &&
             ($input['last_name'] === null || $input['last_name'] === '') &&
-            !empty($input['name'])) {
+            ! empty($input['name'])) {
             [$fn, $ln] = $this->splitName($input['name']);
             $input['first_name'] = $fn;
             $input['last_name'] = $ln;
         }
 
+        if ($request->has('first_name') || $request->has('firstName')) {
+            $request->merge([
+                'first_name' => $input['first_name'],
+                'firstName' => $input['first_name'],
+            ]);
+        }
+        if ($request->has('last_name') || $request->has('lastName')) {
+            $request->merge([
+                'last_name' => $input['last_name'],
+                'lastName' => $input['last_name'],
+            ]);
+        }
+        if ($request->has('name') || $request->has('full_name')) {
+            $request->merge([
+                'name' => $input['name'],
+                'full_name' => $input['name'],
+            ]);
+        }
+        if ($request->has('email')) {
+            $request->merge([
+                'email' => $input['email'],
+            ]);
+        }
+        if ($request->has('address')) {
+            $request->merge([
+                'address' => $this->normalizeTextInput($request->input('address')),
+            ]);
+        }
+
         $validated = $request->validate([
-            'first_name'    => ['nullable', 'string', 'max:255'],
-            'firstName'     => ['nullable', 'string', 'max:255'], // tolerated
-            'last_name'     => ['nullable', 'string', 'max:255'],
-            'lastName'      => ['nullable', 'string', 'max:255'],
-            'name'          => ['nullable', 'string', 'max:255'],
-            'full_name'     => ['nullable', 'string', 'max:255'],
-            'email'         => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'first_name'    => ['nullable', 'string', 'max:60'],
+            'firstName'     => ['nullable', 'string', 'max:60'],
+            'last_name'     => ['nullable', 'string', 'max:60'],
+            'lastName'      => ['nullable', 'string', 'max:60'],
+            'name'          => ['nullable', 'string', 'max:60'],
+            'full_name'     => ['nullable', 'string', 'max:60'],
+            'email'         => RealEmailAddress::rules($user->id, required: false),
             'address'       => ['nullable', 'string', 'max:1000'],
             'province_id'   => ['nullable', 'integer', Rule::exists('provinces', 'id')],
             'province_slug' => ['nullable', 'string', 'max:255'],
@@ -252,7 +299,42 @@ class AuthController extends Controller
             'district'      => ['nullable', 'string', 'max:255'],
         ]);
 
-        // Apply updates only for provided fields
+        $nameUpdateRequested = $request->hasAny([
+            'first_name',
+            'firstName',
+            'last_name',
+            'lastName',
+            'name',
+            'full_name',
+        ]);
+
+        if ($nameUpdateRequested) {
+            $candidateName = $input['name'];
+            if ($candidateName === null || $candidateName === '') {
+                $candidateFirst = $input['first_name'];
+                $candidateLast = $input['last_name'];
+                if ($candidateFirst === null || $candidateFirst === '') {
+                    $candidateFirst = $user->first_name;
+                }
+                if ($candidateLast === null || $candidateLast === '') {
+                    $candidateLast = $user->last_name;
+                }
+                $candidateName = $this->normalizeNameInput(trim(($candidateFirst ?? '') . ' ' . ($candidateLast ?? '')));
+            }
+
+            $nameValidator = Validator::make(
+                ['name' => $candidateName],
+                ['name' => RealHumanName::rules()],
+                ['name.required' => 'Please provide your first and last name.']
+            );
+
+            if ($nameValidator->fails()) {
+                throw ValidationException::withMessages([
+                    'name' => $nameValidator->errors()->get('name'),
+                ]);
+            }
+        }
+
         if ($input['first_name'] !== null && $input['first_name'] !== '') {
             $user->first_name = $input['first_name'];
         } elseif (isset($validated['firstName'])) {
@@ -265,15 +347,18 @@ class AuthController extends Controller
             $user->last_name = $validated['lastName'];
         }
 
-        if (!empty($validated['email'])) {
+        if (! empty($validated['email'])) {
             $user->email = $validated['email'];
         }
 
-        // If a consolidated `name` is sent and we still have gaps, fill them
-        if (!empty($input['name'])) {
+        if (! empty($input['name'])) {
             [$fn, $ln] = $this->splitName($input['name']);
-            if (!empty($fn) && empty($user->first_name)) $user->first_name = $fn;
-            if ($ln !== null && empty($user->last_name)) $user->last_name = $ln;
+            if (! empty($fn) && empty($user->first_name)) {
+                $user->first_name = $fn;
+            }
+            if ($ln !== null && empty($user->last_name)) {
+                $user->last_name = $ln;
+            }
         }
 
         if ($this->hasProvinceInput($request)) {
@@ -475,6 +560,29 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Password updated successfully. You can now sign in with your new password.',
         ], 200);
+    }
+
+    private function normalizeTextInput(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $normalized = trim((string) preg_replace('/\s+/u', ' ', (string) $value));
+
+        return $normalized === '' ? null : $normalized;
+    }
+
+    private function normalizeNameInput(mixed $value): ?string
+    {
+        return $this->normalizeTextInput($value);
+    }
+
+    private function normalizeEmailInput(mixed $value): ?string
+    {
+        $normalized = $this->normalizeTextInput($value);
+
+        return $normalized === null ? null : Str::lower($normalized);
     }
 
     private function splitName(string $name): array

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\NotificationController as AdminNotificationController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\FileController;
 use App\Livewire\Audit\LoginAuditIndex;
@@ -173,6 +174,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('notification/{id}', NotificationShow::class)
         ->name('notification.show')
         ->middleware('permission:show.notifications');
+
+    Route::post('admin/notifications/bulk-delete', [AdminNotificationController::class, 'bulkDelete'])
+        ->name('admin.notifications.bulkDelete')
+        ->middleware(['role:Super Admin|Admin']);
 
     Route::get('location-options', LocationOptionIndex::class)
         ->name('location-options.index')

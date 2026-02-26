@@ -17,7 +17,10 @@ class NotificationIndex extends Component
 
     public function loadNotifications()
     {
-        $this->notifications = Notification::all();
+        $this->notifications = Notification::query()
+            ->with('user')
+            ->latest()
+            ->get();
     }
 
     public function delete($id)

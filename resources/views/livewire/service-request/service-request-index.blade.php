@@ -1,5 +1,6 @@
 @section('page-title', 'Service Requests')
 
+<div>
  <div class="page-content">
      <div class="container-fluid">
          <div class="row">
@@ -176,3 +177,4 @@
          </div> <!-- end row -->
      </div>
  </div>
+</div>

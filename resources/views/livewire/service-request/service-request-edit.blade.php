@@ -155,7 +155,4 @@
                 </script>
             @endonce
 
-        </div>
-    </div>
-
 </div>

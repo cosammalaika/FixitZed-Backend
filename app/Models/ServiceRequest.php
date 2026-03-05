@@ -20,6 +20,7 @@ class ServiceRequest extends Model
         'location_lng',
         'customer_note',
         'fixer_snoozed_until',
+        'no_fixer_notified_at',
     ];
 
     protected $casts = [
@@ -28,6 +29,7 @@ class ServiceRequest extends Model
         'service_id' => 'integer',
         'scheduled_at' => 'datetime',
         'fixer_snoozed_until' => 'datetime',
+        'no_fixer_notified_at' => 'datetime',
         'location_lat' => 'float',
         'location_lng' => 'float',
         'customer_contact_visible' => 'boolean',

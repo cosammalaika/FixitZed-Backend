@@ -53,10 +53,7 @@
                                  @foreach ($serviceRequests as $index => $request)
                                      <tr>
                                          <td>{{ $index + 1 }}</td>
-                                        <td>
-                                            @php($customer = optional($request->customer))
-                                            {{ $customer->first_name ?? 'Deleted user' }} {{ $customer->last_name ?? '' }}
-                                        </td>
+                                         <td>{{ $request->customer?->first_name ?? 'Deleted user' }} {{ $request->customer?->last_name ?? '' }}</td>
                                         <td>
                                             @if ($request->fixer && $request->fixer->user)
                                                 {{ $request->fixer->user->first_name }}
@@ -67,7 +64,7 @@
                                                 <span class="text-muted">Unassigned</span>
                                             @endif
                                         </td>
-                                         <td>{{ $request->service->name ?? 'N/A' }}</td>
+                                         <td>{{ $request->service?->name ?? 'N/A' }}</td>
 
                                          <td>{{ $request->scheduled_at }}</td>
                                          <td><span
@@ -100,7 +97,6 @@
                                                          data-bs-target="#editRoleModal{{ $request->id }}">
                                                          Edit
                                                      </a>
-                                                     </a>
                                                     <a class="dropdown-item text-danger" href="#"
                                                         data-confirm-event="deleteServiceRequest"
                                                         data-confirm-id="{{ $request->id }}"
@@ -125,53 +121,53 @@
                                              </div>
                                          </td>
                                      </tr>
-                                     <div class="modal fade" id="editRoleModal{{ $request->id }}" tabindex="-1"
-                                         aria-labelledby="editRoleModalLabel{{ $request->id }}" aria-hidden="true">
-                                         <div class="modal-dialog modal-dialog-centered modal-lg">
-                                             <div class="modal-content">
-
-                                                 <div class="modal-header">
-                                                     <h5 class="modal-title"
-                                                         id="editRoleModalLabel{{ $request->id }}">
-                                                         Edit request</h5>
-                                                     <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                         aria-label="Close"></button>
-                                                 </div>
-
-                                                 <div class="modal-body">
-                                                     @livewire('service-request.service-request-edit', ['id' => $request->id], key('request-edit-' . $request->id))
-                                                 </div>
-
-                                             </div>
-                                         </div>
-                                     </div>
-
-                                     <!-- Show Modal for Each Role -->
-                                     <div class="modal fade" id="showRoleModal{{ $request->id }}" tabindex="-1"
-                                         aria-labelledby="showRoleModalLabel{{ $request->id }}" aria-hidden="true">
-                                         <div class="modal-dialog modal-dialog-centered modal-lg">
-                                             <div class="modal-content">
-
-                                                 <div class="modal-header">
-                                                     <h5 class="modal-title"
-                                                         id="showRoleModalLabel{{ $request->id }}">
-                                                         Show request</h5>
-                                                     <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                         aria-label="Close"></button>
-                                                 </div>
-
-                                                 <div class="modal-body">
-                                                     @livewire('service-request.service-request-show', ['id' => $request->id], key('service-request-show-' . $request->id))
-                                                 </div>
-
-                                             </div>
-                                         </div>
-                                     </div>
                                  @endforeach
 
                              </tbody>
 
                          </table>
+
+                         @foreach ($serviceRequests as $request)
+                             <div class="modal fade" id="editRoleModal{{ $request->id }}" tabindex="-1"
+                                 aria-labelledby="editRoleModalLabel{{ $request->id }}" aria-hidden="true">
+                                 <div class="modal-dialog modal-dialog-centered modal-lg">
+                                     <div class="modal-content">
+
+                                         <div class="modal-header">
+                                             <h5 class="modal-title" id="editRoleModalLabel{{ $request->id }}">
+                                                 Edit request</h5>
+                                             <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                 aria-label="Close"></button>
+                                         </div>
+
+                                         <div class="modal-body">
+                                             @livewire('service-request.service-request-edit', ['id' => $request->id], key('request-edit-' . $request->id))
+                                         </div>
+
+                                     </div>
+                                 </div>
+                             </div>
+
+                             <div class="modal fade" id="showRoleModal{{ $request->id }}" tabindex="-1"
+                                 aria-labelledby="showRoleModalLabel{{ $request->id }}" aria-hidden="true">
+                                 <div class="modal-dialog modal-dialog-centered modal-lg">
+                                     <div class="modal-content">
+
+                                         <div class="modal-header">
+                                             <h5 class="modal-title" id="showRoleModalLabel{{ $request->id }}">
+                                                 Show request</h5>
+                                             <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                 aria-label="Close"></button>
+                                         </div>
+
+                                         <div class="modal-body">
+                                             @livewire('service-request.service-request-show', ['id' => $request->id], key('service-request-show-' . $request->id))
+                                         </div>
+
+                                     </div>
+                                 </div>
+                             </div>
+                         @endforeach
                      </div>
                  </div>
 

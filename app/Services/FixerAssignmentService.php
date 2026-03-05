@@ -167,12 +167,7 @@ class FixerAssignmentService
 
     protected function scheduleNoFixerNotification(ServiceRequest $serviceRequest): void
     {
-        if (! $serviceRequest->customer_id) {
-            return;
-        }
-
-        NotifyCustomerNoFixerJob::dispatch($serviceRequest->id)
-            ->delay(now()->addMinutes(5));
+        NotifyCustomerNoFixerJob::dispatchIfNeeded($serviceRequest, 5);
     }
 
     protected function distanceKm($lat1, $lng1, $lat2, $lng2): ?float

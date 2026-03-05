@@ -7,27 +7,31 @@
                 <div class="col-md-6">
                     <div class="mb-4">
                         <strong>Customer</strong>
-                        @php($customer = optional($serviceRequest->customer))
-                        <p>{{ $customer->first_name ?? 'Deleted user' }} {{ $customer->last_name ?? '' }}</p>
+                        <p>{{ $serviceRequest->customer?->first_name ?? 'Deleted user' }} {{ $serviceRequest->customer?->last_name ?? '' }}</p>
                     </div>
 
                     <div class="mb-4">
                         <strong>Fixer</strong>
-                        @php
-                            $fixerUser = optional(optional($serviceRequest->fixer)->user);
-                        @endphp
-                        <p>{{ $fixerUser->first_name ?? 'Deleted fixer' }} {{ $fixerUser->last_name ?? '' }}</p>
+                        <p>
+                            @if ($serviceRequest->fixer?->user)
+                                {{ $serviceRequest->fixer->user->first_name }} {{ $serviceRequest->fixer->user->last_name }}
+                            @elseif ($serviceRequest->fixer)
+                                Deleted user
+                            @else
+                                Unassigned
+                            @endif
+                        </p>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="mb-4">
                         <strong>Service</strong>
-                        <p> {{ $serviceRequest->service->name ?? 'N/A' }}</p>
+                        <p>{{ $serviceRequest->service?->name ?? 'N/A' }}</p>
                     </div>
 
                     <div class="mb-4">
                         <strong>Scheduled At</strong>
-                        <p> {{ \Carbon\Carbon::parse($serviceRequest->scheduled_at)->toDayDateTimeString() }}</p>
+                        <p>{{ optional($serviceRequest->scheduled_at)->toDayDateTimeString() ?? 'Not scheduled' }}</p>
                     </div>
                 </div>
                 <div class="col-md-6">

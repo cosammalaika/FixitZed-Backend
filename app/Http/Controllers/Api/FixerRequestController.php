@@ -402,11 +402,6 @@ class FixerRequestController extends Controller
             $this->notifyCustomerDeclined($locked, $fixer);
 
             $nextFixer = $this->assignNextFixer($locked, $fixer->id);
-
-            if (! $nextFixer) {
-                NotifyCustomerNoFixerJob::dispatch($locked->id)
-                    ->delay(now()->addMinutes(5));
-            }
         });
 
         if ($response instanceof JsonResponse) {
@@ -566,8 +561,7 @@ class FixerRequestController extends Controller
             ->get();
 
         if ($candidates->isEmpty()) {
-            NotifyCustomerNoFixerJob::dispatch($serviceRequest->id)
-                ->delay(now()->addMinutes(5));
+            NotifyCustomerNoFixerJob::dispatchIfNeeded($serviceRequest, 5);
             return null;
         }
 

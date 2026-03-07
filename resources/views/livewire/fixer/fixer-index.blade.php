@@ -146,7 +146,7 @@
                                      <!-- Show Modal for Each Role -->
                                      <div class="modal fade" id="showRoleModal{{ $fixer->id }}" tabindex="-1"
                                          aria-labelledby="showRoleModalLabel{{ $fixer->id }}" aria-hidden="true">
-                                         <div class="modal-dialog modal-dialog-centered modal-lg">
+                                         <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
                                              <div class="modal-content">
 
                                                  <div class="modal-header">

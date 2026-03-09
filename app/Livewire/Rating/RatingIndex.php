@@ -9,7 +9,7 @@ class RatingIndex extends Component
 {
     public function render()
     {
-        $ratings = Rating::get();
+        $ratings = Rating::with(['rater', 'ratedUser', 'serviceRequest'])->get();
         return view('livewire.rating.rating-index', compact("ratings"));
     }
     public function delete($id)

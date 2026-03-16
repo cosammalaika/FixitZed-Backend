@@ -2,6 +2,7 @@
 
 use App\Models\Fixer;
 use App\Models\FixerWallet;
+use App\Models\Notification;
 use App\Models\Service;
 use App\Models\ServiceRequest;
 use App\Models\ServiceRequestDecline;
@@ -318,13 +319,112 @@ it('cancel vs accept race yields single outcome', function () {
     ]);
 
     Sanctum::actingAs($customer);
-    postJson("/api/requests/{$sr->id}/cancel", [])->assertOk();
+    postJson("/api/requests/{$sr->id}/cancel", [
+        'reason_key' => 'no_longer_needed',
+    ])->assertOk();
 
     Sanctum::actingAs($fixerUser);
     postJson("/api/service-requests/{$sr->id}/accept", [])->assertStatus(410);
 
     $sr->refresh();
     expect($sr->status)->toBe('cancelled');
+});
+
+it('customer can cancel an accepted request with a preset reason and notify the assigned fixer', function () {
+    Service::truncate();
+    ServiceRequest::truncate();
+    Notification::query()->delete();
+
+    $service = Service::create(['name' => 'Computer Repair', 'category' => 'Tech', 'status' => 'active']);
+    $customer = User::factory()->create([
+        'first_name' => 'Festus',
+        'last_name' => 'Mwape',
+    ]);
+    $fixerUser = User::factory()->create();
+    $fixer = Fixer::create(['user_id' => $fixerUser->id, 'status' => 'approved']);
+    FixerWallet::create(['fixer_id' => $fixer->id, 'coin_balance' => 5, 'subscription_status' => 'approved']);
+    $service->fixers()->sync([$fixer->id]);
+
+    $sr = ServiceRequest::create([
+        'customer_id' => $customer->id,
+        'fixer_id' => $fixer->id,
+        'service_id' => $service->id,
+        'scheduled_at' => now()->addDay(),
+        'status' => 'accepted',
+        'location' => 'Test',
+    ]);
+
+    Sanctum::actingAs($customer);
+    postJson("/api/requests/{$sr->id}/cancel", [
+        'reason_key' => 'time_no_longer_works',
+    ])->assertOk()
+        ->assertJsonPath('data.cancellation_reason_key', 'time_no_longer_works')
+        ->assertJsonPath('data.cancellation_reason_label', 'The scheduled time no longer works for me')
+        ->assertJsonPath('data.canceled_by', 'customer');
+
+    $sr->refresh();
+    expect($sr->status)->toBe('cancelled')
+        ->and($sr->cancellation_reason_key)->toBe('time_no_longer_works')
+        ->and($sr->cancellation_reason_label)->toBe('The scheduled time no longer works for me')
+        ->and($sr->canceled_by)->toBe('customer')
+        ->and($sr->canceled_at)->not()->toBeNull();
+
+    $notification = Notification::query()
+        ->where('user_id', $fixerUser->id)
+        ->latest()
+        ->first();
+
+    expect($notification)->not()->toBeNull()
+        ->and($notification->message)->toContain('Festus Mwape canceled the Computer Repair request.')
+        ->and($notification->message)->toContain('The scheduled time no longer works for me.')
+        ->and($notification->data['service_request_id'] ?? null)->toBe($sr->id);
+});
+
+it('customer cancellation requires a note when other is selected', function () {
+    Service::truncate();
+    ServiceRequest::truncate();
+
+    $service = Service::create(['name' => 'Cleaning', 'category' => 'Home', 'status' => 'active']);
+    $customer = User::factory()->create();
+    $sr = ServiceRequest::create([
+        'customer_id' => $customer->id,
+        'service_id' => $service->id,
+        'scheduled_at' => now()->addDay(),
+        'status' => 'pending',
+        'location' => 'Test',
+    ]);
+
+    Sanctum::actingAs($customer);
+    postJson("/api/requests/{$sr->id}/cancel", [
+        'reason_key' => 'other',
+    ])->assertStatus(422);
+});
+
+it('customer can cancel an unassigned pending request without notifying a fixer', function () {
+    Service::truncate();
+    ServiceRequest::truncate();
+    Notification::query()->delete();
+
+    $service = Service::create(['name' => 'Painting', 'category' => 'Home', 'status' => 'active']);
+    $customer = User::factory()->create();
+    $sr = ServiceRequest::create([
+        'customer_id' => $customer->id,
+        'service_id' => $service->id,
+        'scheduled_at' => now()->addDay(),
+        'status' => 'pending',
+        'location' => 'Test',
+    ]);
+
+    Sanctum::actingAs($customer);
+    postJson("/api/requests/{$sr->id}/cancel", [
+        'reason_key' => 'booked_by_mistake',
+    ])->assertOk();
+
+    $sr->refresh();
+    expect($sr->status)->toBe('cancelled')
+        ->and($sr->cancellation_reason_key)->toBe('booked_by_mistake');
+
+    expect(Notification::query()->count())->toBe(0);
 });
 
 it('only eligible fixers can see or accept a request', function () {

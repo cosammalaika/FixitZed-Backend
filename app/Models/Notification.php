@@ -18,11 +18,13 @@ class Notification extends Model
         'user_id',
         'title',
         'message',
+        'data',
         'read',
     ];
 
     protected $casts = [
         'user_id' => 'integer',
+        'data' => 'array',
         'read' => 'boolean',
     ];
 

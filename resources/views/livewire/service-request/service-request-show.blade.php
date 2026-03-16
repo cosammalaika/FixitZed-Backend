@@ -45,6 +45,36 @@
                         <p>{{ $serviceRequest->location ?? 'Not specified' }}</p>
                     </div>
                 </div>
+
+                @if (in_array(strtolower((string) $serviceRequest->status), ['cancelled', 'canceled'], true))
+                    <div class="col-12">
+                        <div class="border rounded-3 p-3 bg-light">
+                            <h5 class="mb-3">Cancellation details</h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <strong>Canceled by</strong>
+                                    <p class="mb-0">
+                                        {{ $serviceRequest->canceled_by ? ucfirst(str_replace('_', ' ', $serviceRequest->canceled_by)) : '—' }}
+                                    </p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong>Cancellation reason</strong>
+                                    <p class="mb-0">{{ $serviceRequest->cancellation_reason_label ?? '—' }}</p>
+                                </div>
+                                @if ($serviceRequest->cancellation_note)
+                                    <div class="col-md-6 mb-3">
+                                        <strong>Additional note</strong>
+                                        <p class="mb-0">{{ $serviceRequest->cancellation_note }}</p>
+                                    </div>
+                                @endif
+                                <div class="col-md-6 mb-3">
+                                    <strong>Canceled at</strong>
+                                    <p class="mb-0">{{ optional($serviceRequest->canceled_at)->toDayDateTimeString() ?? '—' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
     </div>

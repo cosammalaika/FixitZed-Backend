@@ -3,16 +3,20 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Fixer;
 use App\Models\ServiceRequest;
 use App\Services\FixerAssignmentService;
+use App\Services\ServiceRequestCancellationService;
+use App\Support\CancellationReasonOptions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class ServiceRequestController extends Controller
 {
-    public function __construct(private FixerAssignmentService $assignment)
+    public function __construct(
+        private FixerAssignmentService $assignment,
+        private ServiceRequestCancellationService $cancellations
+    )
     {
     }
     public function index(Request $request)
@@ -113,29 +117,27 @@ class ServiceRequestController extends Controller
     {
         $this->authorizeView($serviceRequest, $request);
 
-        if ($serviceRequest->status !== 'pending') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Only pending bookings can be cancelled.',
-            ], 422);
-        }
+        $validated = $request->validate([
+            'reason_key' => ['required', 'string', Rule::in(CancellationReasonOptions::keys())],
+            'note' => [
+                'nullable',
+                'string',
+                'max:1000',
+                Rule::requiredIf(fn () => $request->input('reason_key') === CancellationReasonOptions::OTHER),
+            ],
+        ]);
 
-        if ($serviceRequest->fixer_id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'A fixer has already been assigned. Please contact support for assistance.',
-            ], 422);
-        }
-
-        $serviceRequest->forceFill([
-            'status' => 'cancelled',
-            'fixer_snoozed_until' => null,
-        ])->save();
+        $serviceRequest = $this->cancellations->cancelByCustomer(
+            $serviceRequest,
+            $request->user(),
+            (string) $validated['reason_key'],
+            $validated['note'] ?? null
+        );
 
         return response()->json([
             'success' => true,
             'message' => 'Booking cancelled.',
-            'data' => $serviceRequest->fresh()->load(['service', 'fixer.user']),
+            'data' => $serviceRequest,
             'meta' => ['count' => 1],
         ]);
     }

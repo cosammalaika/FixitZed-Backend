@@ -356,16 +356,16 @@ it('customer can cancel an accepted request with a preset reason and notify the 
 
     Sanctum::actingAs($customer);
     postJson("/api/requests/{$sr->id}/cancel", [
-        'reason_key' => 'time_no_longer_works',
+        'reason_key' => 'found_another_fixer',
     ])->assertOk()
-        ->assertJsonPath('data.cancellation_reason_key', 'time_no_longer_works')
-        ->assertJsonPath('data.cancellation_reason_label', 'The scheduled time no longer works for me')
+        ->assertJsonPath('data.cancellation_reason_key', 'found_another_fixer')
+        ->assertJsonPath('data.cancellation_reason_label', 'I found another fixer')
         ->assertJsonPath('data.canceled_by', 'customer');
 
     $sr->refresh();
     expect($sr->status)->toBe('cancelled')
-        ->and($sr->cancellation_reason_key)->toBe('time_no_longer_works')
-        ->and($sr->cancellation_reason_label)->toBe('The scheduled time no longer works for me')
+        ->and($sr->cancellation_reason_key)->toBe('found_another_fixer')
+        ->and($sr->cancellation_reason_label)->toBe('I found another fixer')
         ->and($sr->canceled_by)->toBe('customer')
         ->and($sr->canceled_at)->not()->toBeNull();
 
@@ -376,7 +376,7 @@ it('customer can cancel an accepted request with a preset reason and notify the 
 
     expect($notification)->not()->toBeNull()
         ->and($notification->message)->toContain('Festus Mwape canceled the Computer Repair request.')
-        ->and($notification->message)->toContain('The scheduled time no longer works for me.')
+        ->and($notification->message)->toContain('I found another fixer.')
         ->and($notification->data['service_request_id'] ?? null)->toBe($sr->id);
 });
 

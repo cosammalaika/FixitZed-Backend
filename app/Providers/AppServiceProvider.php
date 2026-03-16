@@ -10,6 +10,7 @@ use App\Models\Subcategory;
 use App\Services\FcmService;
 use App\Support\ApiCache;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Component as LivewireComponent;
@@ -74,22 +75,65 @@ class AppServiceProvider extends ServiceProvider
 
         try {
             $fcm = $this->app->make(FcmService::class);
-            if ($fcm->enabled()) {
-                Notification::created(function (Notification $notification) use ($fcm) {
-                    if ($notification->recipient_type === 'Individual' && $notification->user_id) {
-                        $title = $notification->title ?? 'Notification';
-                        $body = $notification->message ?? '';
-                        $fcm->sendToUser(
-                            $notification->user,
-                            $title,
-                            $body,
-                            ['notification_id' => (string) $notification->id],
-                        );
-                    }
-                });
-            }
+
+            Notification::created(function (Notification $notification) use ($fcm) {
+                if ($notification->recipient_type !== 'Individual' || ! $notification->user_id) {
+                    return;
+                }
+
+                $title = $notification->title ?? 'Notification';
+                $body = $notification->message ?? '';
+                $data = is_array($notification->data) ? $notification->data : [];
+                $app = data_get($data, 'app');
+                $payload = collect($data)
+                    ->filter(fn ($value) => $value !== null)
+                    ->map(function ($value) {
+                        if (is_bool($value)) {
+                            return $value ? 'true' : 'false';
+                        }
+
+                        if (is_scalar($value)) {
+                            return (string) $value;
+                        }
+
+                        return json_encode($value) ?: '';
+                    })
+                    ->all();
+                $payload['notification_id'] = (string) $notification->id;
+
+                Log::info('push.dispatch.triggered', [
+                    'notification_id' => $notification->id,
+                    'user_id' => $notification->user_id,
+                    'recipient_type' => $notification->recipient_type,
+                    'app' => is_string($app) && $app !== '' ? $app : null,
+                    'fcm_enabled' => $fcm->enabled(),
+                    'payload_keys' => array_keys($payload),
+                ]);
+
+                if (! $fcm->enabled()) {
+                    return;
+                }
+
+                if (! $notification->user) {
+                    Log::warning('push.dispatch.skipped_missing_user', [
+                        'notification_id' => $notification->id,
+                        'user_id' => $notification->user_id,
+                    ]);
+                    return;
+                }
+
+                $fcm->sendToUser(
+                    $notification->user,
+                    $title,
+                    $body,
+                    $payload,
+                    is_string($app) && $app !== '' ? $app : null,
+                );
+            });
         } catch (\Throwable $e) {
-            // If FCM is not configured, skip silently.
+            Log::warning('push.dispatch.bootstrap_failed', [
+                'error' => $e->getMessage(),
+            ]);
         }
 
         if (ApiCache::enabled()) {

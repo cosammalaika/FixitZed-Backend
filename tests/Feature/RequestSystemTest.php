@@ -60,6 +60,7 @@ function createServiceRequest(Service $service, ?Fixer $fixer = null): ServiceRe
 it('allows only one fixer to accept a pending request', function () {
     Setting::set('requests.expiry_minutes', 60);
     [$service, $fixers] = createServiceWithFixers(2);
+    Notification::query()->delete();
     $sr = createServiceRequest($service);
 
     $fixerA = $fixers[0];
@@ -76,6 +77,17 @@ it('allows only one fixer to accept a pending request', function () {
     $sr->refresh();
     expect($sr->status)->toBe('accepted')
         ->and($sr->fixer_id)->toBe($fixerA->id);
+
+    $notification = Notification::query()
+        ->where('user_id', $sr->customer_id)
+        ->latest()
+        ->first();
+
+    expect($notification)->not()->toBeNull()
+        ->and($notification->title)->toBe('Request accepted')
+        ->and($notification->data['app'] ?? null)->toBe('customer')
+        ->and($notification->data['payload'] ?? null)->toBe('booking_detail:' . $sr->id)
+        ->and($notification->data['service_request_id'] ?? null)->toBe((string) $sr->id);
 });
 
 it('decline is idempotent per fixer', function () {
@@ -222,6 +234,7 @@ it('fixer billing sets awaiting_payment and is visible to customer', function ()
     Service::truncate();
     ServiceRequest::truncate();
     Payment::truncate();
+    Notification::query()->delete();
 
     $service = Service::create(['name' => 'AC Repair', 'category' => 'HVAC', 'status' => 'active']);
 
@@ -252,9 +265,80 @@ it('fixer billing sets awaiting_payment and is visible to customer', function ()
     expect((float) $payment->amount)->toBe(50.0);
     expect($payment->status)->toBe('pending');
 
+    $notification = Notification::query()
+        ->where('user_id', $customer->id)
+        ->where('title', 'Payment Required')
+        ->latest()
+        ->first();
+
+    expect($notification)->not()->toBeNull()
+        ->and($notification->title)->toBe('Payment Required')
+        ->and($notification->data['app'] ?? null)->toBe('customer')
+        ->and($notification->data['payload'] ?? null)->toBe('booking_detail:' . $sr->id)
+        ->and($notification->data['service_request_id'] ?? null)->toBe((string) $sr->id);
+
     Sanctum::actingAs($customer);
     $detail = getJson("/api/requests/{$sr->id}")->assertOk();
     expect($detail->json('data.status'))->toBe('awaiting_payment');
+});
+
+it('payment completion notifies both customer and fixer with scoped payloads', function () {
+    Service::truncate();
+    ServiceRequest::truncate();
+    Payment::truncate();
+    Notification::query()->delete();
+
+    $service = Service::create(['name' => 'AC Repair', 'category' => 'HVAC', 'status' => 'active']);
+
+    $fixerUser = User::factory()->create();
+    $fixer = Fixer::create(['user_id' => $fixerUser->id, 'status' => 'approved']);
+    FixerWallet::create(['fixer_id' => $fixer->id, 'coin_balance' => 5, 'subscription_status' => 'approved']);
+    $service->fixers()->sync([$fixer->id]);
+
+    $customer = User::factory()->create();
+    $sr = ServiceRequest::create([
+        'customer_id' => $customer->id,
+        'fixer_id' => $fixer->id,
+        'service_id' => $service->id,
+        'scheduled_at' => now()->addDay(),
+        'status' => 'awaiting_payment',
+        'location' => 'Test',
+    ]);
+
+    Payment::create([
+        'service_request_id' => $sr->id,
+        'amount' => 50,
+        'status' => 'pending',
+    ]);
+
+    Sanctum::actingAs($customer);
+    postJson("/api/requests/{$sr->id}/payment", [
+        'amount' => 50,
+        'status' => 'paid',
+    ])->assertOk();
+
+    $sr->refresh();
+    expect($sr->status)->toBe('completed');
+
+    $customerNotification = Notification::query()
+        ->where('user_id', $customer->id)
+        ->latest()
+        ->first();
+
+    $fixerNotification = Notification::query()
+        ->where('user_id', $fixerUser->id)
+        ->latest()
+        ->first();
+
+    expect($customerNotification)->not()->toBeNull()
+        ->and($customerNotification->title)->toBe('Payment confirmed')
+        ->and($customerNotification->data['app'] ?? null)->toBe('customer')
+        ->and($customerNotification->data['payload'] ?? null)->toBe('booking_detail:' . $sr->id);
+
+    expect($fixerNotification)->not()->toBeNull()
+        ->and($fixerNotification->title)->toBe('Booking completed')
+        ->and($fixerNotification->data['app'] ?? null)->toBe('fixer')
+        ->and($fixerNotification->data['payload'] ?? null)->toBe('booking_detail:' . $sr->id);
 });
 
 it('decline keeps request pending for other eligible fixers and hides from decliner', function () {

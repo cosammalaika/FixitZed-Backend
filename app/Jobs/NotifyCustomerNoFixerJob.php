@@ -11,6 +11,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class NotifyCustomerNoFixerJob implements ShouldQueue
 {
@@ -63,6 +64,13 @@ class NotifyCustomerNoFixerJob implements ShouldQueue
                     'recipient_type' => 'Individual',
                     'title' => $payload['title'],
                     'message' => $payload['message'],
+                    'data' => [
+                        'app' => 'customer',
+                        'type' => 'service_request_unassigned',
+                        'service_request_id' => (string) $serviceRequest->id,
+                        'payload' => 'booking_detail:' . $serviceRequest->id,
+                        'sync_topics' => 'bookings,notifications,dashboard',
+                    ],
                     'read' => false,
                 ]);
 
@@ -70,8 +78,11 @@ class NotifyCustomerNoFixerJob implements ShouldQueue
                     'no_fixer_notified_at' => now(),
                 ])->save();
             });
-        } catch (\Throwable) {
-            // Silently ignore notification failures so the job does not retry endlessly.
+        } catch (\Throwable $e) {
+            Log::warning('push.no_fixer_job_failed', [
+                'service_request_id' => $this->serviceRequestId,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 

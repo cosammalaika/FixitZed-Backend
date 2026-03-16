@@ -5,6 +5,7 @@ namespace App\Livewire\ServiceRequest;
 use App\Models\ServiceRequest;
 use App\Models\User;
 use App\Models\Fixer;
+use App\Models\Notification;
 use App\Models\Service;
 use App\Support\ProvinceDistrict;
 use Livewire\Component;
@@ -110,6 +111,9 @@ class ServiceRequestCreate extends Component
             'location' => trim($this->province . ', ' . $this->district),
         ]);
 
+        $request->load(['service', 'fixer.user']);
+        $this->notifyAssignmentParties($request);
+
         log_user_action('created service request', "ServiceRequest ID: {$request->id}");
 
         $this->dispatchBrowserEvent('flash-message', [
@@ -117,5 +121,64 @@ class ServiceRequestCreate extends Component
             'message' => 'Service request created successfully.',
             'redirect' => route('serviceRequest.index'),
         ]);
+    }
+
+    protected function notifyAssignmentParties(ServiceRequest $serviceRequest): void
+    {
+        $fixerUser = $serviceRequest->fixer?->user;
+        if ($fixerUser) {
+            try {
+                Notification::create([
+                    'user_id' => $fixerUser->id,
+                    'recipient_type' => 'Individual',
+                    'title' => 'New request available',
+                    'message' => sprintf(
+                        'A customer needs %s on %s.',
+                        optional($serviceRequest->service)->name ?? 'a service',
+                        optional($serviceRequest->scheduled_at)?->format('d M Y • H:i') ?? 'an upcoming date'
+                    ),
+                    'data' => [
+                        'app' => 'fixer',
+                        'type' => 'service_request_assigned',
+                        'service_request_id' => (string) $serviceRequest->id,
+                        'payload' => 'fixer_request:' . $serviceRequest->id,
+                        'sync_topics' => 'requests,notifications,dashboard',
+                    ],
+                    'read' => false,
+                ]);
+            } catch (\Throwable) {
+                // Admin assignment should not fail if notification creation fails.
+            }
+        }
+
+        try {
+            $accepted = $serviceRequest->status === 'accepted';
+            Notification::create([
+                'user_id' => $serviceRequest->customer_id,
+                'recipient_type' => 'Individual',
+                'title' => $accepted ? 'Request accepted' : 'Fixer found',
+                'message' => $accepted
+                    ? sprintf(
+                        '%s accepted your %s request.',
+                        optional($serviceRequest->fixer?->user)->name ?? 'A fixer',
+                        optional($serviceRequest->service)->name ?? 'service'
+                    )
+                    : sprintf(
+                        '%s is reviewing your %s request now.',
+                        optional($serviceRequest->fixer?->user)->name ?? 'A fixer',
+                        optional($serviceRequest->service)->name ?? 'service'
+                    ),
+                'data' => [
+                    'app' => 'customer',
+                    'type' => $accepted ? 'service_request_accepted' : 'service_request_pending_acceptance',
+                    'service_request_id' => (string) $serviceRequest->id,
+                    'payload' => 'booking_detail:' . $serviceRequest->id,
+                    'sync_topics' => 'bookings,notifications,dashboard',
+                ],
+                'read' => false,
+            ]);
+        } catch (\Throwable) {
+            // Admin assignment should not fail if notification creation fails.
+        }
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Coupon;
 use App\Models\Earning;
+use App\Models\Notification;
 use App\Models\Payment;
 use App\Models\ServiceRequest;
 use App\Services\PriorityPointService;
@@ -133,6 +134,7 @@ class PaymentController extends Controller
             if ($isPaid && ! $wasPaid) {
                 $serviceRequest->status = 'completed';
                 $serviceRequest->save();
+                $serviceRequest->loadMissing(['service', 'customer', 'fixer.user']);
 
                 $fixer = $serviceRequest->fixer;
                 if ($fixer) {
@@ -147,6 +149,49 @@ class PaymentController extends Controller
                     ]);
 
                     $fixer->forceFill(['last_completed_at' => now()])->save();
+                }
+
+                try {
+                    Notification::create([
+                        'user_id' => $serviceRequest->customer_id,
+                        'recipient_type' => 'Individual',
+                        'title' => 'Payment confirmed',
+                        'message' => 'Your payment for ' . (optional($serviceRequest->service)->name ?? 'this booking') . ' has been received.',
+                        'data' => [
+                            'app' => 'customer',
+                            'type' => 'service_request_completed',
+                            'service_request_id' => (string) $serviceRequest->id,
+                            'payload' => 'booking_detail:' . $serviceRequest->id,
+                            'sync_topics' => 'bookings,notifications,dashboard',
+                        ],
+                        'read' => false,
+                    ]);
+                } catch (\Throwable) {
+                    // Keep payment completion resilient if notification creation fails.
+                }
+
+                if ($fixer) {
+                    try {
+                        Notification::create([
+                            'user_id' => $fixer->user_id,
+                            'recipient_type' => 'Individual',
+                            'title' => 'Booking completed',
+                            'message' => sprintf(
+                                'Payment for %s has been completed.',
+                                optional($serviceRequest->service)->name ?? 'this booking'
+                            ),
+                            'data' => [
+                                'app' => 'fixer',
+                                'type' => 'service_request_completed',
+                                'service_request_id' => (string) $serviceRequest->id,
+                                'payload' => 'booking_detail:' . $serviceRequest->id,
+                                'sync_topics' => 'requests,notifications,dashboard',
+                            ],
+                            'read' => false,
+                        ]);
+                    } catch (\Throwable) {
+                        // Keep payment completion resilient if notification creation fails.
+                    }
                 }
             }
 

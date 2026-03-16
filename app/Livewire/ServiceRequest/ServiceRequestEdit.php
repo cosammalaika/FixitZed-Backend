@@ -5,6 +5,7 @@ namespace App\Livewire\ServiceRequest;
 use App\Models\ServiceRequest;
 use App\Models\User;
 use App\Models\Fixer;
+use App\Models\Notification;
 use App\Models\Service;
 use App\Models\Payment;
 use App\Support\ProvinceDistrict;
@@ -106,6 +107,8 @@ class ServiceRequestEdit extends Component
         }
 
         $serviceRequest = ServiceRequest::findOrFail($this->serviceRequestId);
+        $previousFixerId = (int) ($serviceRequest->fixer_id ?? 0);
+        $previousStatus = (string) ($serviceRequest->status ?? '');
 
         if ($this->status === 'completed') {
             $payment = Payment::where('service_request_id', $this->serviceRequestId)
@@ -130,6 +133,9 @@ class ServiceRequestEdit extends Component
             'location' => trim($this->province . ', ' . $this->district),
         ]);
 
+        $serviceRequest->load(['service', 'customer', 'fixer.user']);
+        $this->notifyRelevantParties($serviceRequest, $previousFixerId, $previousStatus);
+
         log_user_action('updated service request', "ServiceRequest ID: {$this->serviceRequestId}");
 
         $this->dispatchBrowserEvent('flash-message', [
@@ -149,6 +155,143 @@ class ServiceRequestEdit extends Component
         $this->districtOptions = $this->provinceDistricts[$value] ?? [];
         if (! in_array($this->district, $this->districtOptions, true)) {
             $this->district = '';
+        }
+    }
+
+    protected function notifyRelevantParties(ServiceRequest $serviceRequest, int $previousFixerId, string $previousStatus): void
+    {
+        $status = (string) ($serviceRequest->status ?? '');
+        $fixerUser = $serviceRequest->fixer?->user;
+        $fixerChanged = (int) ($serviceRequest->fixer_id ?? 0) !== $previousFixerId;
+        $statusChanged = $status !== $previousStatus;
+
+        if ($fixerUser && ($fixerChanged || ($statusChanged && in_array($status, ['pending', 'accepted'], true)))) {
+            try {
+                Notification::create([
+                    'user_id' => $fixerUser->id,
+                    'recipient_type' => 'Individual',
+                    'title' => 'New request available',
+                    'message' => sprintf(
+                        'A customer needs %s on %s.',
+                        optional($serviceRequest->service)->name ?? 'a service',
+                        optional($serviceRequest->scheduled_at)?->format('d M Y • H:i') ?? 'an upcoming date'
+                    ),
+                    'data' => [
+                        'app' => 'fixer',
+                        'type' => 'service_request_assigned',
+                        'service_request_id' => (string) $serviceRequest->id,
+                        'payload' => 'fixer_request:' . $serviceRequest->id,
+                        'sync_topics' => 'requests,notifications,dashboard',
+                    ],
+                    'read' => false,
+                ]);
+            } catch (\Throwable) {
+                // Admin edit should not fail if notification creation fails.
+            }
+        }
+
+        if (($fixerChanged || $statusChanged) && in_array($status, ['pending', 'accepted'], true)) {
+            try {
+                $accepted = $status === 'accepted';
+                Notification::create([
+                    'user_id' => $serviceRequest->customer_id,
+                    'recipient_type' => 'Individual',
+                    'title' => $accepted ? 'Request accepted' : 'Fixer found',
+                    'message' => $accepted
+                        ? sprintf(
+                            '%s accepted your %s request.',
+                            optional($fixerUser)->name ?? 'A fixer',
+                            optional($serviceRequest->service)->name ?? 'service'
+                        )
+                        : sprintf(
+                            '%s is reviewing your %s request now.',
+                            optional($fixerUser)->name ?? 'A fixer',
+                            optional($serviceRequest->service)->name ?? 'service'
+                        ),
+                    'data' => [
+                        'app' => 'customer',
+                        'type' => $accepted ? 'service_request_accepted' : 'service_request_pending_acceptance',
+                        'service_request_id' => (string) $serviceRequest->id,
+                        'payload' => 'booking_detail:' . $serviceRequest->id,
+                        'sync_topics' => 'bookings,notifications,dashboard',
+                    ],
+                    'read' => false,
+                ]);
+            } catch (\Throwable) {
+                // Admin edit should not fail if notification creation fails.
+            }
+        }
+
+        if ($statusChanged && $status === 'cancelled' && $fixerUser) {
+            try {
+                Notification::create([
+                    'user_id' => $fixerUser->id,
+                    'recipient_type' => 'Individual',
+                    'title' => 'Booking cancelled',
+                    'message' => sprintf(
+                        'An admin cancelled the %s request.',
+                        optional($serviceRequest->service)->name ?? 'service'
+                    ),
+                    'data' => [
+                        'app' => 'fixer',
+                        'type' => 'service_request_cancelled',
+                        'service_request_id' => (string) $serviceRequest->id,
+                        'payload' => 'booking_detail:' . $serviceRequest->id,
+                        'sync_topics' => 'requests,notifications,dashboard',
+                    ],
+                    'read' => false,
+                ]);
+            } catch (\Throwable) {
+                // Admin edit should not fail if notification creation fails.
+            }
+        }
+
+        if ($statusChanged && $status === 'completed') {
+            try {
+                Notification::create([
+                    'user_id' => $serviceRequest->customer_id,
+                    'recipient_type' => 'Individual',
+                    'title' => 'Booking completed',
+                    'message' => sprintf(
+                        'Your %s booking has been marked as completed.',
+                        optional($serviceRequest->service)->name ?? 'service'
+                    ),
+                    'data' => [
+                        'app' => 'customer',
+                        'type' => 'service_request_completed',
+                        'service_request_id' => (string) $serviceRequest->id,
+                        'payload' => 'booking_detail:' . $serviceRequest->id,
+                        'sync_topics' => 'bookings,notifications,dashboard',
+                    ],
+                    'read' => false,
+                ]);
+            } catch (\Throwable) {
+                // Admin edit should not fail if notification creation fails.
+            }
+
+            if ($fixerUser) {
+                try {
+                    Notification::create([
+                        'user_id' => $fixerUser->id,
+                        'recipient_type' => 'Individual',
+                        'title' => 'Booking completed',
+                        'message' => sprintf(
+                            '%s has been marked as completed.',
+                            optional($serviceRequest->service)->name ?? 'This booking'
+                        ),
+                        'data' => [
+                            'app' => 'fixer',
+                            'type' => 'service_request_completed',
+                            'service_request_id' => (string) $serviceRequest->id,
+                            'payload' => 'booking_detail:' . $serviceRequest->id,
+                            'sync_topics' => 'requests,notifications,dashboard',
+                        ],
+                        'read' => false,
+                    ]);
+                } catch (\Throwable) {
+                    // Admin edit should not fail if notification creation fails.
+                }
+            }
         }
     }
 

@@ -12,10 +12,6 @@ use Illuminate\Validation\ValidationException;
 
 class ServiceRequestCancellationService
 {
-    public function __construct(private FcmService $fcm)
-    {
-    }
-
     public function cancelByCustomer(
         ServiceRequest $serviceRequest,
         User $customer,
@@ -122,32 +118,15 @@ class ServiceRequestCancellationService
                 'recipient_type' => 'Individual',
                 'title' => 'Booking cancelled',
                 'message' => $message,
-                'data' => $data,
+                'data' => $data + [
+                    'app' => 'fixer',
+                    'payload' => 'booking_detail:' . $serviceRequest->id,
+                    'sync_topics' => 'requests,notifications,dashboard',
+                ],
                 'read' => false,
             ]);
         } catch (\Throwable $e) {
             Log::warning('Failed to create fixer cancellation notification', [
-                'service_request_id' => $serviceRequest->id,
-                'fixer_user_id' => $fixerUser->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
-
-        try {
-            $this->fcm->sendToUser(
-                $fixerUser,
-                'Booking cancelled',
-                $message,
-                [
-                    'payload' => 'booking_detail:' . $serviceRequest->id,
-                    'service_request_id' => (string) $serviceRequest->id,
-                    'sync_topics' => 'requests,notifications,dashboard',
-                    'type' => 'service_request_cancelled',
-                ],
-                'fixer'
-            );
-        } catch (\Throwable $e) {
-            Log::warning('Failed to push fixer cancellation notification', [
                 'service_request_id' => $serviceRequest->id,
                 'fixer_user_id' => $fixerUser->id,
                 'error' => $e->getMessage(),

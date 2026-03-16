@@ -284,6 +284,8 @@ class FixerRequestController extends Controller
             $locked->status = 'accepted';
             $locked->save();
 
+            $this->notifyCustomerAccepted($locked->fresh(['service', 'customer', 'fixer.user']), $fixer);
+
             $response = response()->json([
                 'success' => true,
                 'data' => $locked->fresh()->load(['service', 'fixer.user']),
@@ -499,8 +501,16 @@ class FixerRequestController extends Controller
         try {
             Notification::create([
                 'user_id' => $serviceRequest->customer_id,
+                'recipient_type' => 'Individual',
                 'title' => 'Payment Required',
                 'message' => 'A bill of ' . number_format((float) $validated['amount'], 2) . ' has been issued for your ' . optional($serviceRequest->service)->name . ' request.',
+                'data' => [
+                    'app' => 'customer',
+                    'type' => 'payment_requested',
+                    'service_request_id' => (string) $serviceRequest->id,
+                    'payload' => 'booking_detail:' . $serviceRequest->id,
+                    'sync_topics' => 'bookings,notifications,dashboard',
+                ],
                 'read' => false,
             ]);
         } catch (\Throwable $e) {
@@ -671,6 +681,39 @@ class FixerRequestController extends Controller
                     optional($fixer->user)->name ?? 'A fixer',
                     optional($serviceRequest->service)->name ?? 'service'
                 ),
+                'data' => [
+                    'app' => 'customer',
+                    'type' => 'service_request_declined',
+                    'service_request_id' => (string) $serviceRequest->id,
+                    'payload' => 'booking_detail:' . $serviceRequest->id,
+                    'sync_topics' => 'bookings,notifications,dashboard',
+                ],
+                'read' => false,
+            ]);
+        } catch (\Throwable $e) {
+            // ignore
+        }
+    }
+
+    protected function notifyCustomerAccepted(ServiceRequest $serviceRequest, Fixer $fixer): void
+    {
+        try {
+            Notification::create([
+                'user_id' => $serviceRequest->customer_id,
+                'recipient_type' => 'Individual',
+                'title' => 'Request accepted',
+                'message' => sprintf(
+                    '%s accepted your %s request.',
+                    optional($fixer->user)->name ?? 'A fixer',
+                    optional($serviceRequest->service)->name ?? 'service'
+                ),
+                'data' => [
+                    'app' => 'customer',
+                    'type' => 'service_request_accepted',
+                    'service_request_id' => (string) $serviceRequest->id,
+                    'payload' => 'booking_detail:' . $serviceRequest->id,
+                    'sync_topics' => 'bookings,notifications,dashboard',
+                ],
                 'read' => false,
             ]);
         } catch (\Throwable $e) {
@@ -690,6 +733,13 @@ class FixerRequestController extends Controller
                     optional($serviceRequest->service)->name ?? 'a service',
                     optional($serviceRequest->scheduled_at)?->format('d M Y • H:i') ?? 'an upcoming date'
                 ),
+                'data' => [
+                    'app' => 'fixer',
+                    'type' => 'service_request_assigned',
+                    'service_request_id' => (string) $serviceRequest->id,
+                    'payload' => 'fixer_request:' . $serviceRequest->id,
+                    'sync_topics' => 'requests,notifications,dashboard',
+                ],
                 'read' => false,
             ]);
         } catch (\Throwable $e) {
@@ -706,6 +756,13 @@ class FixerRequestController extends Controller
                     optional($fixer->user)->name ?? 'A fixer',
                     optional($serviceRequest->service)->name ?? 'service'
                 ),
+                'data' => [
+                    'app' => 'customer',
+                    'type' => 'service_request_pending_acceptance',
+                    'service_request_id' => (string) $serviceRequest->id,
+                    'payload' => 'booking_detail:' . $serviceRequest->id,
+                    'sync_topics' => 'bookings,notifications,dashboard',
+                ],
                 'read' => false,
             ]);
         } catch (\Throwable $e) {

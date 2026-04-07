@@ -1,32 +1,32 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AdminPushController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
-use App\Http\Controllers\Api\DeviceTokenController;
-use App\Http\Controllers\Api\AdminPushController;
-use App\Http\Controllers\Api\ServiceController;
-use App\Http\Controllers\Api\ServiceRequestController;
-use App\Http\Controllers\Api\FixerController;
-use App\Http\Controllers\Api\FixerDashboardController;
-use App\Http\Controllers\Api\SubcategoryController;
-use App\Http\Controllers\Api\LocationController;
-use App\Http\Controllers\Api\LocationOptionController;
-use App\Http\Controllers\Api\ReviewController;
-use App\Http\Controllers\Api\RatingController;
-use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\CouponController;
-use App\Http\Controllers\Api\PaymentController;
-use App\Http\Controllers\Api\PaymentMethodController;
 use App\Http\Controllers\Api\CurrencyController;
-use App\Http\Controllers\Api\ProvinceController;
-use App\Http\Controllers\Api\SubscriptionController;
-use App\Http\Controllers\Api\FixerRequestController;
-use App\Http\Controllers\Api\LoyaltyController;
-use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Api\EarningController;
 use App\Http\Controllers\Api\EmailVerificationController;
+use App\Http\Controllers\Api\FixerController;
+use App\Http\Controllers\Api\FixerDashboardController;
+use App\Http\Controllers\Api\FixerRequestController;
+use App\Http\Controllers\Api\LocationController;
+use App\Http\Controllers\Api\LocationOptionController;
+use App\Http\Controllers\Api\LoyaltyController;
 use App\Http\Controllers\Api\MfaController;
+use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\PaymentMethodController;
+use App\Http\Controllers\Api\ProvinceController;
+use App\Http\Controllers\Api\RatingController;
+use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\ServiceController;
+use App\Http\Controllers\Api\ServiceRequestController;
+use App\Http\Controllers\Api\SubcategoryController;
+use App\Http\Controllers\Api\SubscriptionController;
+use Illuminate\Support\Facades\Route;
 
 // Guest routes (no authentication required)
 Route::post('login', [AuthController::class, 'login'])->middleware('throttle:10,1');
@@ -70,6 +70,8 @@ Route::middleware('auth:sanctum')->group(function () {
         ->middleware('throttle:6,1')
         ->name('verification.send');
     Route::get('me', [AuthController::class, 'me']);
+    Route::delete('me', [AuthController::class, 'deleteAccount']);
+    Route::delete('account', [AuthController::class, 'deleteAccount']);
     Route::post('logout', [AuthController::class, 'logout']);
     Route::post('device-tokens', [DeviceTokenController::class, 'store']);
     Route::delete('device-tokens', [DeviceTokenController::class, 'destroy']);

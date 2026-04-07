@@ -1,4 +1,5 @@
 <?php
+
 // app/Http/Controllers/Api/AuthController.php
 
 namespace App\Http\Controllers\Api;
@@ -6,29 +7,30 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\District;
 use App\Models\LoginAudit;
-use App\Models\UserTrustedDevice;
 use App\Models\Province;
 use App\Models\User;
-use App\Support\ProvinceDistrict;
-use App\Support\UserSessionManager;
+use App\Models\UserTrustedDevice;
 use App\Notifications\ResetPasswordOtp;
 use App\Rules\RealEmailAddress;
 use App\Rules\RealHumanName;
+use App\Services\AccountDeletionService;
+use App\Support\ProvinceDistrict;
+use App\Support\UserSessionManager;
 use Carbon\Carbon;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rules\Password as PasswordRule;
+use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
 
 class AuthController extends Controller
@@ -39,7 +41,7 @@ class AuthController extends Controller
     public function register(Request $request): JsonResponse
     {
         $normalizedName = $this->normalizeNameInput(
-            $request->input('name', trim(((string) $request->input('first_name', '')) . ' ' . ((string) $request->input('last_name', ''))))
+            $request->input('name', trim(((string) $request->input('first_name', '')).' '.((string) $request->input('last_name', ''))))
         );
         $normalizedFirstName = $this->normalizeNameInput($request->input('first_name'));
         $normalizedLastName = $this->normalizeNameInput($request->input('last_name'));
@@ -59,30 +61,30 @@ class AuthController extends Controller
         ]);
 
         $validated = $request->validate([
-            'name'            => RealHumanName::rules(),
-            'first_name'      => ['nullable', 'string', 'max:60'],
-            'last_name'       => ['nullable', 'string', 'max:60'],
-            'username'        => ['nullable', 'string', 'max:255', Rule::unique('users', 'username')],
-            'email'           => RealEmailAddress::rules(),
-            'contact_number'  => ['required', 'string', 'max:20'],
-            'address'         => ['nullable', 'string', 'max:1000'],
-            'province_id'     => ['nullable', 'integer', Rule::exists('provinces', 'id')],
-            'province_slug'   => ['nullable', 'string', 'max:255'],
-            'province'        => ['nullable', 'string', 'max:255'],
-            'district_id'     => ['nullable', 'integer', Rule::exists('districts', 'id')],
-            'district_slug'   => ['nullable', 'string', 'max:255'],
-            'district'        => ['nullable', 'string', 'max:255'],
-            'user_type'       => ['nullable', Rule::in(['Customer', 'Fixer', 'Admin', 'Support'])],
-            'status'          => ['nullable', Rule::in(['Active', 'Inactive'])],
-            'password'        => ['required', PasswordRule::defaults()],
+            'name' => RealHumanName::rules(),
+            'first_name' => ['nullable', 'string', 'max:60'],
+            'last_name' => ['nullable', 'string', 'max:60'],
+            'username' => ['nullable', 'string', 'max:255', Rule::unique('users', 'username')],
+            'email' => RealEmailAddress::rules(),
+            'contact_number' => ['required', 'string', 'max:20'],
+            'address' => ['nullable', 'string', 'max:1000'],
+            'province_id' => ['nullable', 'integer', Rule::exists('provinces', 'id')],
+            'province_slug' => ['nullable', 'string', 'max:255'],
+            'province' => ['nullable', 'string', 'max:255'],
+            'district_id' => ['nullable', 'integer', Rule::exists('districts', 'id')],
+            'district_slug' => ['nullable', 'string', 'max:255'],
+            'district' => ['nullable', 'string', 'max:255'],
+            'user_type' => ['nullable', Rule::in(['Customer', 'Fixer', 'Admin', 'Support'])],
+            'status' => ['nullable', Rule::in(['Active', 'Inactive'])],
+            'password' => ['required', PasswordRule::defaults()],
         ]);
 
         [$fnFromName, $lnFromName] = $this->splitName($validated['name'] ?? '');
         $firstName = $validated['first_name'] ?? $fnFromName;
-        $lastName  = $validated['last_name']  ?? $lnFromName;
+        $lastName = $validated['last_name'] ?? $lnFromName;
 
         $username = $validated['username'] ?? $this->makeUniqueUsername(
-            seed: trim($firstName . ' ' . ($lastName ?? '')),
+            seed: trim($firstName.' '.($lastName ?? '')),
             fallbackEmail: $validated['email']
         );
 
@@ -103,16 +105,16 @@ class AuthController extends Controller
         $address = $this->composeAddress($province->name, $district->name, $validated['address'] ?? null);
 
         $user = User::create([
-            'first_name'     => $firstName,
-            'last_name'      => $lastName,
-            'username'       => $username,
-            'email'          => $validated['email'],
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'username' => $username,
+            'email' => $validated['email'],
             'contact_number' => $validated['contact_number'],
-            'province'       => $province->name,
-            'district'       => $district->name,
-            'address'        => $address,
-            'status'         => $validated['status'] ?? 'Active',
-            'password'       => Hash::make($validated['password']),
+            'province' => $province->name,
+            'district' => $district->name,
+            'address' => $address,
+            'status' => $validated['status'] ?? 'Active',
+            'password' => Hash::make($validated['password']),
         ]);
 
         $roleFromRequest = $validated['user_type'] ?? null;
@@ -137,8 +139,8 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'token'   => $token,
-            'user'    => $user,
+            'token' => $token,
+            'user' => $user,
             'requires_verification' => true,
         ], 201);
     }
@@ -150,8 +152,8 @@ class AuthController extends Controller
     {
         $validated = $request->validate([
             'identifier' => ['required_without:email', 'string'],
-            'email'      => ['nullable', 'email'],
-            'password'   => ['required', 'string'],
+            'email' => ['nullable', 'email'],
+            'password' => ['required', 'string'],
         ]);
 
         $identifier = $validated['identifier'] ?? $validated['email'] ?? '';
@@ -167,7 +169,7 @@ class AuthController extends Controller
             RateLimiter::hit($this->throttleKey($identifier));
             throw ValidationException::withMessages([
                 'identifier' => ['The provided credentials are incorrect.'],
-                'email'      => ['The provided credentials are incorrect.'],
+                'email' => ['The provided credentials are incorrect.'],
             ]);
         }
 
@@ -214,8 +216,8 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'token'   => $token,
-            'user'    => $user,
+            'token' => $token,
+            'user' => $user,
             'requires_verification' => ! $user->hasVerifiedEmail(),
         ], 200);
     }
@@ -223,9 +225,10 @@ class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         $user = $request->user()->loadMissing('roles');
+
         return response()->json([
             'success' => true,
-            'user'    => $user,
+            'user' => $user,
             'requires_verification' => ! $user->hasVerifiedEmail(),
         ], 200);
     }
@@ -241,9 +244,9 @@ class AuthController extends Controller
 
         $input = [
             'first_name' => $this->normalizeNameInput($request->input('first_name', $request->input('firstName'))),
-            'last_name'  => $this->normalizeNameInput($request->input('last_name', $request->input('lastName'))),
-            'name'       => $this->normalizeNameInput($request->input('name', $request->input('full_name'))),
-            'email'      => $this->normalizeEmailInput($request->input('email')),
+            'last_name' => $this->normalizeNameInput($request->input('last_name', $request->input('lastName'))),
+            'name' => $this->normalizeNameInput($request->input('name', $request->input('full_name'))),
+            'email' => $this->normalizeEmailInput($request->input('email')),
         ];
 
         if (($input['first_name'] === null || $input['first_name'] === '') &&
@@ -284,21 +287,21 @@ class AuthController extends Controller
         }
 
         $validated = $request->validate([
-            'first_name'    => ['nullable', 'string', 'max:60'],
-            'firstName'     => ['nullable', 'string', 'max:60'],
-            'last_name'     => ['nullable', 'string', 'max:60'],
-            'lastName'      => ['nullable', 'string', 'max:60'],
-            'name'          => ['nullable', 'string', 'max:60'],
-            'full_name'     => ['nullable', 'string', 'max:60'],
-            'email'         => RealEmailAddress::rules($user->id, required: false),
+            'first_name' => ['nullable', 'string', 'max:60'],
+            'firstName' => ['nullable', 'string', 'max:60'],
+            'last_name' => ['nullable', 'string', 'max:60'],
+            'lastName' => ['nullable', 'string', 'max:60'],
+            'name' => ['nullable', 'string', 'max:60'],
+            'full_name' => ['nullable', 'string', 'max:60'],
+            'email' => RealEmailAddress::rules($user->id, required: false),
             'profile_photo' => ['nullable', 'file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
-            'address'       => ['nullable', 'string', 'max:1000'],
-            'province_id'   => ['nullable', 'integer', Rule::exists('provinces', 'id')],
+            'address' => ['nullable', 'string', 'max:1000'],
+            'province_id' => ['nullable', 'integer', Rule::exists('provinces', 'id')],
             'province_slug' => ['nullable', 'string', 'max:255'],
-            'province'      => ['nullable', 'string', 'max:255'],
-            'district_id'   => ['nullable', 'integer', Rule::exists('districts', 'id')],
+            'province' => ['nullable', 'string', 'max:255'],
+            'district_id' => ['nullable', 'integer', Rule::exists('districts', 'id')],
             'district_slug' => ['nullable', 'string', 'max:255'],
-            'district'      => ['nullable', 'string', 'max:255'],
+            'district' => ['nullable', 'string', 'max:255'],
         ]);
 
         $nameUpdateRequested = $request->hasAny([
@@ -321,7 +324,7 @@ class AuthController extends Controller
                 if ($candidateLast === null || $candidateLast === '') {
                     $candidateLast = $user->last_name;
                 }
-                $candidateName = $this->normalizeNameInput(trim(($candidateFirst ?? '') . ' ' . ($candidateLast ?? '')));
+                $candidateName = $this->normalizeNameInput(trim(($candidateFirst ?? '').' '.($candidateLast ?? '')));
             }
 
             $nameValidator = Validator::make(
@@ -406,7 +409,7 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'user'    => $freshUser,
+            'user' => $freshUser,
             'avatar_updated_at' => optional($freshUser?->updated_at)->toISOString(),
         ], 200);
     }
@@ -433,7 +436,7 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
-        $token = $request->user()->currentAccessToken(); 
+        $token = $request->user()->currentAccessToken();
         if ($token) {
             $token->delete();
         }
@@ -443,6 +446,22 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Logged out',
+        ], 200);
+    }
+
+    public function deleteAccount(Request $request, AccountDeletionService $deletionService): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $this->recordLoginAudit($user, 'account.delete', 'requested');
+
+        $result = $deletionService->delete($user);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Your account has been permanently deleted.',
+            'deleted_at' => $result['deleted_at'],
         ], 200);
     }
 
@@ -460,6 +479,7 @@ class AuthController extends Controller
             $this->recordLoginAudit(null, 'password.forgot', 'failed', [
                 'identifier' => $identifier,
             ]);
+
             return response()->json([
                 'success' => true,
                 'message' => 'If we find a matching account, a reset code will be emailed shortly.',
@@ -471,6 +491,7 @@ class AuthController extends Controller
                 'identifier' => $identifier,
                 'reason' => 'missing_email',
             ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'This account does not have an email address on file. Please contact support to reset your password.',
@@ -608,8 +629,11 @@ class AuthController extends Controller
     private function splitName(string $name): array
     {
         $name = trim(preg_replace('/\s+/u', ' ', $name));
-        if ($name === '') return ['', null];
+        if ($name === '') {
+            return ['', null];
+        }
         $parts = explode(' ', $name, 2);
+
         return [$parts[0], $parts[1] ?? null];
     }
 
@@ -631,11 +655,11 @@ class AuthController extends Controller
 
             if ($normalized !== null) {
                 $query->orWhere('contact_number', $normalized)
-                      ->orWhere('contact_number', '+' . $normalized)
-                      ->orWhereRaw(
-                          "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(contact_number, ' ', ''), '-', ''), '(', ''), ')', ''), '+', '') = ?",
-                          [$normalized]
-                      );
+                    ->orWhere('contact_number', '+'.$normalized)
+                    ->orWhereRaw(
+                        "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(contact_number, ' ', ''), '-', ''), '(', ''), ')', ''), '+', '') = ?",
+                        [$normalized]
+                    );
             }
         })->first();
     }
@@ -823,7 +847,7 @@ class AuthController extends Controller
         }
 
         if ($extra !== null && $extra !== '') {
-            return $location . ' - ' . $extra;
+            return $location.' - '.$extra;
         }
 
         return $location;
@@ -853,9 +877,9 @@ class AuthController extends Controller
 
         while (User::where('username', $username)->exists()) {
             $suffix++;
-            $username = $base . '.' . $suffix;
+            $username = $base.'.'.$suffix;
             if ($suffix > 1000) {
-                $username = $base . '.' . bin2hex(random_bytes(2));
+                $username = $base.'.'.bin2hex(random_bytes(2));
                 break;
             }
         }
@@ -902,7 +926,7 @@ class AuthController extends Controller
 
     protected function throttleKey(string $identifier): string
     {
-        return Str::lower($identifier) . '|' . request()->ip();
+        return Str::lower($identifier).'|'.request()->ip();
     }
 
     protected function findTrustedDevice(User $user, ?string $deviceToken): ?UserTrustedDevice
@@ -912,6 +936,7 @@ class AuthController extends Controller
         }
 
         $hash = hash('sha256', $deviceToken);
+
         return $user->trustedDevices()
             ->where('device_key', $hash)
             ->first();
@@ -945,7 +970,7 @@ class AuthController extends Controller
 
     protected function mfaCacheKey(string $token): string
     {
-        return 'mfa:challenge:' . $token;
+        return 'mfa:challenge:'.$token;
     }
 
     /**
@@ -958,8 +983,8 @@ class AuthController extends Controller
         $user = $request->user();
 
         $validated = $request->validate([
-            'current_password'      => ['required', 'string'],
-            'password'              => ['required', PasswordRule::defaults(), 'confirmed'],
+            'current_password' => ['required', 'string'],
+            'password' => ['required', PasswordRule::defaults(), 'confirmed'],
             'password_confirmation' => ['required', 'string'],
         ]);
 

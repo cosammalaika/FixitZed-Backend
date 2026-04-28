@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class NotificationController extends Controller
@@ -74,6 +75,31 @@ class NotificationController extends Controller
         })->update(['read' => true]);
 
         return response()->json(['success' => true]);
+    }
+
+    public function destroy(int|string $notification, Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $record = Notification::query()
+            ->whereKey($notification)
+            ->where('recipient_type', 'Individual')
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (! $record) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Notification not found.',
+            ], 404);
+        }
+
+        $record->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notification deleted successfully.',
+        ]);
     }
 
     private function audiencesForUser($user): array

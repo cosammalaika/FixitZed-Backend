@@ -73,7 +73,9 @@ Route::middleware(['auth:sanctum', 'api.account.active'])->group(function () {
     Route::delete('me', [AuthController::class, 'deleteAccount']);
     Route::delete('account', [AuthController::class, 'deleteAccount']);
     Route::post('logout', [AuthController::class, 'logout']);
+    Route::post('device-token', [DeviceTokenController::class, 'store']);
     Route::post('device-tokens', [DeviceTokenController::class, 'store']);
+    Route::delete('device-token', [DeviceTokenController::class, 'destroy']);
     Route::delete('device-tokens', [DeviceTokenController::class, 'destroy']);
     Route::post('admin/push', [AdminPushController::class, 'send']);
 

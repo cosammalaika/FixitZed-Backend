@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Jobs\DispatchNotificationPush;
 use App\Models\Category;
 use App\Models\Fixer;
 use App\Models\Notification;
@@ -9,6 +10,7 @@ use App\Models\Service;
 use App\Models\Subcategory;
 use App\Services\FcmService;
 use App\Support\ApiCache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -74,61 +76,38 @@ class AppServiceProvider extends ServiceProvider
         });
 
         try {
-            $fcm = $this->app->make(FcmService::class);
+            Notification::created(function (Notification $notification) {
+                $notificationId = $notification->id;
+                $useQueue = (bool) config('services.fcm.queue_notifications', false);
+                $mode = $useQueue ? 'queue' : 'sync';
 
-            Notification::created(function (Notification $notification) use ($fcm) {
-                if ($notification->recipient_type !== 'Individual' || ! $notification->user_id) {
-                    return;
-                }
-
-                $title = $notification->title ?? 'Notification';
-                $body = $notification->message ?? '';
-                $data = is_array($notification->data) ? $notification->data : [];
-                $app = data_get($data, 'app');
-                $payload = collect($data)
-                    ->filter(fn ($value) => $value !== null)
-                    ->map(function ($value) {
-                        if (is_bool($value)) {
-                            return $value ? 'true' : 'false';
-                        }
-
-                        if (is_scalar($value)) {
-                            return (string) $value;
-                        }
-
-                        return json_encode($value) ?: '';
-                    })
-                    ->all();
-                $payload['notification_id'] = (string) $notification->id;
-
-                Log::info('push.dispatch.triggered', [
-                    'notification_id' => $notification->id,
+                Log::info('push.dispatch.scheduled', [
+                    'notification_id' => $notificationId,
                     'user_id' => $notification->user_id,
                     'recipient_type' => $notification->recipient_type,
-                    'app' => is_string($app) && $app !== '' ? $app : null,
-                    'fcm_enabled' => $fcm->enabled(),
-                    'payload_keys' => array_keys($payload),
+                    'mode' => $mode,
                 ]);
 
-                if (! $fcm->enabled()) {
+                $dispatch = function () use ($notificationId, $useQueue) {
+                    if ($useQueue) {
+                        DispatchNotificationPush::dispatch($notificationId);
+                        return;
+                    }
+
+                    $resolved = Notification::with('user')->find($notificationId);
+                    if (! $resolved) {
+                        return;
+                    }
+
+                    app(FcmService::class)->sendNotificationRecord($resolved);
+                };
+
+                if (DB::transactionLevel() > 0) {
+                    DB::afterCommit($dispatch);
                     return;
                 }
 
-                if (! $notification->user) {
-                    Log::warning('push.dispatch.skipped_missing_user', [
-                        'notification_id' => $notification->id,
-                        'user_id' => $notification->user_id,
-                    ]);
-                    return;
-                }
-
-                $fcm->sendToUser(
-                    $notification->user,
-                    $title,
-                    $body,
-                    $payload,
-                    is_string($app) && $app !== '' ? $app : null,
-                );
+                $dispatch();
             });
         } catch (\Throwable $e) {
             Log::warning('push.dispatch.bootstrap_failed', [

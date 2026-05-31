@@ -198,6 +198,10 @@ class WalletService
                 'user_id' => $context['user_id'],
                 'title' => $title,
                 'message' => $body,
+                'data' => [
+                    'app' => 'fixer',
+                    'sync_topics' => 'wallet,notifications,dashboard',
+                ],
                 'read' => false,
             ]);
         } catch (\Throwable $e) {

@@ -11,10 +11,16 @@ class DeviceTokenController extends Controller
     public function store(Request $request)
     {
         $user = $request->user();
+        $appType = $this->resolveAppType($request);
+        $request->merge([
+            'app' => $appType,
+            'app_type' => $appType,
+        ]);
         $data = $request->validate([
             'token' => ['required', 'string'],
             'platform' => ['nullable', 'string', 'max:50'],
             'app' => ['required', 'string', 'in:customer,fixer'],
+            'app_type' => ['required', 'string', 'in:customer,fixer'],
             'device_id' => ['nullable', 'string', 'max:191'],
         ]);
 
@@ -23,7 +29,7 @@ class DeviceTokenController extends Controller
             [
                 'user_id' => $user->id,
                 'platform' => $data['platform'] ?? $request->header('X-Platform'),
-                'app' => $data['app'],
+                'app' => $appType,
                 'device_id' => $data['device_id'] ?? $request->header('X-Device-Id'),
                 'last_seen_at' => now(),
             ],
@@ -31,7 +37,10 @@ class DeviceTokenController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $token,
+            'data' => [
+                ...$token->toArray(),
+                'app_type' => $token->app,
+            ],
         ]);
     }
 
@@ -50,5 +59,12 @@ class DeviceTokenController extends Controller
             'success' => true,
             'message' => 'Token removed',
         ]);
+    }
+
+    protected function resolveAppType(Request $request): string
+    {
+        $appType = $request->input('app_type', $request->input('app'));
+
+        return is_string($appType) ? strtolower(trim($appType)) : '';
     }
 }

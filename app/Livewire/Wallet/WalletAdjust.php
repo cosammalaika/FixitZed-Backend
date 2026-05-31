@@ -78,6 +78,10 @@ class WalletAdjust extends Component
                 'user_id' => $fixer->user->id,
                 'title' => $title,
                 'message' => $msg,
+                'data' => [
+                    'app' => 'fixer',
+                    'sync_topics' => 'wallet,notifications,dashboard',
+                ],
                 'read' => false,
             ]);
         }

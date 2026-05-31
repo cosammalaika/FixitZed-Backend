@@ -58,6 +58,10 @@ class ApplicationIndex extends Component
                 'user_id' => $user->id,
                 'title' => 'Application approved',
                 'message' => 'Your fixer application has been approved. You can now take jobs.',
+                'data' => [
+                    'app' => 'fixer',
+                    'sync_topics' => 'profile,notifications,dashboard',
+                ],
                 'read' => false,
             ]);
         }

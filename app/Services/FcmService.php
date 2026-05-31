@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\DeviceToken;
+use App\Models\Notification;
 use App\Models\User;
+use App\Support\UserSessionManager;
 use Google\Auth\Credentials\ServiceAccountCredentials;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -41,6 +43,37 @@ class FcmService
         return $this->enabled && $this->credentials !== null && $this->projectId !== '';
     }
 
+    public function sendNotificationRecord(Notification $notification): void
+    {
+        $title = trim((string) ($notification->title ?? ''));
+        $body = trim((string) ($notification->message ?? ''));
+        $data = is_array($notification->data) ? $notification->data : [];
+        $recipientType = trim((string) ($notification->recipient_type ?? 'Individual'));
+        $app = $this->resolveAppType($data['app_type'] ?? $data['app'] ?? null)
+            ?? $this->defaultAppForRecipientType($recipientType);
+
+        $payload = [
+            ...$data,
+            'notification_id' => (string) $notification->id,
+            'payload' => $data['payload'] ?? ('remote_notification:' . $notification->id),
+            'sync_topics' => $data['sync_topics'] ?? 'notifications,dashboard',
+            'title' => $data['title'] ?? $title,
+            'body' => $data['body'] ?? $body,
+        ];
+        if ($app !== null) {
+            $payload['app'] = $app;
+            $payload['app_type'] = $app;
+        }
+        $payload = $this->normalizeData($payload);
+
+        if ($recipientType === 'Individual' && $notification->user) {
+            $this->sendToUser($notification->user, $title, $body, $payload, $app);
+            return;
+        }
+
+        $this->sendToAudience($recipientType, $title, $body, $payload, $app);
+    }
+
     /**
     * Send a push to all device tokens for a user.
     */
@@ -54,6 +87,43 @@ class FcmService
         Log::info('push.dispatch.recipient_resolved', [
             'user_id' => $user->id,
             'app' => $app,
+            'token_count' => count($tokens),
+        ]);
+
+        $this->sendToTokens($tokens, $title, $body, $data);
+    }
+
+    public function sendToAudience(string $recipientType, string $title, string $body, array $data = [], ?string $app = null): void
+    {
+        $normalizedRecipient = trim($recipientType);
+        if ($normalizedRecipient === '' || $normalizedRecipient === 'Individual') {
+            return;
+        }
+
+        $eligibleUserIds = User::role($normalizedRecipient)
+            ->get(['id', 'status'])
+            ->filter(fn (User $user) => UserSessionManager::isAccountActive($user))
+            ->pluck('id')
+            ->all();
+
+        if (empty($eligibleUserIds)) {
+            Log::info('push.dispatch.skipped_empty_audience', [
+                'recipient_type' => $normalizedRecipient,
+                'app' => $app,
+            ]);
+            return;
+        }
+
+        $tokens = DeviceToken::query()
+            ->whereIn('user_id', $eligibleUserIds)
+            ->when($app, fn ($query) => $query->where('app', $app))
+            ->pluck('token')
+            ->all();
+
+        Log::info('push.dispatch.audience_resolved', [
+            'recipient_type' => $normalizedRecipient,
+            'app' => $app,
+            'user_count' => count($eligibleUserIds),
             'token_count' => count($tokens),
         ]);
 
@@ -88,18 +158,13 @@ class FcmService
             return;
         }
 
-        // Ensure string values in data
-        $data = collect($data)->map(function ($value) {
-            if (is_bool($value)) {
-                return $value ? 'true' : 'false';
-            }
-
-            if (is_scalar($value)) {
-                return (string) $value;
-            }
-
-            return json_encode($value) ?: '';
-        })->all();
+        $data = $this->normalizeData([
+            ...$data,
+            'title' => $data['title'] ?? $title,
+            'body' => $data['body'] ?? $body,
+        ]);
+        $app = $this->resolveAppType($data['app_type'] ?? $data['app'] ?? null);
+        $channelId = $this->defaultChannelForApp($app);
 
         $accessToken = $this->accessToken();
         if (! $accessToken) {
@@ -125,6 +190,26 @@ class FcmService
                                 'notification' => [
                                     'title' => $title,
                                     'body' => $body,
+                                ],
+                                'android' => [
+                                    'priority' => 'HIGH',
+                                    'notification' => [
+                                        'channel_id' => $channelId,
+                                        'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                                        'sound' => 'default',
+                                    ],
+                                ],
+                                'apns' => [
+                                    'headers' => [
+                                        'apns-priority' => '10',
+                                        'apns-push-type' => 'alert',
+                                    ],
+                                    'payload' => [
+                                        'aps' => [
+                                            'sound' => 'default',
+                                            'content-available' => 1,
+                                        ],
+                                    ],
                                 ],
                                 'data' => $data,
                             ],
@@ -216,5 +301,51 @@ class FcmService
         }
 
         return substr($trimmed, 0, 8) . '...' . substr($trimmed, -8);
+    }
+
+    protected function normalizeData(array $data): array
+    {
+        return collect($data)
+            ->filter(fn ($value) => $value !== null)
+            ->map(function ($value) {
+                if (is_bool($value)) {
+                    return $value ? 'true' : 'false';
+                }
+
+                if (is_scalar($value)) {
+                    return (string) $value;
+                }
+
+                return json_encode($value) ?: '';
+            })
+            ->all();
+    }
+
+    protected function resolveAppType(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $normalized = strtolower(trim($value));
+        if ($normalized === 'customer' || $normalized === 'fixer') {
+            return $normalized;
+        }
+
+        return null;
+    }
+
+    protected function defaultAppForRecipientType(string $recipientType): ?string
+    {
+        return match (strtolower(trim($recipientType))) {
+            'customer' => 'customer',
+            'fixer' => 'fixer',
+            default => null,
+        };
+    }
+
+    protected function defaultChannelForApp(?string $app): string
+    {
+        return $app === 'fixer' ? 'fixitzed_fixer_default' : 'fixitzed_default';
     }
 }

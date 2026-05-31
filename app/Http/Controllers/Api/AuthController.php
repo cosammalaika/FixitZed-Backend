@@ -175,6 +175,19 @@ class AuthController extends Controller
 
         RateLimiter::clear($this->throttleKey($identifier));
 
+        if (! UserSessionManager::isAccountActive($user)) {
+            $this->recordLoginAudit($user, 'login', 'blocked', [
+                'identifier' => $identifier,
+                'reason' => 'account_disabled',
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'code' => 'account_disabled',
+                'message' => 'Your account is disabled. Please contact support.',
+            ], 423);
+        }
+
         $trustedDevice = $this->findTrustedDevice($user, $request->input('device_token'));
 
         if ($user->mfa_enabled && ! $trustedDevice) {

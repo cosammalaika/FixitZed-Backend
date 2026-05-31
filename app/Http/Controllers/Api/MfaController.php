@@ -201,6 +201,26 @@ class MfaController extends Controller
             'mfa_last_confirmed_at' => now(),
         ])->save();
 
+        if (! UserSessionManager::isAccountActive($user)) {
+            LoginAudit::create([
+                'user_id' => $user->id,
+                'event' => 'login.mfa',
+                'status' => 'blocked',
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'metadata' => [
+                    'identifier' => $payload['identifier'] ?? null,
+                    'reason' => 'account_disabled',
+                ],
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'code' => 'account_disabled',
+                'message' => 'Your account is disabled. Please contact support.',
+            ], 423);
+        }
+
         $deviceToken = null;
         if ($payload['remember_device']) {
             $deviceToken = $user->issueTrustedDevice($data['device_name'] ?? null);

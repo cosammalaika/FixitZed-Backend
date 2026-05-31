@@ -8,12 +8,16 @@ use Illuminate\Support\Facades\Log;
 class UserSessionManager
 {
     /**
-     * Delete all existing API tokens for the given user to enforce single-session login.
+     * Optionally delete existing API tokens for the given user on login.
      *
      * @return int number of revoked tokens.
      */
     public static function revokeActiveTokens(User $user): int
     {
+        if (! config('auth.mobile_tokens.revoke_existing_on_login', false)) {
+            return 0;
+        }
+
         try {
             return $user->tokens()->delete();
         } catch (\Throwable $e) {
@@ -24,5 +28,16 @@ class UserSessionManager
         }
 
         return 0;
+    }
+
+    public static function isAccountActive(User $user): bool
+    {
+        $status = strtolower(trim((string) ($user->status ?? '')));
+
+        if ($status === '') {
+            return true;
+        }
+
+        return ! in_array($status, ['inactive', 'disabled', 'suspended', 'banned', 'deleted'], true);
     }
 }

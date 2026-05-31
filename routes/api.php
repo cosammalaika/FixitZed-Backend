@@ -65,7 +65,7 @@ Route::get('location-options', [LocationOptionController::class, 'index']);
 Route::get('subscription/plans', [SubscriptionController::class, 'plans']);
 
 // Authenticated routes
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'api.account.active'])->group(function () {
     Route::post('email/verification-notification', [AuthController::class, 'resendVerification'])
         ->middleware('throttle:6,1')
         ->name('verification.send');
@@ -87,7 +87,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('service-requests/{serviceRequest}/cancel', [ServiceRequestController::class, 'cancel']); // alias
 });
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'api.account.active'])->group(function () {
     Route::patch('me', [AuthController::class, 'updateMe']);
 
     Route::post('mfa/setup', [MfaController::class, 'setup']);

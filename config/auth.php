@@ -112,4 +112,19 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Mobile Token Policy
+    |--------------------------------------------------------------------------
+    |
+    | By default, mobile API tokens are long-lived and coexist across devices
+    | and app variants. Enable forced revocation only if you intentionally want
+    | single-session behavior for Sanctum mobile tokens.
+    |
+    */
+
+    'mobile_tokens' => [
+        'revoke_existing_on_login' => env('AUTH_MOBILE_REVOKE_EXISTING_ON_LOGIN', false),
+    ],
+
 ];
